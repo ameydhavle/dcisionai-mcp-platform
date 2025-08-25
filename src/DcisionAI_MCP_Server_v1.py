@@ -405,65 +405,61 @@ class DcisionAI_MCP_Server_v1:
                 "message": "Solver execution failed"
             }
 
-async def main():
-    """Main function to run the MCP server."""
-    server = DcisionAI_MCP_Server_v1()
-    
-    # Simple HTTP server for testing
-    import uvicorn
-    from fastapi import FastAPI, Request
-    from fastapi.responses import JSONResponse
-    
-    app = FastAPI(title=server.server_name, version=server.version)
-    
-    @app.post("/mcp")
-    async def handle_mcp_request(request: Request):
-        """Handle MCP requests."""
-        try:
-            data = await request.json()
-            method = data.get("method")
-            request_id = data.get("id")
-            params = data.get("params", {})
-            
-            if method == "initialize":
-                return await server.handle_initialize(request_id, params)
-            elif method == "tools/list":
-                return await server.handle_tools_list(request_id)
-            elif method == "tools/call":
-                return await server.handle_tools_call(request_id, params)
-            else:
-                return JSONResponse({
-                    "jsonrpc": "2.0",
-                    "id": request_id,
-                    "error": {
-                        "code": -32601,
-                        "message": f"Method '{method}' not found"
-                    }
-                })
-                
-        except Exception as e:
-            logger.error(f"❌ Error handling request: {e}")
+# Create FastAPI app
+server = DcisionAI_MCP_Server_v1()
+
+# Simple HTTP server for testing
+import uvicorn
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+app = FastAPI(title=server.server_name, version=server.version)
+
+@app.post("/mcp")
+async def handle_mcp_request(request: Request):
+    """Handle MCP requests."""
+    try:
+        data = await request.json()
+        method = data.get("method")
+        request_id = data.get("id")
+        params = data.get("params", {})
+        
+        if method == "initialize":
+            return await server.handle_initialize(request_id, params)
+        elif method == "tools/list":
+            return await server.handle_tools_list(request_id)
+        elif method == "tools/call":
+            return await server.handle_tools_call(request_id, params)
+        else:
             return JSONResponse({
                 "jsonrpc": "2.0",
+                "id": request_id,
                 "error": {
-                    "code": -32603,
-                    "message": f"Internal error: {str(e)}"
+                    "code": -32601,
+                    "message": f"Method '{method}' not found"
                 }
             })
-    
-    @app.get("/health")
-    async def health_check():
-        """Health check endpoint."""
-        return {
-            "status": "healthy",
-            "server": server.server_name,
-            "version": server.version,
-            "manufacturing_agent": "available" if server.manufacturing_agent else "not_available"
-        }
-    
-    logger.info(f"🚀 Starting {server.server_name} on http://localhost:8080")
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+            
+    except Exception as e:
+        logger.error(f"❌ Error handling request: {e}")
+        return JSONResponse({
+            "jsonrpc": "2.0",
+            "error": {
+                "code": -32603,
+                "message": f"Internal error: {str(e)}"
+            }
+        })
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "server": server.server_name,
+        "version": server.version,
+        "manufacturing_agent": "available" if server.manufacturing_agent else "not_available"
+    }
 
 if __name__ == "__main__":
-    # Run the main function
-    asyncio.run(main())
+    logger.info(f"🚀 Starting {server.server_name} on http://localhost:8080")
+    uvicorn.run(app, host="0.0.0.0", port=8080)
