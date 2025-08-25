@@ -38,4 +38,4 @@ openai>=1.0.0
 anthropic>=0.7.0
 
 # Strands framework for manufacturing agent
-strands>=0.1.0
+strands-agents-tools>=0.2.4
