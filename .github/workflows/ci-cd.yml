@@ -39,11 +39,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.mcp.txt
         
-    - name: Run tests
-      run: |
-        python tests/test_fallback_server.py
-        python tests/test_intent_responses.py
-        python tests/test_specific_intents.py
+          - name: Run tests
+        run: |
+          python tests/test_actual_functionality.py
         
     - name: Test coverage
       run: |
