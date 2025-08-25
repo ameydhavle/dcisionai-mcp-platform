@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies and solvers
 RUN apt-get update && apt-get install -y \
     curl \
     gcc \
@@ -14,7 +14,35 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     build-essential \
     pkg-config \
+    coinor-cbc \
+    coinor-clp \
+    coinor-cgl \
+    coinor-osi \
+    coinor-utils \
+    libcbc-dev \
+    libclp-dev \
+    libosi-dev \
+    libcoinutils-dev \
+    libcgl-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Install HiGHS solver
+RUN git clone https://github.com/ERGO-Code/HiGHS.git /tmp/highs && \
+    cd /tmp/highs && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig && \
+    rm -rf /tmp/highs
+
+# Install SCIP solver (commercial license required, but we'll try the academic version)
+RUN wget -O /tmp/scip.tar.gz https://www.scipopt.org/download/release/SCIPOptSuite-8.0.4-Linux-ubuntu.20.04.x86_64.tar.gz && \
+    tar -xzf /tmp/scip.tar.gz -C /tmp && \
+    cp /tmp/SCIPOptSuite-8.0.4-Linux-ubuntu.20.04.x86_64/bin/scip /usr/local/bin/ && \
+    rm -rf /tmp/scip* && \
+    rm -f /tmp/scip.tar.gz
 
 # Copy requirements and install Python dependencies
 COPY requirements.mcp.txt .
