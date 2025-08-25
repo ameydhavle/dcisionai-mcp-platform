@@ -40,3 +40,6 @@ anthropic>=0.7.0
 # Strands framework for manufacturing agent
 strands-agents>=1.5.0
 strands-agents-tools>=0.2.4
+
+# Async support
+nest-asyncio>=1.5.0
