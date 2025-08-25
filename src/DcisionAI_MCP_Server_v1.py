@@ -465,4 +465,13 @@ async def main():
     uvicorn.run(app, host="0.0.0.0", port=8080)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except RuntimeError as e:
+        if "asyncio.run() cannot be called from a running event loop" in str(e):
+            # Handle the case where we're already in an event loop
+            import nest_asyncio
+            nest_asyncio.apply()
+            asyncio.run(main())
+        else:
+            raise
