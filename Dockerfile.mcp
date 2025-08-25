@@ -42,5 +42,5 @@ HEALTHCHECK --interval=30s \
             --retries=3 \
             CMD curl -f http://localhost:8080/health || exit 1
 
-# Run the fallback MCP server
-CMD ["python", "src/mcp_server_fallback.py"]
+# Run the production MCP server
+CMD ["python", "src/DcisionAI_MCP_Server_v1.py"]
