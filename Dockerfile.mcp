@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies and basic solvers
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     gcc \
@@ -15,11 +15,6 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     wget \
-    coinor-cbc \
-    coinor-clp \
-    coinor-cgl \
-    coinor-osi \
-    coinor-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install HiGHS solver
