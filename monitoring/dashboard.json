@@ -1,0 +1,181 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          ["AWS/ApplicationELB", "RequestCount", "LoadBalancer", "DcisionAI-Gateway-ALB-staging"],
+          [".", "TargetResponseTime", ".", "."],
+          [".", "HTTPCode_Target_5XX_Count", ".", "."],
+          [".", "HTTPCode_Target_4XX_Count", ".", "."]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Gateway Load Balancer Metrics",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          ["AWS/ECS", "CPUUtilization", "ServiceName", "DcisionAI-Gateway-Service-staging", "ClusterName", "DcisionAI-Gateway-Cluster-staging"],
+          [".", "MemoryUtilization", ".", ".", ".", "."],
+          [".", "RunningTaskCount", ".", ".", ".", "."]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Gateway ECS Service Metrics",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          ["AWS/DynamoDB", "ConsumedReadCapacityUnits", "TableName", "dcisionai-tenants-staging"],
+          [".", "ConsumedWriteCapacityUnits", ".", "."],
+          [".", "ThrottledRequests", ".", "."]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "DynamoDB Tenant Table Metrics",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          ["AWS/DynamoDB", "ConsumedReadCapacityUnits", "TableName", "dcisionai-api-keys-staging"],
+          [".", "ConsumedWriteCapacityUnits", ".", "."],
+          [".", "ThrottledRequests", ".", "."]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "DynamoDB API Keys Table Metrics",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 12,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          ["AWS/Cognito", "SignInSuccesses", "UserPool", "DcisionAI-Users-staging"],
+          [".", "SignInFailures", ".", "."],
+          [".", "TokenRefreshSuccesses", ".", "."],
+          [".", "TokenRefreshFailures", ".", "."]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Cognito Authentication Metrics",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 12,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          ["AWS/Logs", "IncomingLogEvents", "LogGroupName", "/ecs/DcisionAI-Gateway-staging"],
+          [".", "IncomingBytes", ".", "."],
+          [".", "StoredBytes", ".", "."]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "CloudWatch Logs Metrics",
+        "period": 300
+      }
+    },
+    {
+      "type": "log",
+      "x": 0,
+      "y": 18,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "query": "SOURCE '/ecs/DcisionAI-Gateway-staging'\n| fields @timestamp, @message\n| filter @message like /ERROR/\n| sort @timestamp desc\n| limit 20",
+        "region": "us-east-1",
+        "title": "Gateway Error Logs",
+        "view": "table"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 24,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          ["AWS/ApplicationELB", "HealthyHostCount", "LoadBalancer", "DcisionAI-Gateway-ALB-staging", "TargetGroup", "DcisionAI-Gateway-TG-staging"]
+        ],
+        "view": "singleValue",
+        "region": "us-east-1",
+        "title": "Healthy Hosts",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 24,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          ["AWS/ApplicationELB", "UnHealthyHostCount", "LoadBalancer", "DcisionAI-Gateway-ALB-staging", "TargetGroup", "DcisionAI-Gateway-TG-staging"]
+        ],
+        "view": "singleValue",
+        "region": "us-east-1",
+        "title": "Unhealthy Hosts",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 24,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          ["AWS/ECS", "RunningTaskCount", "ServiceName", "DcisionAI-Gateway-Service-staging", "ClusterName", "DcisionAI-Gateway-Cluster-staging"]
+        ],
+        "view": "singleValue",
+        "region": "us-east-1",
+        "title": "Running Tasks",
+        "period": 300
+      }
+    }
+  ]
+}

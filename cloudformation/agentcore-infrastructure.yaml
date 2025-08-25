@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'DcisionAI askDcisionAI API AgentCore Infrastructure'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    Description: Environment name
+
+Resources:
+  # AgentCore Agent
+  DcisionAIAgent:
+    Type: AWS::Bedrock::Agent
+    Properties:
+      AgentName: DcisionAI-askDcisionAI-Agent
+      Description: DcisionAI optimization platform primary API agent
+      Instruction: 
+    You are the DcisionAI optimization platform agent. Your role is to:
+    1. Process optimization queries from users
+    2. Execute manufacturing workflows using the DcisionAI Manufacturing Agent
+    3. Return structured results with intent analysis, data requirements, and optimization solutions
+    4. Handle errors gracefully and provide meaningful feedback
+    
+    Available workflows:
+    - comprehensive: Full end-to-end optimization workflow
+    - intent_only: Intent classification only
+    - data_only: Data analysis only
+    - solver_only: Optimization solving only
+    
+    Always respond with structured JSON containing the workflow results.
+    
+      AgentResourceRoleArn: !GetAtt AgentRole.Arn
+      FoundationModel: anthropic.claude-3-sonnet-20240229-v1:0
+
+  # IAM Role for Agent
+  AgentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DcisionAIAgentRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSBedrockAgentRole
+
+  # AgentCore Runtime
+  AgentRuntime:
+    Type: AWS::Bedrock::AgentRuntime
+    Properties:
+      AgentId: !Ref DcisionAIAgent
+      RuntimeName: DcisionAI-Runtime
+      RuntimeDescription: Runtime for DcisionAI askDcisionAI API
+
+Outputs:
+  AgentId:
+    Description: Agent ID
+    Value: !Ref DcisionAIAgent
+    Export:
+      Name: !Sub "${AWS::StackName}-AgentId"
+
+  RuntimeEndpoint:
+    Description: AgentCore Runtime Endpoint
+    Value: !GetAtt AgentRuntime.RuntimeEndpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-RuntimeEndpoint"
