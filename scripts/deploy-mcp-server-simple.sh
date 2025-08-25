@@ -67,12 +67,14 @@ echo "🚀 Step 2: Deploying MCP Server Infrastructure"
 echo "----------------------------------------------"
 
 # Deploy MCP server infrastructure
+DEPLOYMENT_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 aws cloudformation deploy \
     --template-file cloudformation/mcp-server-simple.yaml \
     --stack-name $STACK_NAME \
     --parameter-overrides \
         Environment=$ENVIRONMENT \
         ECRImageUri=$ECR_URI:$ENVIRONMENT \
+        DeploymentTimestamp=$DEPLOYMENT_TIMESTAMP \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --region $REGION
 

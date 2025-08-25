@@ -11,6 +11,11 @@ Parameters:
   ECRImageUri:
     Type: String
     Description: ECR image URI for the MCP server
+    
+  DeploymentTimestamp:
+    Type: String
+    Default: "2025-08-25T21:59:00Z"
+    Description: Deployment timestamp to force updates
 
 Resources:
   # ECS Cluster
@@ -49,6 +54,8 @@ Resources:
               Value: !Ref AWS::Region
             - Name: LOG_LEVEL
               Value: INFO
+            - Name: DEPLOYMENT_TIMESTAMP
+              Value: !Ref DeploymentTimestamp
           LogConfiguration:
             LogDriver: awslogs
             Options:
