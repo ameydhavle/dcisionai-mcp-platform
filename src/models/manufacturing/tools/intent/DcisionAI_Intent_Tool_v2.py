@@ -34,7 +34,7 @@ except ImportError:
     raise Exception("Strands framework is required but not available")
 
 # Platform throttling imports
-from src.shared.throttling import get_platform_throttle_manager
+from shared.throttling import get_platform_throttle_manager
 
 logger = logging.getLogger(__name__)
 

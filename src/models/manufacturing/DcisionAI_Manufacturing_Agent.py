@@ -53,7 +53,7 @@ except ImportError:
     logging.warning("Some tools not available - will use fallback")
 
 # Platform throttling imports
-from src.shared.throttling import get_platform_throttle_manager
+from shared.throttling import get_platform_throttle_manager
 
 logger = logging.getLogger(__name__)
 
