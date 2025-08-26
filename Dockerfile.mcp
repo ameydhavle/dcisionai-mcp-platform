@@ -50,5 +50,5 @@ HEALTHCHECK --interval=30s \
             --retries=3 \
             CMD curl -f http://localhost:8080/health || exit 1
 
-# Run the production MCP server v4 Final
-CMD ["python", "src/DcisionAI_MCP_Server_v4_Final.py"]
+# Run the production MCP server v4 Working
+CMD ["python", "src/DcisionAI_MCP_Server_v4_Working.py"]
