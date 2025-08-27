@@ -29,7 +29,7 @@ def test_agentcore_workflow():
         # Initialize Bedrock AgentCore client
         client = boto3.client('bedrock-agentcore', region_name='us-east-1')
         
-        # AgentCore runtime ARN (fresh from direct deployment with enhanced Model Builder)
+        # AgentCore runtime ARN (latest deployment with enhanced Model Builder)
         agent_runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:808953421331:runtime/DcisionAI_Manufacturing_MCP_v1_v2_1756272231-e0yCNBHlML"
         
         logger.info("🎯 Testing NEW AgentCore runtime with enhanced Model Builder!")
@@ -41,14 +41,11 @@ def test_agentcore_workflow():
         logger.info(f"📦 Agent Runtime: {agent_runtime_arn}")
         logger.info(f"🔍 Test Prompt: {test_prompt}")
         
-        # Prepare the request (simplified format for AgentCore)
+        # Prepare the request (correct format for AgentCore FastAPI)
         request_body = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": test_prompt
-                }
-            ]
+            "input": {
+                "prompt": test_prompt
+            }
         }
         
         logger.info("📤 Sending request to AgentCore...")
@@ -62,9 +59,18 @@ def test_agentcore_workflow():
         )
         
         logger.info("📥 Received response from AgentCore")
+        logger.info(f"📊 Response keys: {list(response.keys())}")
         
-        # Parse the response
-        response_body = json.loads(response['responseBody'].read())
+        # Parse the response (check different possible response structures)
+        if 'response' in response:
+            response_body = json.loads(response['response'].read())
+        elif 'payload' in response:
+            response_body = json.loads(response['payload'].read())
+        elif 'responseBody' in response:
+            response_body = json.loads(response['responseBody'].read())
+        else:
+            logger.info(f"📝 Full response: {response}")
+            response_body = response
         
         logger.info("✅ AgentCore Workflow Test Results:")
         logger.info(f"📊 Response Status: {response.get('status', 'Unknown')}")

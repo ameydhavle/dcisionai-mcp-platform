@@ -82,7 +82,7 @@ async def invoke_agent(request: InvocationRequest):
             logger.info("Processing through FastMCP manufacturing workflow...")
             
             # Use the FastMCP server's built-in workflow
-            workflow_result = await mcp_server.process_manufacturing_message(user_message)
+            workflow_result = await mcp_server.process_message(user_message)
             
             # FastMCP workflow returns a different structure
             if "error" not in workflow_result:

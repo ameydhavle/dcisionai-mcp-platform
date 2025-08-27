@@ -28,12 +28,9 @@ def test_agentcore_simple():
         
         # Simple request
         simple_request = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "Hello, can you help me with production optimization?"
-                }
-            ]
+            "input": {
+                "prompt": "Hello, can you help me with production optimization?"
+            }
         }
         
         logger.info("📤 Sending simple request...")
@@ -47,17 +44,34 @@ def test_agentcore_simple():
         )
         
         logger.info("📥 Received response!")
-        logger.info(f"📊 Status: {response.get('status', 'Unknown')}")
+        logger.info(f"📊 Status: {response.get('statusCode', 'Unknown')}")
         
         # Parse response
-        response_body = json.loads(response['payload'].read())
-        logger.info(f"📝 Response: {response_body}")
-        
-        return response_body
-        
+        if 'response' in response:
+            response_body = json.loads(response['response'].read())
+            logger.info(f"📝 Response: {response_body}")
+            
+            # Check if we got a meaningful response
+            if 'output' in response_body:
+                output = response_body['output']
+                logger.info(f"✅ SUCCESS: AgentCore is working!")
+                logger.info(f"📄 Output: {output.get('message', 'No message')}")
+                logger.info(f"🔧 Tools used: {output.get('tools_used', [])}")
+                return True
+            else:
+                logger.warning("⚠️  Response doesn't contain expected 'output' field")
+                return False
+        else:
+            logger.error("❌ No 'response' field in AgentCore response")
+            return False
+            
     except Exception as e:
         logger.error(f"❌ Error: {e}")
-        return None
+        return False
 
 if __name__ == "__main__":
-    test_agentcore_simple()
+    success = test_agentcore_simple()
+    if success:
+        logger.info("🎉 AgentCore test PASSED!")
+    else:
+        logger.error("💥 AgentCore test FAILED!")
