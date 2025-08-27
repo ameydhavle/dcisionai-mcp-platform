@@ -57,9 +57,10 @@ def deploy_manufacturing_agent():
         logger.info(f"🐳 Container URI: {container_uri}")
         logger.info(f"🔐 Role ARN: {role_arn}")
         
-        # For now, let's just create a new agent runtime with a different name
-        # since updating requires different API calls
-        agent_runtime_name_v2 = f"{agent_runtime_name}_v2"
+        # Create a new agent runtime with a unique timestamp-based name
+        import time
+        timestamp = int(time.time())
+        agent_runtime_name_v2 = f"{agent_runtime_name}_v2_{timestamp}"
         logger.info(f"📦 Creating new agent runtime: {agent_runtime_name_v2}")
         
         response = client.create_agent_runtime(
