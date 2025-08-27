@@ -1,7 +1,0 @@
-bedrock-agentcore>=0.1.0
-strands>=0.1.0
-boto3>=1.26.0
-aiohttp>=3.8.0
-pandas>=1.5.0
-numpy>=1.21.0
-ortools>=9.5.0

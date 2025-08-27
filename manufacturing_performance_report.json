@@ -1,0 +1,43 @@
+{
+  "total_tests": 3,
+  "successful_tests": 0,
+  "failed_tests": 3,
+  "average_response_time": 0,
+  "total_response_time": 0,
+  "validation_results": [],
+  "detailed_results": [
+    {
+      "scenario": "Production Line Optimization",
+      "result": {
+        "success": false,
+        "error": "Parameter validation failed:\nMissing required parameter in input: \"payload\"\nUnknown parameter in input: \"sessionId\", must be one of: contentType, accept, mcpSessionId, runtimeSessionId, mcpProtocolVersion, runtimeUserId, traceId, traceParent, traceState, baggage, agentRuntimeArn, qualifier, payload\nUnknown parameter in input: \"input\", must be one of: contentType, accept, mcpSessionId, runtimeSessionId, mcpProtocolVersion, runtimeUserId, traceId, traceParent, traceState, baggage, agentRuntimeArn, qualifier, payload",
+        "response_time": 0.00047206878662109375,
+        "session_id": "dcisionai-manufacturing-perf-493f78c0-1756246627",
+        "timestamp": "2025-08-26T22:17:07.476408"
+      },
+      "validation": null
+    },
+    {
+      "scenario": "Supply Chain Optimization",
+      "result": {
+        "success": false,
+        "error": "Parameter validation failed:\nMissing required parameter in input: \"payload\"\nUnknown parameter in input: \"sessionId\", must be one of: contentType, accept, mcpSessionId, runtimeSessionId, mcpProtocolVersion, runtimeUserId, traceId, traceParent, traceState, baggage, agentRuntimeArn, qualifier, payload\nUnknown parameter in input: \"input\", must be one of: contentType, accept, mcpSessionId, runtimeSessionId, mcpProtocolVersion, runtimeUserId, traceId, traceParent, traceState, baggage, agentRuntimeArn, qualifier, payload",
+        "response_time": 0.0010838508605957031,
+        "session_id": "dcisionai-manufacturing-perf-ad804767-1756246632",
+        "timestamp": "2025-08-26T22:17:12.480316"
+      },
+      "validation": null
+    },
+    {
+      "scenario": "Quality Control Analysis",
+      "result": {
+        "success": false,
+        "error": "Parameter validation failed:\nMissing required parameter in input: \"payload\"\nUnknown parameter in input: \"sessionId\", must be one of: contentType, accept, mcpSessionId, runtimeSessionId, mcpProtocolVersion, runtimeUserId, traceId, traceParent, traceState, baggage, agentRuntimeArn, qualifier, payload\nUnknown parameter in input: \"input\", must be one of: contentType, accept, mcpSessionId, runtimeSessionId, mcpProtocolVersion, runtimeUserId, traceId, traceParent, traceState, baggage, agentRuntimeArn, qualifier, payload",
+        "response_time": 0.0002200603485107422,
+        "session_id": "dcisionai-manufacturing-perf-bc5a0785-1756246637",
+        "timestamp": "2025-08-26T22:17:17.481833"
+      },
+      "validation": null
+    }
+  ]
+}

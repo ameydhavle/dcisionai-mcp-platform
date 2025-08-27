@@ -1,0 +1,58 @@
+default_agent: dcisionai_mcp_final
+agents:
+  DcisionAI_MCP_Server_v6:
+    name: DcisionAI_MCP_Server_v6
+    entrypoint: src/DcisionAI_MCP_Server_v6.py
+    platform: linux/arm64
+    container_runtime: docker
+    aws:
+      execution_role: null
+      execution_role_auto_create: true
+      account: '808953421331'
+      region: us-east-1
+      ecr_repository: null
+      ecr_auto_create: true
+      network_configuration:
+        network_mode: PUBLIC
+      protocol_configuration:
+        server_protocol: MCP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: null
+      agent_arn: null
+      agent_session_id: null
+    codebuild:
+      project_name: null
+      execution_role: null
+      source_bucket: null
+    authorizer_configuration: null
+    oauth_configuration: null
+  dcisionai_mcp_final:
+    name: dcisionai_mcp_final
+    entrypoint: agentcore_entry_point.py
+    platform: linux/arm64
+    container_runtime: docker
+    aws:
+      execution_role: arn:aws:iam::808953421331:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-3bddb2550f
+      execution_role_auto_create: false
+      account: '808953421331'
+      region: us-east-1
+      ecr_repository: 808953421331.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-dcisionai_mcp_final
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+      protocol_configuration:
+        server_protocol: MCP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: dcisionai_mcp_final-CDEhMdFJY8
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:808953421331:runtime/dcisionai_mcp_final-CDEhMdFJY8
+      agent_session_id: null
+    codebuild:
+      project_name: bedrock-agentcore-dcisionai_mcp_final-builder
+      execution_role: arn:aws:iam::808953421331:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-3bddb2550f
+      source_bucket: bedrock-agentcore-codebuild-sources-808953421331-us-east-1
+    authorizer_configuration: null
+    oauth_configuration: null

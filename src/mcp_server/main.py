@@ -219,5 +219,12 @@ async def main():
 
 
 if __name__ == "__main__":
-    # Run the server
-    asyncio.run(main())
+    # Use FastMCP server for AWS AgentCore deployment
+    from .fastmcp_server import create_fastmcp_server
+    
+    try:
+        server = create_fastmcp_server()
+        server.run()
+    except Exception as e:
+        print(f"Failed to start MCP server: {e}")
+        sys.exit(1)

@@ -1,0 +1,194 @@
+{
+  "timestamp": "2025-08-26T18:23:29.340332",
+  "results": [
+    {
+      "tool_name": "classify_manufacturing_intent",
+      "success": true,
+      "response_time": 27.854623317718506,
+      "response_length": 280,
+      "tool_responded": true,
+      "meaningful_response": false,
+      "message": "DcisionAI Manufacturing MCP Server received: I need to optimize my automotive production line with 3 stations. Station A: 45min, 98% quality. Station B: 38min, 95% quality. Station C: 52min, 99% quality. Target: 500 units/day, 97%+ quality. Please classify my optimization intent.",
+      "full_response": {
+        "output": {
+          "message": "DcisionAI Manufacturing MCP Server received: I need to optimize my automotive production line with 3 stations. Station A: 45min, 98% quality. Station B: 38min, 95% quality. Station C: 52min, 99% quality. Target: 500 units/day, 97%+ quality. Please classify my optimization intent.",
+          "tools_available": [
+            "classify_manufacturing_intent",
+            "analyze_data_requirements",
+            "build_optimization_model",
+            "solve_optimization_problem",
+            "manufacturing_optimization_workflow",
+            "manufacturing_tools_status"
+          ],
+          "server_ready": true,
+          "timestamp": "2025-08-26T22:21:25.461430",
+          "model": "dcisionai-manufacturing-mcp-server"
+        }
+      }
+    },
+    {
+      "tool_name": "analyze_data_requirements",
+      "success": true,
+      "response_time": 16.75635266304016,
+      "response_length": 240,
+      "tool_responded": true,
+      "meaningful_response": false,
+      "message": "DcisionAI Manufacturing MCP Server received: For my production line optimization, what specific data do I need to collect? I have processing times and quality metrics, but what else should I measure to build an effective optimization model?",
+      "full_response": {
+        "output": {
+          "message": "DcisionAI Manufacturing MCP Server received: For my production line optimization, what specific data do I need to collect? I have processing times and quality metrics, but what else should I measure to build an effective optimization model?",
+          "tools_available": [
+            "classify_manufacturing_intent",
+            "analyze_data_requirements",
+            "build_optimization_model",
+            "solve_optimization_problem",
+            "manufacturing_optimization_workflow",
+            "manufacturing_tools_status"
+          ],
+          "server_ready": true,
+          "timestamp": "2025-08-26T22:21:45.179943",
+          "model": "dcisionai-manufacturing-mcp-server"
+        }
+      }
+    },
+    {
+      "tool_name": "build_optimization_model",
+      "success": true,
+      "response_time": 27.73915386199951,
+      "response_length": 267,
+      "tool_responded": true,
+      "meaningful_response": false,
+      "message": "DcisionAI Manufacturing MCP Server received: Build an optimization model for my production line. I have 3 stations with different processing times and quality metrics. I need to maximize throughput while maintaining quality above 97%. What type of model should I use?",
+      "full_response": {
+        "output": {
+          "message": "DcisionAI Manufacturing MCP Server received: Build an optimization model for my production line. I have 3 stations with different processing times and quality metrics. I need to maximize throughput while maintaining quality above 97%. What type of model should I use?",
+          "tools_available": [
+            "classify_manufacturing_intent",
+            "analyze_data_requirements",
+            "build_optimization_model",
+            "solve_optimization_problem",
+            "manufacturing_optimization_workflow",
+            "manufacturing_tools_status"
+          ],
+          "server_ready": true,
+          "timestamp": "2025-08-26T22:22:15.954983",
+          "model": "dcisionai-manufacturing-mcp-server"
+        }
+      }
+    },
+    {
+      "tool_name": "solve_optimization_problem",
+      "success": true,
+      "response_time": 16.7295560836792,
+      "response_length": 253,
+      "tool_responded": true,
+      "meaningful_response": false,
+      "message": "DcisionAI Manufacturing MCP Server received: Solve my production line optimization problem. Station A: 45min, 98% quality. Station B: 38min, 95% quality. Station C: 52min, 99% quality. Target: 500 units/day, 97%+ quality. Find the optimal configuration.",
+      "full_response": {
+        "output": {
+          "message": "DcisionAI Manufacturing MCP Server received: Solve my production line optimization problem. Station A: 45min, 98% quality. Station B: 38min, 95% quality. Station C: 52min, 99% quality. Target: 500 units/day, 97%+ quality. Find the optimal configuration.",
+          "tools_available": [
+            "classify_manufacturing_intent",
+            "analyze_data_requirements",
+            "build_optimization_model",
+            "solve_optimization_problem",
+            "manufacturing_optimization_workflow",
+            "manufacturing_tools_status"
+          ],
+          "server_ready": true,
+          "timestamp": "2025-08-26T22:22:35.634424",
+          "model": "dcisionai-manufacturing-mcp-server"
+        }
+      }
+    },
+    {
+      "tool_name": "manufacturing_optimization_workflow",
+      "success": true,
+      "response_time": 27.640310049057007,
+      "response_length": 198,
+      "tool_responded": true,
+      "meaningful_response": false,
+      "message": "DcisionAI Manufacturing MCP Server received: Create a workflow for my production line optimization. I need to go from data collection to implementation. What steps should I follow and in what order?",
+      "full_response": {
+        "output": {
+          "message": "DcisionAI Manufacturing MCP Server received: Create a workflow for my production line optimization. I need to go from data collection to implementation. What steps should I follow and in what order?",
+          "tools_available": [
+            "classify_manufacturing_intent",
+            "analyze_data_requirements",
+            "build_optimization_model",
+            "solve_optimization_problem",
+            "manufacturing_optimization_workflow",
+            "manufacturing_tools_status"
+          ],
+          "server_ready": true,
+          "timestamp": "2025-08-26T22:23:06.344306",
+          "model": "dcisionai-manufacturing-mcp-server"
+        }
+      }
+    },
+    {
+      "tool_name": "manufacturing_tools_status",
+      "success": true,
+      "response_time": 16.936610221862793,
+      "response_length": 158,
+      "tool_responded": true,
+      "meaningful_response": false,
+      "message": "DcisionAI Manufacturing MCP Server received: What is the current status of all manufacturing tools? Are they all operational and ready for optimization tasks?",
+      "full_response": {
+        "output": {
+          "message": "DcisionAI Manufacturing MCP Server received: What is the current status of all manufacturing tools? Are they all operational and ready for optimization tasks?",
+          "tools_available": [
+            "classify_manufacturing_intent",
+            "analyze_data_requirements",
+            "build_optimization_model",
+            "solve_optimization_problem",
+            "manufacturing_optimization_workflow",
+            "manufacturing_tools_status"
+          ],
+          "server_ready": true,
+          "timestamp": "2025-08-26T22:23:26.217910",
+          "model": "dcisionai-manufacturing-mcp-server"
+        }
+      }
+    }
+  ],
+  "tool_tests": [
+    {
+      "name": "classify_manufacturing_intent",
+      "prompt": "I need to optimize my automotive production line with 3 stations. Station A: 45min, 98% quality. Station B: 38min, 95% quality. Station C: 52min, 99% quality. Target: 500 units/day, 97%+ quality. Please classify my optimization intent.",
+      "expected_response_type": "intent_classification"
+    },
+    {
+      "name": "analyze_data_requirements",
+      "prompt": "For my production line optimization, what specific data do I need to collect? I have processing times and quality metrics, but what else should I measure to build an effective optimization model?",
+      "expected_response_type": "data_requirements_analysis"
+    },
+    {
+      "name": "build_optimization_model",
+      "prompt": "Build an optimization model for my production line. I have 3 stations with different processing times and quality metrics. I need to maximize throughput while maintaining quality above 97%. What type of model should I use?",
+      "expected_response_type": "model_building"
+    },
+    {
+      "name": "solve_optimization_problem",
+      "prompt": "Solve my production line optimization problem. Station A: 45min, 98% quality. Station B: 38min, 95% quality. Station C: 52min, 99% quality. Target: 500 units/day, 97%+ quality. Find the optimal configuration.",
+      "expected_response_type": "problem_solving"
+    },
+    {
+      "name": "manufacturing_optimization_workflow",
+      "prompt": "Create a workflow for my production line optimization. I need to go from data collection to implementation. What steps should I follow and in what order?",
+      "expected_response_type": "workflow_orchestration"
+    },
+    {
+      "name": "manufacturing_tools_status",
+      "prompt": "What is the current status of all manufacturing tools? Are they all operational and ready for optimization tasks?",
+      "expected_response_type": "status_monitoring"
+    }
+  ],
+  "summary": {
+    "total_tools": 6,
+    "successful_tools": 6,
+    "failed_tools": 0,
+    "meaningful_responses": 0,
+    "success_rate": 100.0
+  }
+}

@@ -17,8 +17,8 @@ class MCPServerSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
     
     # Server Configuration
-    server_host: str = Field(default="localhost", description="MCP server host")
-    server_port: int = Field(default=3000, description="MCP server port")
+    server_host: str = Field(default="0.0.0.0", description="MCP server host")
+    server_port: int = Field(default=8000, description="MCP server port")
     server_debug: bool = Field(default=False, description="Enable debug mode")
     
     # AWS Configuration
