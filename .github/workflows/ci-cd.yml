@@ -41,7 +41,7 @@ jobs:
         
     - name: Run tests
       run: |
-        python tests/test_actual_functionality.py
+        python tests/workflow/test_complete_workflow.py
         
     - name: Test coverage
       run: |
