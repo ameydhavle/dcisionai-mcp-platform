@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-DcisionAI Manufacturing Agent - AgentCore SDK Integration
-========================================================
+DcisionAI Manufacturing Agent v1 - AgentCore SDK Integration
+===========================================================
 
-Simple AgentCore deployment using the official bedrock-agentcore SDK.
+Production-ready AgentCore deployment using the official bedrock-agentcore SDK.
 This follows the "Option A: SDK Integration" approach from the Strands documentation.
 
 Based on: https://strandsagents.com/latest/documentation/docs/user-guide/deploy/deploy_to_bedrock_agentcore/
 
 Usage:
-    python src/mcp_server/agentcore_simple_agent.py
+    python src/mcp_server/DcisionAI_Manufacturing_Agent_v1.py
 
 Author: DcisionAI Team
 Copyright (c) 2025 DcisionAI. All rights reserved.

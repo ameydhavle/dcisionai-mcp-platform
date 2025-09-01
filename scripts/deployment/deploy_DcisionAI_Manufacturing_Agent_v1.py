@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-DcisionAI Manufacturing Agent - Simple AgentCore Deployment
-==========================================================
+DcisionAI Manufacturing Agent v1 - Production AgentCore Deployment
+==================================================================
 
-Simple deployment script following the official AgentCore SDK approach.
+Production deployment script following the official AgentCore SDK approach.
 Based on: https://strandsagents.com/latest/documentation/docs/user-guide/deploy/deploy_to_bedrock_agentcore/
 
-This script follows the "Option A: SDK Integration" approach which is much simpler.
+This script follows the "Option A: SDK Integration" approach which is production-ready.
 
 Usage:
-    python scripts/deployment/deploy_agentcore_simple.py
+    python scripts/deployment/deploy_DcisionAI_Manufacturing_Agent_v1.py
 
 Author: DcisionAI Team
 Copyright (c) 2025 DcisionAI. All rights reserved.
@@ -25,7 +25,7 @@ from pathlib import Path
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | DcisionAI Simple AgentCore | %(message)s"
+    format="%(asctime)s | %(levelname)s | DcisionAI Manufacturing Agent v1 | %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -47,9 +47,9 @@ def run_command(command: str, description: str) -> subprocess.CompletedProcess:
     
     return result
 
-def deploy_simple_agentcore():
-    """Deploy the simple AgentCore agent using SDK integration."""
-    logger.info("🚀 DEPLOYING DcisionAI Manufacturing Agent (Simple AgentCore)")
+def deploy_dcisionai_manufacturing_agent_v1():
+    """Deploy the DcisionAI Manufacturing Agent v1 using SDK integration."""
+    logger.info("🚀 DEPLOYING DcisionAI Manufacturing Agent v1 (Production AgentCore)")
     logger.info("=" * 70)
     
     # Configuration
@@ -59,7 +59,7 @@ def deploy_simple_agentcore():
     
     # Generate unique agent runtime name
     timestamp = int(time.time())
-    agent_runtime_name = f"DcisionAI_Manufacturing_Simple_{timestamp}"
+    agent_runtime_name = f"DcisionAI_Manufacturing_Agent_v1_{timestamp}"
     
     logger.info(f"📋 Configuration:")
     logger.info(f"   Region: {region}")
@@ -73,8 +73,8 @@ def deploy_simple_agentcore():
         auth_command = f"aws ecr get-login-password --region {region} | docker login --username AWS --password-stdin {account_id}.dkr.ecr.{region}.amazonaws.com"
         run_command(auth_command, "ECR authentication")
         
-        # Step 2: Build Docker image (using simple Dockerfile)
-        build_command = f"docker buildx build --platform linux/arm64 -f Dockerfile.agentcore_simple -t {ecr_repo}:latest --push ."
+        # Step 2: Build Docker image (using production Dockerfile)
+        build_command = f"docker buildx build --platform linux/arm64 -f Dockerfile.DcisionAI_Manufacturing_Agent_v1 -t {ecr_repo}:latest --push ."
         run_command(build_command, "Docker build and push")
         
         # Step 3: Deploy to AgentCore
@@ -102,7 +102,7 @@ def deploy_simple_agentcore():
         
         logger.info("📋 Next Steps:")
         logger.info("1. Test the deployment:")
-        logger.info(f"   python scripts/deployment/test_agentcore_simple.py")
+        logger.info(f"   python scripts/deployment/test_DcisionAI_Manufacturing_Agent_v1.py")
         logger.info("")
         logger.info("2. Monitor logs:")
         logger.info(f"   aws logs tail /aws/bedrock-agentcore/runtimes/{agent_runtime_name}-* --follow")
@@ -122,4 +122,4 @@ def deploy_simple_agentcore():
         raise
 
 if __name__ == "__main__":
-    deploy_simple_agentcore()
+    deploy_dcisionai_manufacturing_agent_v1()

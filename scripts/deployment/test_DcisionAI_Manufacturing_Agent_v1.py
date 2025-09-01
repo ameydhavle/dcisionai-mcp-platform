@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-DcisionAI Manufacturing Agent - Simple AgentCore Intent Test
-===========================================================
+DcisionAI Manufacturing Agent v1 - Production AgentCore Test
+============================================================
 
-Test script for the simple AgentCore deployment - Intent Only.
-This tests just the intent classification to avoid timeout issues.
+Test script for the production AgentCore deployment v1.
+This tests the complete end-to-end manufacturing workflow.
 
 Usage:
-    python scripts/deployment/test_agentcore_simple_intent_only.py
+    python scripts/deployment/test_DcisionAI_Manufacturing_Agent_v1.py
 
 Author: DcisionAI Team
 Copyright (c) 2025 DcisionAI. All rights reserved.
@@ -31,12 +31,12 @@ def test_intent_only():
     
     # Configuration
     region = "us-east-1"
-    agent_runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:808953421331:runtime/DcisionAI_Manufacturing_Simple_1756352007-SUxBtYHf1X"
+    agent_runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:808953421331:runtime/DcisionAI_Manufacturing_Agent_v1_1756746910-rwnUTu8UaT"
     
     # Generate session ID (must be 33+ characters)
     session_id = f"test-session-{int(time.time())}-dcisionai-intent-only"
     
-    logger.info("🧪 TESTING DcisionAI Manufacturing Agent (Full E2E - All Tools)")
+    logger.info("🧪 TESTING DcisionAI Manufacturing Agent v1 (Full E2E - All Tools)")
     logger.info("=" * 70)
     logger.info(f"📋 Test Configuration:")
     logger.info(f"   Region: {region}")

@@ -61,19 +61,16 @@ DcisionAI Manufacturing Agent
 ## 📁 Key Files Created/Modified
 
 ### **Core Agent Files**
-- `src/mcp_server/agentcore_simple_agent.py` - Main AgentCore integration
-- `src/mcp_server/agentcore_simple_agent_intent_only.py` - Intent-only version
-- `Dockerfile.agentcore_simple` - Production Docker configuration
+- `src/mcp_server/DcisionAI_Manufacturing_Agent_v1.py` - Main AgentCore integration v1
+- `Dockerfile.DcisionAI_Manufacturing_Agent_v1` - Production Docker configuration v1
 - `Dockerfile.agentcore_intent_only` - Intent-only Docker configuration
 
 ### **Deployment Scripts**
-- `scripts/deployment/deploy_agentcore_simple.py` - Full deployment automation
-- `scripts/deployment/deploy_agentcore_intent_only.py` - Intent-only deployment
-- `scripts/deployment/test_agentcore_simple.py` - End-to-end testing
-- `scripts/deployment/test_agentcore_simple_intent_only.py` - Intent testing
+- `scripts/deployment/deploy_DcisionAI_Manufacturing_Agent_v1.py` - Full deployment automation v1
+- `scripts/deployment/test_DcisionAI_Manufacturing_Agent_v1.py` - End-to-end testing v1
 
 ### **Configuration Files**
-- `requirements.agentcore_simple.txt` - Optimized dependencies
+- `requirements.DcisionAI_Manufacturing_Agent_v1.txt` - Optimized dependencies v1
 - `requirements.intent_only.txt` - Minimal dependencies
 - `AGENTCORE_DEPLOYMENT_SUCCESS.md` - Success documentation
 

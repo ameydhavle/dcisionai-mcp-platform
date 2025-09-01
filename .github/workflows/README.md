@@ -8,7 +8,7 @@ The CI/CD workflows have been **temporarily disabled** because we've completely 
 
 - **Old Approach**: Custom FastAPI server with complex deployment scripts
 - **New Approach**: Direct AgentCore SDK integration using `bedrock-agentcore` package
-- **Deployment**: Now uses `scripts/deployment/deploy_agentcore_simple.py` instead of the old scripts
+- **Deployment**: Now uses `scripts/deployment/deploy_DcisionAI_Manufacturing_Agent_v1.py` instead of the old scripts
 
 ## 📁 Disabled Files
 
@@ -19,14 +19,14 @@ The CI/CD workflows have been **temporarily disabled** because we've completely 
 
 The platform is now deployed using:
 ```bash
-python scripts/deployment/deploy_agentcore_simple.py
+python scripts/deployment/deploy_DcisionAI_Manufacturing_Agent_v1.py
 ```
 
 ## 🔧 Re-enabling CI/CD
 
 To re-enable CI/CD, we need to:
 1. Update the workflows to use the new AgentCore SDK approach
-2. Update the Docker build process to use `Dockerfile.agentcore_simple`
+2. Update the Docker build process to use `Dockerfile.DcisionAI_Manufacturing_Agent_v1`
 3. Update the deployment scripts to use the new architecture
 4. Update the test workflows to test the new AgentCore agents
 

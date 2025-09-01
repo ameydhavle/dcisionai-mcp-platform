@@ -1,5 +1,5 @@
-# AgentCore Simple Dependencies
-# Core dependencies for AgentCore deployment
+# DcisionAI Manufacturing Agent v1 Dependencies
+# Production dependencies for AgentCore deployment
 
 # AgentCore SDK
 bedrock-agentcore>=0.1.2
