@@ -295,8 +295,8 @@ class DcisionAI_Manufacturing_Agent_v2(BaseAgent):
             # Execute through inference manager for optimal region selection
             inference_result = await self.inference_manager.execute_inference(inference_request)
             
-            # Execute the actual intent tool using the correct method
-            intent_data = await self.intent_tool.classify_intent(query)
+            # Execute the actual intent tool using the correct method (synchronous)
+            intent_data = self.intent_tool.classify_intent(query)
             
             # Convert intent data to expected format
             intent_result = {
@@ -348,7 +348,7 @@ class DcisionAI_Manufacturing_Agent_v2(BaseAgent):
             # Execute through inference manager
             inference_result = await self.inference_manager.execute_inference(inference_request)
             
-            # Execute the actual data tool using the correct method
+            # Execute the actual data tool using the correct method (synchronous)
             data_result = self.data_tool.analyze_data_requirements(
                 user_query="Manufacturing optimization query",  # We'll need to pass the actual query
                 intent_result=intent_result.get('data'),
@@ -455,7 +455,7 @@ class DcisionAI_Manufacturing_Agent_v2(BaseAgent):
             # Execute through inference manager
             inference_result = await self.inference_manager.execute_inference(inference_request)
             
-            # Execute the actual solver tool using the correct method
+            # Execute the actual solver tool using the correct method (synchronous)
             solver_result = self.solver_tool.solve_optimization_model(
                 model_data=model_result.get('data'),
                 domain="manufacturing",

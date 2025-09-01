@@ -8,7 +8,7 @@
    Passed: 6 ✅
    Failed: 2 ❌
    Success Rate: 75.0%
-   Total Time: 15.12s
+   Total Time: 22.64s
 
 📋 Detailed Results:
    ✅ Inference Manager: PASSED
@@ -21,7 +21,7 @@
       Details: Agent initialized with 4 capabilities
 
    ❌ Cross-Region Optimization: FAILED
-      Error: 'dict' object has no attribute 'health_status'
+      Error: Should select different regions for optimization
 
    ✅ Performance Monitoring: PASSED
       Details: Performance metrics collected and updated successfully

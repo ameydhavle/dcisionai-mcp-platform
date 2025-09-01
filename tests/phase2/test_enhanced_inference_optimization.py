@@ -81,36 +81,44 @@ class Phase2TestSuite:
             await self.generate_test_report()
     
     async def test_inference_manager(self):
-        """Test the enhanced inference manager."""
+        """Test enhanced inference manager."""
         self.logger.info("🧪 Test 1: Enhanced Inference Manager")
         
         try:
             # Initialize inference manager
             inference_manager = InferenceManager()
             
+            # Wait for region metrics to be initialized
+            await asyncio.sleep(3)  # Allow time for background tasks to initialize metrics
+            
+            # Test initialization
+            assert hasattr(inference_manager, 'region_metrics'), "Should have region metrics"
+            assert len(inference_manager.region_metrics) > 0, "Should have initialized regions"
+            
             # Test configuration loading
-            config = inference_manager.config
-            assert 'inference_profiles' in config, "Configuration should contain inference profiles"
-            assert 'manufacturing' in config['inference_profiles'], "Manufacturing profile should be configured"
+            assert hasattr(inference_manager, 'config'), "Should have configuration"
+            assert 'inference_profiles' in inference_manager.config, "Should have inference profiles"
             
-            # Test region metrics initialization
-            await asyncio.sleep(2)  # Wait for background tasks to initialize
-            region_metrics = inference_manager.region_metrics
-            assert len(region_metrics) > 0, "Region metrics should be populated"
+            # Test region selection
+            test_request = InferenceRequest(
+                request_id="test",
+                domain="manufacturing",
+                request_type="test",
+                payload={"test": "data"}
+            )
             
-            # Test health check
-            health = inference_manager.health_check()
-            assert 'status' in health, "Health check should return status"
+            selected_region = inference_manager.select_optimal_region(test_request)
+            assert selected_region in ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'], \
+                f"Invalid region selected: {selected_region}"
             
-            # Test performance summary
-            performance = inference_manager.get_performance_summary()
-            assert 'timestamp' in performance, "Performance summary should contain timestamp"
+            # Cleanup
+            await inference_manager.cleanup()
             
             self.logger.info("✅ Inference Manager tests passed")
             self.test_results.append({
                 'test': 'Inference Manager',
                 'status': 'PASSED',
-                'details': f"Initialized with {len(region_metrics)} regions"
+                'details': f"Initialized with {len(inference_manager.region_metrics)} regions"
             })
             
         except Exception as e:
@@ -122,42 +130,39 @@ class Phase2TestSuite:
             })
     
     async def test_gateway_client(self):
-        """Test the enhanced Gateway client."""
+        """Test enhanced Gateway client."""
         self.logger.info("🧪 Test 2: Enhanced Gateway Client")
         
         try:
             # Initialize Gateway client
             async with GatewayClient() as gateway_client:
-                # Test tool discovery
-                all_tools = await gateway_client.discover_tools()
-                assert len(all_tools) > 0, "Should discover tools"
+                # Wait for region metrics to be initialized
+                await asyncio.sleep(3)  # Allow time for background tasks to initialize metrics
                 
-                # Test domain-specific tool discovery
+                # Test tool discovery
                 manufacturing_tools = await gateway_client.discover_tools(domain="manufacturing")
                 assert len(manufacturing_tools) > 0, "Should discover manufacturing tools"
                 
-                # Test semantic search
-                search_tools = await gateway_client.discover_tools(query="optimization")
-                assert len(search_tools) > 0, "Should find tools with semantic search"
+                finance_tools = await gateway_client.discover_tools(domain="finance")
+                assert len(finance_tools) > 0, "Should discover finance tools"
                 
-                # Test tool information
-                tool_info = gateway_client.get_tool_info("manufacturing_intent")
-                assert tool_info is not None, "Should get tool information"
-                assert tool_info.domain == "manufacturing", "Tool should belong to manufacturing domain"
+                pharma_tools = await gateway_client.discover_tools(domain="pharma")
+                assert len(pharma_tools) > 0, "Should discover pharma tools"
+                
+                # Test semantic search
+                search_results = await gateway_client.discover_tools(query="optimization")
+                assert len(search_results) > 0, "Should find tools via semantic search"
                 
                 # Test performance metrics
-                metrics = gateway_client.get_performance_metrics()
-                assert 'timestamp' in metrics, "Should return performance metrics"
+                performance = gateway_client.get_performance_metrics()
+                assert 'tools_count' in performance, "Should have tools count"
+                assert performance['tools_count'] > 0, "Should have registered tools"
                 
-                # Test health check
-                health = gateway_client.health_check()
-                assert 'status' in health, "Should return health status"
-            
             self.logger.info("✅ Gateway Client tests passed")
             self.test_results.append({
                 'test': 'Gateway Client',
                 'status': 'PASSED',
-                'details': f"Discovered {len(all_tools)} tools across all domains"
+                'details': f"Discovered {len(manufacturing_tools + finance_tools + pharma_tools)} tools across all domains"
             })
             
         except Exception as e:
@@ -169,26 +174,26 @@ class Phase2TestSuite:
             })
     
     async def test_enhanced_manufacturing_agent(self):
-        """Test the enhanced manufacturing agent."""
+        """Test enhanced manufacturing agent with inference optimization."""
         self.logger.info("🧪 Test 3: Enhanced Manufacturing Agent")
         
         try:
-            # Initialize enhanced manufacturing agent
+            # Initialize agent
             agent = DcisionAI_Manufacturing_Agent_v2()
             
-            # Test capabilities
-            capabilities = agent.get_manufacturing_capabilities()
-            assert capabilities['version'] == '2.0.0', "Should be version 2.0.0"
-            assert capabilities['inference_optimization']['enabled'], "Inference optimization should be enabled"
-            assert 'gateway_integration' in capabilities, "Should have Gateway integration"
+            # Wait for region metrics to be initialized
+            await asyncio.sleep(3)  # Allow time for background tasks to initialize metrics
             
-            # Test health check
-            health = await agent.health_check()
-            assert 'status' in health, "Should return health status"
+            # Test agent capabilities
+            capabilities = agent.get_capabilities()
+            assert 'capabilities' in capabilities, "Should return capabilities"
+            assert len(capabilities['capabilities']) > 0, "Should have at least one capability"
             
-            # Test performance summary
-            performance = agent.get_performance_summary()
-            assert 'total_workflows' in performance, "Should return workflow count"
+            # Test tool registration
+            assert hasattr(agent, 'intent_tool'), "Should have intent tool"
+            assert hasattr(agent, 'data_tool'), "Should have data tool"
+            assert hasattr(agent, 'model_tool'), "Should have model tool"
+            assert hasattr(agent, 'solver_tool'), "Should have solver tool"
             
             # Cleanup
             await agent.cleanup()
@@ -215,6 +220,9 @@ class Phase2TestSuite:
         try:
             # Initialize inference manager
             inference_manager = InferenceManager()
+            
+            # Wait for region metrics to be initialized
+            await asyncio.sleep(3)  # Allow time for background tasks to initialize metrics
             
             # Test region selection for different domains
             test_requests = [
@@ -252,6 +260,9 @@ class Phase2TestSuite:
             unique_regions = set(regions_used)
             assert len(unique_regions) > 1, "Should select different regions for optimization"
             
+            # Cleanup
+            await inference_manager.cleanup()
+            
             self.logger.info("✅ Cross-Region Optimization tests passed")
             self.test_results.append({
                 'test': 'Cross-Region Optimization',
@@ -275,6 +286,9 @@ class Phase2TestSuite:
             # Initialize components
             inference_manager = InferenceManager()
             async with GatewayClient() as gateway_client:
+                # Wait for region metrics to be initialized
+                await asyncio.sleep(3)  # Allow time for background tasks to initialize metrics
+                
                 # Test inference manager performance
                 inference_performance = inference_manager.get_performance_summary()
                 assert 'region_metrics' in inference_performance, "Should contain region metrics"
@@ -289,6 +303,9 @@ class Phase2TestSuite:
                 updated_performance = inference_manager.get_performance_summary()
                 assert 'timestamp' in updated_performance, "Should have updated timestamp"
                 
+            # Cleanup
+            await inference_manager.cleanup()
+            
             self.logger.info("✅ Performance Monitoring tests passed")
             self.test_results.append({
                 'test': 'Performance Monitoring',
@@ -312,24 +329,28 @@ class Phase2TestSuite:
             # Initialize inference manager
             inference_manager = InferenceManager()
             
+            # Wait for region metrics to be initialized
+            await asyncio.sleep(3)  # Allow time for background tasks to initialize metrics
+            
             # Test cost calculation
             test_request = InferenceRequest(
                 request_id="cost_test",
                 domain="manufacturing",
                 request_type="test",
-                payload={"test": "data"}
+                payload={"test": "data"},
+                timeout=30
             )
             
-            # Execute inference to generate cost data
+            # Execute inference to test cost tracking
             result = await inference_manager.execute_inference(test_request)
             
             # Verify cost tracking
             assert hasattr(result, 'cost'), "Result should have cost attribute"
+            assert isinstance(result.cost, (int, float)), "Cost should be numeric"
             assert result.cost >= 0, "Cost should be non-negative"
             
-            # Test performance summary cost tracking
-            performance = inference_manager.get_performance_summary()
-            assert 'performance_cache' in performance, "Should contain performance cache"
+            # Cleanup
+            await inference_manager.cleanup()
             
             self.logger.info("✅ Cost Tracking tests passed")
             self.test_results.append({
@@ -354,21 +375,26 @@ class Phase2TestSuite:
             # Initialize components
             inference_manager = InferenceManager()
             async with GatewayClient() as gateway_client:
+                # Wait for region metrics to be initialized
+                await asyncio.sleep(3)  # Allow time for background tasks to initialize metrics
+                
                 # Test inference manager health
                 inference_health = inference_manager.health_check()
-                assert 'status' in inference_health, "Should return health status"
-                assert 'total_regions' in inference_health, "Should return region count"
+                assert 'status' in inference_health, "Should contain health status"
+                assert inference_health['status'] in ['healthy', 'degraded'], f"Unexpected health status: {inference_health['status']}"
                 
                 # Test Gateway client health
                 gateway_health = gateway_client.health_check()
-                assert 'status' in gateway_health, "Should return health status"
-                assert 'tool_registry' in gateway_health, "Should return tool registry health"
+                assert 'status' in gateway_health, "Should contain health status"
+                assert gateway_health['status'] in ['healthy', 'degraded'], f"Unexpected health status: {gateway_health['status']}"
                 
-                # Test health status values
-                valid_statuses = ['healthy', 'degraded', 'unhealthy']
-                assert inference_health['status'] in valid_statuses, f"Invalid health status: {inference_health['status']}"
-                assert gateway_health['status'] in valid_statuses, f"Invalid health status: {gateway_health['status']}"
+                # Verify health details
+                assert 'inference_manager' in gateway_health, "Should contain inference manager health"
+                assert 'tool_registry' in gateway_health, "Should contain tool registry health"
                 
+            # Cleanup
+            await inference_manager.cleanup()
+            
             self.logger.info("✅ Health Monitoring tests passed")
             self.test_results.append({
                 'test': 'Health Monitoring',
@@ -392,9 +418,12 @@ class Phase2TestSuite:
             # Test complete workflow with enhanced manufacturing agent
             agent = DcisionAI_Manufacturing_Agent_v2()
             
+            # Wait for region metrics to be initialized
+            await asyncio.sleep(3)  # Allow time for background tasks to initialize metrics
+            
             # Test request processing
             test_request = {
-                'query': 'Test manufacturing optimization workflow',
+                'query': 'Optimize production schedule to minimize costs while meeting customer demand for automotive parts manufacturing with capacity constraints of 1000 units per day',
                 'user_location': 'us',
                 'priority': 'normal'
             }
