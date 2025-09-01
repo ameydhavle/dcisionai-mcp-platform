@@ -175,6 +175,10 @@ python main.py
 - [Phase 2 Implementation](PHASE_2_IMPLEMENTATION_TODO.md)
 - [Multi-Domain Restructuring](MULTI_DOMAIN_RESTRUCTURING_SUMMARY.md)
 
+### Business & Production Documents
+- **[🚀 Platform Summary & Business Overview](PLATFORM_SUMMARY.md)** - Business-facing overview, production features, and investor summary
+- [Deployment Guide](DEPLOYMENT_GUIDE.md) - Complete deployment procedures and AWS integration
+
 ### Deployment Guides
 - [AgentCore Deployment](AGENTCORE_DEPLOYMENT_SUCCESS.md)
 - [Cleanup Summary](CLEANUP_SUMMARY.md)
