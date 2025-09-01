@@ -1,0 +1,312 @@
+# DcisionAI Platform - Enhanced Gateway Configuration
+# Phase 2: Multi-Domain Tool Management with Inference Profiles
+
+# Gateway Core Configuration
+gateway:
+  name: "DcisionAI_Enhanced_Gateway"
+  description: "Multi-domain gateway with optimized inference profiles and MCP support"
+  version: "2.0.0"
+  environment: "production"
+  
+  # AWS Configuration
+  aws:
+    region: "us-east-1"
+    account_id: "808953421331"
+    role_arn: "arn:aws:iam::808953421331:role/DcisionAI-Gateway-Role"
+    
+  # Endpoint Configuration
+  endpoints:
+    primary: "https://gateway.dcisionai.com"
+    health_check: "https://gateway.dcisionai.com/health"
+    metrics: "https://gateway.dcisionai.com/metrics"
+    
+  # Scaling Configuration
+  scaling:
+    min_capacity: 2
+    max_capacity: 20
+    target_cpu_utilization: 70
+    target_memory_utilization: 80
+
+# MCP Protocol Configuration
+mcp:
+  protocol_version: "2025-03-26"
+  search_type: "SEMANTIC"
+  supported_versions: ["2025-03-26", "2024-12-01"]
+  
+  # Tool Discovery
+  tool_discovery:
+    enabled: true
+    search_algorithm: "semantic_similarity"
+    max_results: 100
+    cache_ttl: 300  # 5 minutes
+    
+  # Request Handling
+  request_handling:
+    max_concurrent_requests: 100
+    request_timeout: 300  # 5 minutes
+    max_request_size: "10MB"
+    rate_limiting:
+      enabled: true
+      requests_per_minute: 1000
+      burst_limit: 100
+      
+  # Response Optimization
+  response_optimization:
+    compression: true
+    caching: true
+    cache_ttl: 600  # 10 minutes
+    streaming: true
+
+# Inference Profile Integration
+inference_profiles:
+  enabled: true
+  profiles:
+    manufacturing: "${MANUFACTURING_INFERENCE_PROFILE_ARN}"
+    finance: "${FINANCE_INFERENCE_PROFILE_ARN}"
+    pharma: "${PHARMA_INFERENCE_PROFILE_ARN}"
+    
+  # Profile Routing
+  routing:
+    strategy: "intelligent"
+    load_balancing: true
+    failover: true
+    health_checking: true
+    
+  # Performance Optimization
+  optimization:
+    region_selection: "latency_based"
+    local_zone_routing: true
+    quota_management: true
+    cost_optimization: true
+
+# Domain Management
+domains:
+  manufacturing:
+    name: "manufacturing"
+    description: "Manufacturing optimization and production planning"
+    status: "active"
+    tools:
+      - "intent_classification"
+      - "data_analysis"
+      - "model_building"
+      - "optimization_solving"
+    inference_profile: "manufacturing"
+    max_concurrent_requests: 50
+    priority: "high"
+    
+  finance:
+    name: "finance"
+    description: "Financial analysis and risk assessment"
+    status: "active"
+    tools:
+      - "risk_assessment"
+      - "portfolio_optimization"
+      - "fraud_detection"
+      - "compliance_checking"
+    inference_profile: "finance"
+    max_concurrent_requests: 30
+    priority: "high"
+    compliance_required: true
+    
+  pharma:
+    name: "pharma"
+    description: "Pharmaceutical research and drug discovery"
+    status: "active"
+    tools:
+      - "drug_discovery"
+      - "clinical_trial_optimization"
+      - "supply_chain_management"
+      - "regulatory_compliance"
+    inference_profile: "pharma"
+    max_concurrent_requests: 25
+    priority: "medium"
+    long_running_support: true
+
+# Authentication and Authorization
+auth:
+  type: "CUSTOM_JWT"
+  jwt:
+    issuer: "https://auth.dcisionai.com"
+    audience: "dcisionai-gateway"
+    signing_key: "${JWT_SIGNING_KEY}"
+    expiration: 3600  # 1 hour
+    
+  # OAuth Configuration
+  oauth:
+    enabled: true
+    provider: "aws_cognito"
+    user_pool_id: "${COGNITO_USER_POOL_ID}"
+    client_id: "${COGNITO_CLIENT_ID}"
+    scopes:
+      - "openid"
+      - "profile"
+      - "email"
+      - "dcisionai:read"
+      - "dcisionai:write"
+      
+  # Domain-Specific Roles
+  roles:
+    manufacturing_admin:
+      permissions: ["manufacturing:*"]
+      domains: ["manufacturing"]
+      
+    finance_analyst:
+      permissions: ["finance:read", "finance:write"]
+      domains: ["finance"]
+      compliance_required: true
+      
+    pharma_researcher:
+      permissions: ["pharma:read", "pharma:write"]
+      domains: ["pharma"]
+      long_running_access: true
+      
+    platform_admin:
+      permissions: ["*"]
+      domains: ["*"]
+
+# Security Configuration
+security:
+  # Data Protection
+  encryption:
+    at_rest: true
+    in_transit: true
+    algorithm: "AES-256-GCM"
+    
+  # Network Security
+  network:
+    vpc: true
+    private_subnets: true
+    security_groups: true
+    waf_enabled: true
+    
+  # Compliance
+  compliance:
+    sox: true
+    gdpr: true
+    pci_dss: true
+    hipaa: false  # Enable if needed for pharma
+    
+  # Audit and Logging
+  audit:
+    enabled: true
+    log_retention: 2555  # 7 years
+    real_time_monitoring: true
+    alerting: true
+
+# Monitoring and Observability
+monitoring:
+  # CloudWatch Integration
+  cloudwatch:
+    enabled: true
+    namespace: "DcisionAI/Gateway"
+    log_groups:
+      - "/aws/dcisionai/gateway/access"
+      - "/aws/dcisionai/gateway/error"
+      - "/aws/dcisionai/gateway/performance"
+      
+  # Metrics Collection
+  metrics:
+    request_count: true
+    response_time: true
+    error_rate: true
+    throughput: true
+    cost_per_request: true
+    
+  # Alerting
+  alerts:
+    high_error_rate:
+      threshold: 5.0  # 5%
+      period: 300  # 5 minutes
+      
+    high_latency:
+      threshold: 5000  # 5 seconds
+      period: 300
+      
+    quota_exceeded:
+      threshold: 0.9  # 90%
+      period: 60
+      
+    cost_threshold:
+      threshold: 100  # USD per day
+      period: 86400  # 24 hours
+      
+  # Dashboards
+  dashboards:
+    - "DcisionAI-Gateway-Overview"
+    - "DcisionAI-Domain-Performance"
+    - "DcisionAI-Inference-Metrics"
+    - "DcisionAI-Security-Compliance"
+
+# Performance Optimization
+performance:
+  # Caching
+  caching:
+    enabled: true
+    type: "redis"
+    ttl: 600  # 10 minutes
+    max_size: "1GB"
+    
+  # CDN
+  cdn:
+    enabled: true
+    provider: "cloudfront"
+    regions: ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"]
+    
+  # Load Balancing
+  load_balancing:
+    algorithm: "least_connections"
+    health_check_path: "/health"
+    health_check_interval: 30
+    unhealthy_threshold: 3
+    healthy_threshold: 2
+
+# Deployment Configuration
+deployment:
+  # Infrastructure
+  infrastructure:
+    cloudformation: true
+    terraform: false
+    cdk: false
+    
+  # CI/CD
+  cicd:
+    pipeline: "aws-codepipeline"
+    source: "github"
+    branch: "main"
+    auto_deploy: true
+    
+  # Rollback
+  rollback:
+    enabled: true
+    automatic: true
+    health_check_grace_period: 300
+    
+  # Blue-Green Deployment
+  blue_green:
+    enabled: true
+    traffic_shifting: true
+    health_check_timeout: 600
+
+# Environment Variables
+environment_variables:
+  # AWS Configuration
+  AWS_REGION: "us-east-1"
+  AWS_ACCOUNT_ID: "808953421331"
+  
+  # Gateway Configuration
+  GATEWAY_NAME: "DcisionAI_Enhanced_Gateway"
+  GATEWAY_ENVIRONMENT: "production"
+  
+  # Inference Profiles
+  MANUFACTURING_INFERENCE_PROFILE_ARN: "arn:aws:bedrock:..."
+  FINANCE_INFERENCE_PROFILE_ARN: "arn:aws:bedrock:..."
+  PHARMA_INFERENCE_PROFILE_ARN: "arn:aws:bedrock:..."
+  
+  # Authentication
+  JWT_SIGNING_KEY: "your-jwt-signing-key"
+  COGNITO_USER_POOL_ID: "us-east-1_..."
+  COGNITO_CLIENT_ID: "your-client-id"
+  
+  # Monitoring
+  CLOUDWATCH_NAMESPACE: "DcisionAI/Gateway"
+  LOG_LEVEL: "INFO"

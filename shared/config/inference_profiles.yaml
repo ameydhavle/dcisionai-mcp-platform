@@ -1,0 +1,171 @@
+# DcisionAI Platform - Inference Profiles Configuration
+# Phase 2: Domain-Specific Inference Optimization with AWS Bedrock
+
+# AWS Bedrock Inference Profiles for Multi-Domain Platform
+inference_profiles:
+  manufacturing:
+    name: "DcisionAI_Manufacturing_Profile"
+    description: "High-throughput inference for manufacturing optimization"
+    model: "anthropic.claude-3-haiku-20240307-v1:0"
+    regions:
+      - "us-east-1"
+      - "us-west-2" 
+      - "eu-west-1"
+    max_throughput: 1000  # tokens/minute
+    timeout: 300  # 5 minutes
+    optimization_focus: "high_throughput"
+    supported_workflows:
+      - "intent_classification"
+      - "data_analysis"
+      - "model_building"
+      - "optimization_solving"
+    cost_optimization:
+      preferred_regions: ["us-east-1", "us-west-2"]
+      fallback_regions: ["eu-west-1"]
+      max_cost_per_request: 0.50  # USD
+
+  finance:
+    name: "DcisionAI_Finance_Profile"
+    description: "Secure inference for financial analysis and compliance"
+    model: "anthropic.claude-3-sonnet-20240229-v1:0"
+    regions:
+      - "us-east-1"
+      - "us-west-2"
+    max_throughput: 500  # tokens/minute
+    timeout: 180  # 3 minutes
+    optimization_focus: "compliance_security"
+    compliance_requirements:
+      - "SOX"
+      - "GDPR"
+      - "PCI-DSS"
+    supported_workflows:
+      - "risk_assessment"
+      - "portfolio_optimization"
+      - "fraud_detection"
+      - "compliance_checking"
+    security_features:
+      data_encryption: true
+      audit_logging: true
+      compliance_tracking: true
+    cost_optimization:
+      preferred_regions: ["us-east-1"]
+      fallback_regions: ["us-west-2"]
+      max_cost_per_request: 0.75  # USD
+
+  pharma:
+    name: "DcisionAI_Pharma_Profile"
+    description: "Research-focused inference for drug discovery and clinical trials"
+    model: "anthropic.claude-3-sonnet-20240229-v1:0"
+    regions:
+      - "us-east-1"
+      - "eu-west-1"
+      - "ap-southeast-1"
+    max_throughput: 750  # tokens/minute
+    timeout: 600  # 10 minutes
+    optimization_focus: "research_discovery"
+    research_focus:
+      - "drug_discovery"
+      - "clinical_trials"
+      - "supply_chain_management"
+      - "regulatory_compliance"
+    supported_workflows:
+      - "drug_discovery"
+      - "clinical_trial_optimization"
+      - "supply_chain_management"
+      - "regulatory_compliance"
+    research_features:
+      long_running_inference: true
+      progress_tracking: true
+      checkpoint_resume: true
+      resource_optimization: true
+    cost_optimization:
+      preferred_regions: ["us-east-1", "eu-west-1"]
+      fallback_regions: ["ap-southeast-1"]
+      max_cost_per_request: 1.00  # USD
+
+# Global Inference Settings
+global_settings:
+  default_timeout: 300  # 5 minutes
+  max_retries: 3
+  retry_delay: 5  # seconds
+  health_check_interval: 60  # seconds
+  
+  # Quota Management
+  quota_monitoring: true
+  quota_alert_threshold: 0.8  # 80% of quota
+  graceful_degradation: true
+  
+  # Performance Monitoring
+  performance_tracking: true
+  latency_threshold: 5000  # 5 seconds
+  throughput_monitoring: true
+  
+  # Cost Management
+  cost_tracking: true
+  cost_alert_threshold: 100  # USD per day
+  cost_optimization: true
+
+# Region-Specific Configurations
+region_configs:
+  us-east-1:
+    name: "US East (N. Virginia)"
+    priority: "high"
+    max_concurrent_requests: 100
+    local_zones: ["us-east-1-atl-2a", "us-east-1-bos-1a"]
+    
+  us-west-2:
+    name: "US West (Oregon)"
+    priority: "medium"
+    max_concurrent_requests: 75
+    local_zones: ["us-west-2-sea-1a"]
+    
+  eu-west-1:
+    name: "Europe (Ireland)"
+    priority: "medium"
+    max_concurrent_requests: 75
+    local_zones: ["eu-west-1-dub-1a"]
+    
+  ap-southeast-1:
+    name: "Asia Pacific (Singapore)"
+    priority: "low"
+    max_concurrent_requests: 50
+    local_zones: []
+
+# Domain Routing Rules
+domain_routing:
+  manufacturing:
+    primary_regions: ["us-east-1", "us-west-2"]
+    fallback_regions: ["eu-west-1"]
+    routing_strategy: "load_balanced"
+    optimization_priority: "throughput"
+    
+  finance:
+    primary_regions: ["us-east-1"]
+    fallback_regions: ["us-west-2"]
+    routing_strategy: "compliance_first"
+    optimization_priority: "security"
+    
+  pharma:
+    primary_regions: ["us-east-1", "eu-west-1"]
+    fallback_regions: ["ap-southeast-1"]
+    routing_strategy: "research_optimized"
+    optimization_priority: "accuracy"
+
+# Monitoring and Alerting
+monitoring:
+  cloudwatch:
+    enabled: true
+    metrics_namespace: "DcisionAI/Inference"
+    log_group: "/aws/dcisionai/inference"
+    
+  alerts:
+    high_latency: true
+    quota_exceeded: true
+    cost_threshold: true
+    region_unavailable: true
+    
+  dashboards:
+    - "DcisionAI-Inference-Performance"
+    - "DcisionAI-Domain-Metrics"
+    - "DcisionAI-Cost-Optimization"
+    - "DcisionAI-Compliance-Status"
