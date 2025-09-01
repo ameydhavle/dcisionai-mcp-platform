@@ -1,0 +1,175 @@
+{
+  "platform_info": {
+    "name": "DcisionAI Multi-Domain Platform",
+    "version": "1.0.0",
+    "environment": "development",
+    "created_at": "2025-09-01T13:38:16.209466",
+    "last_updated": "2025-09-01T13:38:16.209470"
+  },
+  "settings": {
+    "platform": {
+      "name": "DcisionAI Multi-Domain Platform",
+      "version": "1.0.0",
+      "environment": "development",
+      "debug": true,
+      "log_level": "INFO"
+    },
+    "aws": {
+      "region": "us-east-1",
+      "account_id": "808953421331",
+      "ecr_base_url": "808953421331.dkr.ecr.us-east-1.amazonaws.com"
+    },
+    "domains": {
+      "manufacturing": {
+        "name": "manufacturing",
+        "description": "Manufacturing optimization and production planning",
+        "version": "1.0.0",
+        "ecr_repo": "808953421331.dkr.ecr.us-east-1.amazonaws.com/dcisionai-manufacturing-v1",
+        "agent_runtime_prefix": "DcisionAI_Manufacturing_Agent_v1",
+        "tools": {
+          "intent": "manufacturing_intent_tool",
+          "data": "manufacturing_data_tool",
+          "model": "manufacturing_model_tool",
+          "solver": "manufacturing_solver_tool"
+        },
+        "workflow": [
+          "intent",
+          "data",
+          "model",
+          "solver"
+        ],
+        "max_execution_time": 300,
+        "supported_industries": [
+          "automotive",
+          "electronics",
+          "aerospace",
+          "chemicals"
+        ]
+      },
+      "finance": {
+        "name": "finance",
+        "description": "Financial analysis, risk assessment, and portfolio optimization",
+        "version": "1.0.0",
+        "ecr_repo": "808953421331.dkr.ecr.us-east-1.amazonaws.com/dcisionai-finance-v1",
+        "agent_runtime_prefix": "DcisionAI_Finance_Agent_v1",
+        "tools": {
+          "risk_assessment": "finance_risk_tool",
+          "portfolio_optimization": "finance_portfolio_tool",
+          "fraud_detection": "finance_fraud_tool",
+          "compliance_checking": "finance_compliance_tool"
+        },
+        "workflow": [
+          "risk_assessment",
+          "portfolio_optimization",
+          "fraud_detection"
+        ],
+        "max_execution_time": 180,
+        "supported_industries": [
+          "banking",
+          "insurance",
+          "investment",
+          "fintech"
+        ]
+      },
+      "pharma": {
+        "name": "pharma",
+        "description": "Pharmaceutical research, clinical trials, and drug discovery",
+        "version": "1.0.0",
+        "ecr_repo": "808953421331.dkr.ecr.us-east-1.amazonaws.com/dcisionai-pharma-v1",
+        "agent_runtime_prefix": "DcisionAI_Pharma_Agent_v1",
+        "tools": {
+          "drug_discovery": "pharma_drug_tool",
+          "clinical_trial_optimization": "pharma_trial_tool",
+          "supply_chain_management": "pharma_supply_tool",
+          "regulatory_compliance": "pharma_compliance_tool"
+        },
+        "workflow": [
+          "drug_discovery",
+          "clinical_trial_optimization",
+          "supply_chain_management"
+        ],
+        "max_execution_time": 600,
+        "supported_industries": [
+          "biotechnology",
+          "pharmaceuticals",
+          "medical_devices",
+          "healthcare"
+        ]
+      },
+      "retail": {
+        "name": "retail",
+        "description": "Retail analytics, inventory management, and customer insights",
+        "version": "1.0.0",
+        "ecr_repo": "808953421331.dkr.ecr.us-east-1.amazonaws.com/dcisionai-retail-v1",
+        "agent_runtime_prefix": "DcisionAI_Retail_Agent_v1",
+        "tools": {
+          "inventory_management": "retail_inventory_tool",
+          "demand_forecasting": "retail_demand_tool",
+          "pricing_optimization": "retail_pricing_tool",
+          "customer_analytics": "retail_customer_tool"
+        },
+        "workflow": [
+          "inventory_management",
+          "demand_forecasting",
+          "pricing_optimization"
+        ],
+        "max_execution_time": 240,
+        "supported_industries": [
+          "ecommerce",
+          "brick_mortar",
+          "fashion",
+          "grocery"
+        ]
+      }
+    }
+  },
+  "domains": {
+    "total_domains": 4,
+    "total_agents": 0,
+    "total_tools": 0,
+    "domains": [
+      {
+        "name": "manufacturing",
+        "description": "Manufacturing optimization and production planning",
+        "version": "1.0.0",
+        "status": "active",
+        "agent_count": 0,
+        "tool_count": 0,
+        "created_at": "2025-09-01T13:38:16.209494",
+        "last_updated": "2025-09-01T13:38:16.209495"
+      },
+      {
+        "name": "finance",
+        "description": "Financial analysis, risk assessment, and portfolio optimization",
+        "version": "1.0.0",
+        "status": "active",
+        "agent_count": 0,
+        "tool_count": 0,
+        "created_at": "2025-09-01T13:38:16.209522",
+        "last_updated": "2025-09-01T13:38:16.209522"
+      },
+      {
+        "name": "pharma",
+        "description": "Pharmaceutical research, clinical trials, and drug discovery",
+        "version": "1.0.0",
+        "status": "active",
+        "agent_count": 0,
+        "tool_count": 0,
+        "created_at": "2025-09-01T13:38:16.209540",
+        "last_updated": "2025-09-01T13:38:16.209540"
+      },
+      {
+        "name": "retail",
+        "description": "Retail analytics, inventory management, and customer insights",
+        "version": "1.0.0",
+        "status": "active",
+        "agent_count": 0,
+        "tool_count": 0,
+        "created_at": "2025-09-01T13:38:16.209554",
+        "last_updated": "2025-09-01T13:38:16.209554"
+      }
+    ],
+    "timestamp": "2025-09-01T13:38:17.493203"
+  },
+  "export_timestamp": "2025-09-01T13:38:17.493204"
+}
