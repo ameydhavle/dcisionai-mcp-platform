@@ -5,10 +5,10 @@
 
 📊 Test Summary:
    Total Tests: 8
-   Passed: 6 ✅
-   Failed: 2 ❌
-   Success Rate: 75.0%
-   Total Time: 61.05s
+   Passed: 7 ✅
+   Failed: 1 ❌
+   Success Rate: 87.5%
+   Total Time: 62.37s
 
 📋 Detailed Results:
    ✅ Inference Manager: PASSED
@@ -17,8 +17,8 @@
    ✅ Gateway Client: PASSED
       Details: Discovered 12 tools across all domains
 
-   ❌ Enhanced Manufacturing Agent: FAILED
-      Error: 'DcisionAI_Manufacturing_Agent_v2' object has no attribute 'get_capabilities'
+   ✅ Enhanced Manufacturing Agent: PASSED
+      Details: Agent initialized with 4 capabilities
 
    ✅ Cross-Region Optimization: PASSED
       Details: Selected 2 different regions for optimization
@@ -36,7 +36,7 @@
       Error: Should not have unknown regions
 
 
-⚠️ 2 TESTS FAILED
+⚠️ 1 TESTS FAILED
 
 Please review the failed tests and fix the issues before proceeding.
 Focus on:
