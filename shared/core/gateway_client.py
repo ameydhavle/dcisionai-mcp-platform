@@ -16,6 +16,7 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 import aiohttp
 import jwt
+import yaml
 from pathlib import Path
 
 from .inference_manager import InferenceManager, InferenceRequest, InferenceResult
@@ -561,19 +562,19 @@ class GatewayClient:
                 overall_status = "unhealthy"
             
             return {
-                "status": overall_status,
-                "timestamp": datetime.now().isoformat(),
-                "gateway_client": "healthy",
-                "inference_manager": inference_health,
-                "tool_registry": tool_health,
-                "performance_metrics": self.get_performance_metrics()
+                'status': overall_status,
+                'timestamp': datetime.now().isoformat(),
+                'gateway_client': 'healthy',
+                'inference_manager': inference_health,
+                'tool_registry': tool_health,
+                'performance_metrics': self.get_performance_metrics()
             }
             
         except Exception as e:
             return {
-                "status": "unhealthy",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                'status': 'unhealthy',
+                'error': str(e),
+                'timestamp': datetime.now().isoformat()
             }
     
     async def close(self):
@@ -581,6 +582,10 @@ class GatewayClient:
         try:
             if self.session:
                 await self.session.close()
+            
+            # Cleanup inference manager
+            await self.inference_manager.cleanup()
+            
             self.logger.info("✅ Gateway client closed successfully")
         except Exception as e:
             self.logger.error(f"❌ Error closing Gateway client: {e}")

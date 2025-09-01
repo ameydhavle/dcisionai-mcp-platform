@@ -90,6 +90,10 @@ class InferenceManager:
         self.request_history: List[InferenceRequest] = []
         self.performance_cache: Dict[str, Any] = {}
         
+        # Background task management
+        self._background_tasks: List[asyncio.Task] = []
+        self._running = True
+        
         # Start background tasks
         self._start_background_tasks()
         
@@ -136,13 +140,21 @@ class InferenceManager:
     
     def _start_background_tasks(self):
         """Start background tasks for monitoring and optimization."""
-        asyncio.create_task(self._update_region_metrics())
-        asyncio.create_task(self._cleanup_old_requests())
-        asyncio.create_task(self._update_performance_cache())
+        try:
+            # Create background tasks
+            self._background_tasks = [
+                asyncio.create_task(self._update_region_metrics()),
+                asyncio.create_task(self._cleanup_old_requests()),
+                asyncio.create_task(self._update_performance_cache())
+            ]
+            self.logger.info("✅ Background tasks started successfully")
+        except Exception as e:
+            self.logger.error(f"❌ Failed to start background tasks: {e}")
+            raise
     
     async def _update_region_metrics(self):
         """Update region metrics every minute."""
-        while True:
+        while self._running:
             try:
                 await self._refresh_region_metrics()
                 await asyncio.sleep(60)  # Update every minute
@@ -152,10 +164,13 @@ class InferenceManager:
     
     async def _refresh_region_metrics(self):
         """Refresh metrics for all regions."""
-        for domain, profile in self.config.get("inference_profiles", {}).items():
-            for region in profile.get("regions", []):
-                metrics = await self._get_region_metrics(region, domain)
-                self.region_metrics[region] = metrics
+        try:
+            for domain, profile in self.config.get("inference_profiles", {}).items():
+                for region in profile.get("regions", []):
+                    metrics = await self._get_region_metrics(region, domain)
+                    self.region_metrics[region] = metrics
+        except Exception as e:
+            self.logger.error(f"❌ Failed to refresh region metrics: {e}")
     
     async def _get_region_metrics(self, region: str, domain: str) -> RegionMetrics:
         """Get current metrics for a specific region."""
@@ -492,9 +507,9 @@ class InferenceManager:
         
         return (base_cost * estimated_tokens) + time_cost
     
-    async def cleanup_old_requests(self):
+    async def _cleanup_old_requests(self):
         """Clean up old request history."""
-        while True:
+        while self._running:
             try:
                 cutoff_time = datetime.now() - timedelta(hours=24)
                 self.request_history = [
@@ -506,9 +521,9 @@ class InferenceManager:
                 self.logger.error(f"❌ Error cleaning up requests: {e}")
                 await asyncio.sleep(3600)
     
-    async def update_performance_cache(self):
+    async def _update_performance_cache(self):
         """Update performance cache with recent metrics."""
-        while True:
+        while self._running:
             try:
                 # Update cache with recent performance data
                 self.performance_cache = {
@@ -598,3 +613,31 @@ class InferenceManager:
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
+    
+    async def cleanup(self):
+        """Cleanup resources and stop background tasks."""
+        try:
+            self.logger.info("🔄 Stopping background tasks...")
+            self._running = False
+            
+            # Cancel all background tasks
+            for task in self._background_tasks:
+                if not task.done():
+                    task.cancel()
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        pass
+            
+            self.logger.info("✅ Inference Manager cleanup completed")
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error during cleanup: {e}")
+    
+    def __del__(self):
+        """Destructor to ensure cleanup."""
+        try:
+            if hasattr(self, '_running') and self._running:
+                self.logger.warning("⚠️ Inference Manager destroyed without cleanup")
+        except:
+            pass

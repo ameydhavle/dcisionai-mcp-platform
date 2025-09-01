@@ -534,13 +534,21 @@ class DcisionAI_Manufacturing_Agent_v2(BaseAgent):
             # Close Gateway client
             await self.gateway_client.close()
             
-            # Cleanup inference manager (if needed)
-            # self.inference_manager.cleanup()
+            # Cleanup inference manager
+            await self.inference_manager.cleanup()
             
             self.logger.info("✅ Enhanced manufacturing agent cleanup completed")
             
         except Exception as e:
             self.logger.error(f"❌ Error during cleanup: {e}")
+    
+    def __del__(self):
+        """Destructor to ensure cleanup."""
+        try:
+            if hasattr(self, 'gateway_client') and self.gateway_client:
+                self.logger.warning("⚠️ Enhanced manufacturing agent destroyed without cleanup")
+        except:
+            pass
 
 # Standalone testing
 if __name__ == "__main__":
