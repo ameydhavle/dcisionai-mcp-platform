@@ -76,10 +76,10 @@ python src/mcp_server_fallback.py
 ### Manual AWS Deployment
 ```bash
 # Deploy to staging
-./scripts/deploy-mcp-server-simple.sh staging
+python scripts/deployment/dcisionai_manufacturing_deploy_agentcore.py
 
 # Deploy to production
-./scripts/deploy-mcp-server-simple.sh production
+python scripts/deployment/dcisionai_manufacturing_invoke_agentcore.py
 ```
 
 ### Check Deployment Status

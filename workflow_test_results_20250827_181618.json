@@ -1,0 +1,42 @@
+{
+  "Production Optimization": {
+    "scenario_name": "Production Optimization",
+    "user_query": "I need to optimize my production schedule to minimize costs while meeting customer demand for our automotive parts manufacturing",
+    "overall_success": true,
+    "total_time": 138.82782411575317,
+    "stages": {
+      "intent": {
+        "success": true,
+        "primary_intent": "IntentCategory.PRODUCTION_SCHEDULING",
+        "confidence": 0.88,
+        "objectives": [
+          "minimize costs",
+          "meet customer demand",
+          "optimize production schedule"
+        ]
+      },
+      "data": {
+        "success": true,
+        "analysis_id": "data_analysis_20250827_181410_0593ba80",
+        "extracted_entities": 0,
+        "missing_entities": 0,
+        "industry_context": "Manufacturing"
+      },
+      "model": {
+        "success": true,
+        "model_id": "model_20250827_181433_28c1b591",
+        "model_type": "mixed_integer_programming",
+        "variables": 9,
+        "constraints": 14,
+        "objectives": 1
+      },
+      "solver": {
+        "success": true,
+        "solver_used": "or_tools_scip",
+        "status": "infeasible",
+        "objective_value": null,
+        "solve_time": 0.010815858840942383
+      }
+    }
+  }
+}

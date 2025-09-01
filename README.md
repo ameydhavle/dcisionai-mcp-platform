@@ -43,11 +43,11 @@ python src/DcisionAI_MCP_Server_v1.py
 
 ### AWS Deployment
 ```bash
-# Deploy to staging
-./scripts/deploy-mcp-server-simple.sh staging
+# Deploy to AgentCore
+python scripts/deployment/dcisionai_manufacturing_deploy_agentcore.py
 
-# Deploy to production
-./scripts/deploy-mcp-server-simple.sh production
+# Test deployment
+python scripts/deployment/dcisionai_manufacturing_invoke_agentcore.py
 ```
 
 ## 🏗️ Architecture
@@ -76,7 +76,7 @@ dcisionai-mcp-platform/
 │   ├── mcp_server_http.py          # HTTP MCP server (simple)
 │   └── models/manufacturing/       # Manufacturing agent and tools
 ├── scripts/
-│   └── deploy-mcp-server-simple.sh # AWS deployment script
+│   └── deployment/                 # AgentCore deployment scripts
 ├── cloudformation/
 │   ├── mcp-server-simple.yaml      # ECS infrastructure
 │   └── mcp-server-infrastructure.yaml # Full infrastructure (archived)

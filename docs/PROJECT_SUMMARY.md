@@ -107,7 +107,7 @@ dcisionai-mcp-platform/
 │   ├── mcp_server_http.py          # HTTP MCP server (simple)
 │   └── models/manufacturing/       # Manufacturing agent and tools
 ├── scripts/
-│   └── deploy-mcp-server-simple.sh # AWS deployment script
+│   └── deployment/                 # AgentCore deployment scripts
 ├── cloudformation/
 │   ├── mcp-server-simple.yaml      # ECS infrastructure
 │   └── mcp-server-infrastructure.yaml # Full infrastructure

@@ -25,8 +25,8 @@ try:
     STRANDS_AVAILABLE = True
 except ImportError:
     STRANDS_AVAILABLE = False
-    logging.error("Strands framework not available - install with: pip install strands")
-    raise ImportError("Strands framework is required for data analysis")
+    logging.warning("Strands framework not available - install with: pip install strands")
+    # Don't raise error, just log warning
 
 try:
     from ....utils.throttling import get_platform_throttle_manager

@@ -30,7 +30,7 @@ from .utils.logging import get_logger
 
 # Import manufacturing tools with correct paths
 from .tools.manufacturing.intent.DcisionAI_Intent_Tool import create_dcisionai_intent_tool_v6
-from .tools.manufacturing.data.DcisionAI_Data_Tool import create_dcisionai_data_tool_v3
+from .tools.manufacturing.data.DcisionAI_Data_Tool import create_data_tool
 from .tools.manufacturing.model.DcisionAI_Model_Builder import create_model_builder_tool
 from .tools.manufacturing.solver import create_shared_solver_tool
 
@@ -69,7 +69,7 @@ class DcisionAIFastMCPServer:
             self.logger.info("✅ Intent classification tool initialized")
             
             # Initialize data analysis tool
-            self.data_tool = create_dcisionai_data_tool_v3()
+            self.data_tool = create_data_tool()
             self.logger.info("✅ Data analysis tool initialized")
             
             # Initialize model builder tool

@@ -30,6 +30,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+# ------------------------ LOGGING ------------------------
+logger = logging.getLogger(__name__)
+
 # ------------------------ STRANDS IMPORT ------------------------
 try:
     from strands import Agent, tool  # noqa: F401
@@ -37,9 +40,6 @@ try:
 except Exception as e:
     STRANDS_AVAILABLE = False
     raise RuntimeError("Strands framework is required for this tool") from e
-
-# ------------------------ LOGGING ------------------------
-logger = logging.getLogger(__name__)
 if not logger.handlers:
     logging.basicConfig(
         level=logging.INFO,
