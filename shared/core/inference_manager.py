@@ -357,11 +357,24 @@ class InferenceManager:
             self.logger.warning(f"⚠️ No regions available for domain {domain}")
             return "us-east-1"  # Fallback
         
-        # Filter regions by health status
-        healthy_regions = [r for r in available_regions 
-                          if self.region_metrics.get(r, {}).health_status == "healthy"]
-        degraded_regions = [r for r in available_regions 
-                           if self.region_metrics.get(r, {}).health_status == "degraded"]
+        # Filter regions by health status - ensure proper access to region_metrics
+        healthy_regions = []
+        degraded_regions = []
+        
+        for region in available_regions:
+            if region in self.region_metrics:
+                metrics = self.region_metrics[region]
+                if hasattr(metrics, 'health_status'):
+                    if metrics.health_status == "healthy":
+                        healthy_regions.append(region)
+                    elif metrics.health_status == "degraded":
+                        degraded_regions.append(region)
+                else:
+                    # If metrics don't have health_status, treat as degraded
+                    degraded_regions.append(region)
+            else:
+                # If region not in metrics, treat as degraded
+                degraded_regions.append(region)
         
         # Prioritize healthy regions
         candidate_regions = healthy_regions + degraded_regions
@@ -375,6 +388,10 @@ class InferenceManager:
         for region in candidate_regions:
             metrics = self.region_metrics.get(region)
             if not metrics:
+                continue
+            
+            # Ensure metrics has required attributes
+            if not hasattr(metrics, 'current_load') or not hasattr(metrics, 'latency_ms'):
                 continue
             
             # Calculate score (lower is better)
@@ -394,13 +411,18 @@ class InferenceManager:
             region_scores.append((region, score))
         
         # Sort by score and return best region
-        region_scores.sort(key=lambda x: x[1])
-        optimal_region = region_scores[0][0]
-        
-        self.logger.info(f"🎯 Selected region {optimal_region} for {domain} request "
-                        f"(score: {region_scores[0][1]:.4f})")
-        
-        return optimal_region
+        if region_scores:
+            region_scores.sort(key=lambda x: x[1])
+            optimal_region = region_scores[0][0]
+            
+            self.logger.info(f"🎯 Selected region {optimal_region} for {domain} request "
+                           f"(score: {region_scores[0][1]:.4f})")
+            
+            return optimal_region
+        else:
+            # Fallback if no valid regions found
+            self.logger.warning(f"⚠️ No valid regions found for {domain}, using fallback")
+            return available_regions[0]
     
     def _calculate_proximity_bonus(self, region: str, user_location: str) -> float:
         """Calculate proximity bonus for region selection."""

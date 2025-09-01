@@ -5,38 +5,38 @@
 
 📊 Test Summary:
    Total Tests: 8
-   Passed: 0 ✅
-   Failed: 8 ❌
-   Success Rate: 0.0%
-   Total Time: 0.10s
+   Passed: 6 ✅
+   Failed: 2 ❌
+   Success Rate: 75.0%
+   Total Time: 15.12s
 
 📋 Detailed Results:
-   ❌ Inference Manager: FAILED
-      Error: 'InferenceManager' object has no attribute '_cleanup_old_requests'
+   ✅ Inference Manager: PASSED
+      Details: Initialized with 4 regions
 
-   ❌ Gateway Client: FAILED
-      Error: 'InferenceManager' object has no attribute '_cleanup_old_requests'
+   ✅ Gateway Client: PASSED
+      Details: Discovered 12 tools across all domains
 
-   ❌ Enhanced Manufacturing Agent: FAILED
-      Error: 'InferenceManager' object has no attribute '_cleanup_old_requests'
+   ✅ Enhanced Manufacturing Agent: PASSED
+      Details: Agent initialized with 4 capabilities
 
    ❌ Cross-Region Optimization: FAILED
-      Error: 'InferenceManager' object has no attribute '_cleanup_old_requests'
+      Error: 'dict' object has no attribute 'health_status'
 
-   ❌ Performance Monitoring: FAILED
-      Error: 'InferenceManager' object has no attribute '_cleanup_old_requests'
+   ✅ Performance Monitoring: PASSED
+      Details: Performance metrics collected and updated successfully
 
-   ❌ Cost Tracking: FAILED
-      Error: 'InferenceManager' object has no attribute '_cleanup_old_requests'
+   ✅ Cost Tracking: PASSED
+      Details: Cost tracking working, sample cost: $0.0000
 
-   ❌ Health Monitoring: FAILED
-      Error: 'InferenceManager' object has no attribute '_cleanup_old_requests'
+   ✅ Health Monitoring: PASSED
+      Details: Inference: healthy, Gateway: healthy
 
    ❌ Integration Testing: FAILED
-      Error: 'InferenceManager' object has no attribute '_cleanup_old_requests'
+      Error: Should not have unknown regions
 
 
-⚠️ 8 TESTS FAILED
+⚠️ 2 TESTS FAILED
 
 Please review the failed tests and fix the issues before proceeding.
 Focus on:
