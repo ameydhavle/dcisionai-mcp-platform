@@ -456,7 +456,10 @@ class DcisionAI_Manufacturing_Agent_v2(BaseAgent):
             inference_result = await self.inference_manager.execute_inference(inference_request)
             
             # Execute the actual solver tool using the correct method (synchronous)
-            solver_result = self.solver_tool.solve_optimization_model(
+            # Use the function from the solver package __init__.py for compatibility
+            from domains.manufacturing.tools.solver import solve_optimization_model
+            
+            solver_result = solve_optimization_model(
                 model_data=model_result.get('data'),
                 domain="manufacturing",
                 session_id="default"
@@ -515,6 +518,27 @@ class DcisionAI_Manufacturing_Agent_v2(BaseAgent):
             'performance_monitoring': True,
             'cost_tracking': True,
             'cross_region_routing': True
+        }
+    
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Get manufacturing agent capabilities."""
+        return {
+            'version': '2.0.0',
+            'capabilities': [
+                'intent_classification',
+                'data_analysis', 
+                'model_building',
+                'optimization_solving'
+            ],
+            'inference_optimization': {
+                'enabled': True,
+                'cross_region': True,
+                'performance_monitoring': True,
+                'cost_tracking': True
+            },
+            'gateway_integration': True,
+            'domain': 'manufacturing',
+            'description': 'Enhanced manufacturing agent with inference optimization and cross-region routing'
         }
     
     def get_performance_summary(self) -> Dict[str, Any]:

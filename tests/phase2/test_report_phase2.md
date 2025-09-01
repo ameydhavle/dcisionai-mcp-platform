@@ -8,7 +8,7 @@
    Passed: 6 ✅
    Failed: 2 ❌
    Success Rate: 75.0%
-   Total Time: 22.64s
+   Total Time: 61.05s
 
 📋 Detailed Results:
    ✅ Inference Manager: PASSED
@@ -17,17 +17,17 @@
    ✅ Gateway Client: PASSED
       Details: Discovered 12 tools across all domains
 
-   ✅ Enhanced Manufacturing Agent: PASSED
-      Details: Agent initialized with 4 capabilities
+   ❌ Enhanced Manufacturing Agent: FAILED
+      Error: 'DcisionAI_Manufacturing_Agent_v2' object has no attribute 'get_capabilities'
 
-   ❌ Cross-Region Optimization: FAILED
-      Error: Should select different regions for optimization
+   ✅ Cross-Region Optimization: PASSED
+      Details: Selected 2 different regions for optimization
 
    ✅ Performance Monitoring: PASSED
       Details: Performance metrics collected and updated successfully
 
    ✅ Cost Tracking: PASSED
-      Details: Cost tracking working, sample cost: $0.0000
+      Details: Cost tracking working, sample cost: $0.0033
 
    ✅ Health Monitoring: PASSED
       Details: Inference: healthy, Gateway: healthy
