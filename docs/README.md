@@ -101,6 +101,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### 🆕 **New to the Team?**
+**Start here**: [🚀 Getting Started Guide](GETTING_STARTED.md) - Complete onboarding for new engineers
+
 ### Running Tests
 ```bash
 # Run Phase 2 Enhanced Inference Optimization tests
@@ -170,22 +173,19 @@ python main.py
 
 ## 📚 Documentation
 
-### Architecture Documents
-- [Multi-Domain Architecture](MULTI_DOMAIN_ARCHITECTURE.md)
-- [Phase 2 Implementation](PHASE_2_IMPLEMENTATION_TODO.md)
-- [Multi-Domain Restructuring](MULTI_DOMAIN_RESTRUCTURING_SUMMARY.md)
+### 🆕 **Essential Guides**
+- **[🚀 Getting Started Guide](GETTING_STARTED.md)** - **NEW ENGINEERS START HERE** - Complete onboarding, architecture guidelines, and "no shortcuts" philosophy
 
-### Business & Production Documents
-- **[🚀 Platform Summary & Business Overview](PLATFORM_SUMMARY.md)** - Business-facing overview, production features, and investor summary
-- [Deployment Guide](DEPLOYMENT_GUIDE.md) - Complete deployment procedures and AWS integration
+### **Core Documentation**
+- **[🏗️ Architecture Overview](ARCHITECTURE_OVERVIEW.md)** - Detailed technical architecture and component breakdown
+- **[💼 Platform Summary](PLATFORM_SUMMARY.md)** - Business-facing overview, production features, and investor summary
+- **[🚀 Deployment Guide](DEPLOYMENT_GUIDE.md)** - Complete deployment procedures and AWS integration
 
-### Deployment Guides
-- [AgentCore Deployment](AGENTCORE_DEPLOYMENT_SUCCESS.md)
-- [Cleanup Summary](CLEANUP_SUMMARY.md)
-- [Rebranding Summary](REBRANDING_SUMMARY.md)
-
-### Test Reports
-- [Phase 2 Test Report](test_report_phase2.md)
+### **Getting Help**
+- **Start with**: [Getting Started Guide](GETTING_STARTED.md) for new team members
+- **Architecture questions**: [Architecture Overview](ARCHITECTURE_OVERVIEW.md)
+- **Deployment issues**: [Deployment Guide](DEPLOYMENT_GUIDE.md)
+- **Business overview**: [Platform Summary](PLATFORM_SUMMARY.md)
 
 ## 🎯 Roadmap
 

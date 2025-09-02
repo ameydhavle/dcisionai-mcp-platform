@@ -36,6 +36,7 @@ python main.py
 
 **All detailed documentation has been moved to the `docs/` folder:**
 
+- **[🚀 Getting Started Guide](docs/GETTING_STARTED.md)** - **NEW ENGINEERS START HERE** - Complete onboarding and architecture guidelines
 - **[📖 Complete Platform Documentation](docs/README.md)** - Full architecture, features, and deployment guide
 - **[🏗️ Architecture Overview](docs/ARCHITECTURE_OVERVIEW.md)** - Detailed technical architecture and components
 - **[🚀 Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment instructions and AWS setup
