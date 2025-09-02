@@ -37,9 +37,9 @@ python main.py
 **All detailed documentation has been moved to the `docs/` folder:**
 
 - **[📖 Complete Platform Documentation](docs/README.md)** - Full architecture, features, and deployment guide
-- **[🏗️ Multi-Domain Architecture](docs/MULTI_DOMAIN_ARCHITECTURE.md)** - Detailed architecture overview
-- **[🚀 Phase 2 Implementation](docs/PHASE_2_IMPLEMENTATION_TODO.md)** - Implementation details and roadmap
-- **[📊 Test Reports](docs/test_report_phase2.md)** - Latest test results and performance metrics
+- **[🏗️ Architecture Overview](docs/ARCHITECTURE_OVERVIEW.md)** - Detailed technical architecture and components
+- **[🚀 Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment instructions and AWS setup
+- **[💼 Platform Summary](docs/PLATFORM_SUMMARY.md)** - Business-facing overview and investor information
 
 ## 🔥 Production Features
 
