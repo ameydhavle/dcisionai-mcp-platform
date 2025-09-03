@@ -1,0 +1,769 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'DcisionAI Platform - Enhanced Domain Infrastructure for Dual-Track Architecture'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    Description: Environment name (production, staging, development)
+    AllowedValues: [production, staging, development]
+  
+  DomainName:
+    Type: String
+    Default: dcisionai.com
+    Description: Primary domain name
+  
+  CertificateValidationMethod:
+    Type: String
+    Default: DNS
+    Description: Method for SSL certificate validation
+    AllowedValues: [DNS, EMAIL]
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: python3.11
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref Environment
+        DOMAIN_NAME: !Ref DomainName
+
+Resources:
+  # ============================================================================
+  # SSL CERTIFICATES
+  # ============================================================================
+  
+  WildcardCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub '*.${DomainName}'
+      SubjectAlternativeNames:
+        - !Ref DomainName
+      ValidationMethod: !Ref CertificateValidationMethod
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZone
+        - DomainName: !Sub '*.${DomainName}'
+          HostedZoneId: !Ref HostedZone
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: 'Wildcard SSL Certificate for DcisionAI Platform'
+
+  # ============================================================================
+  # ROUTE 53 HOSTED ZONE
+  # ============================================================================
+  
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref DomainName
+      HostedZoneConfig:
+        Comment: !Sub 'Hosted zone for ${DomainName}'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: 'DNS Management for DcisionAI Platform'
+
+  # ============================================================================
+  # CLOUDFRONT DISTRIBUTIONS
+  # ============================================================================
+  
+  # MCP Documentation Distribution
+  MCPDocsDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub 'MCP Documentation for ${DomainName}'
+        Origins:
+          - Id: MCPDocsS3Origin
+            DomainName: !GetAtt MCPDocsBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${MCPDocsOriginAccessIdentity}'
+        DefaultCacheBehavior:
+          TargetOriginId: MCPDocsS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Managed-CachingOptimized
+        Aliases:
+          - !Sub 'mcp-docs.${DomainName}'
+        ViewerCertificate:
+          AcmCertificateArn: !Ref WildcardCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        Tags:
+          - Key: Environment
+            Value: !Ref Environment
+          - Key: Purpose
+            Value: 'MCP Documentation Distribution'
+
+  # SDK Distribution
+  SDKDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub 'SDK Downloads for ${DomainName}'
+        Origins:
+          - Id: SDKS3Origin
+            DomainName: !GetAtt SDKBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${SDKOriginAccessIdentity}'
+        DefaultCacheBehavior:
+          TargetOriginId: SDKS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Managed-CachingOptimized
+        Aliases:
+          - !Sub 'sdk.${DomainName}'
+        ViewerCertificate:
+          AcmCertificateArn: !Ref WildcardCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        Tags:
+          - Key: Environment
+            Value: !Ref Environment
+          - Key: Purpose
+            Value: 'SDK Downloads Distribution'
+
+  # API Documentation Distribution
+  APIDocsDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub 'API Documentation for ${DomainName}'
+        Origins:
+          - Id: APIDocsS3Origin
+            DomainName: !GetAtt APIDocsBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${APIDocsOriginAccessIdentity}'
+        DefaultCacheBehavior:
+          TargetOriginId: APIDocsS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Managed-CachingOptimized
+        Aliases:
+          - !Sub 'docs.${DomainName}'
+        ViewerCertificate:
+          AcmCertificateArn: !Ref WildcardCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        Tags:
+          - Key: Environment
+            Value: !Ref Environment
+          - Key: Purpose
+            Value: 'API Documentation Distribution'
+
+  # Status Page Distribution
+  StatusPageDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub 'Status Page for ${DomainName}'
+        Origins:
+          - Id: StatusPageS3Origin
+            DomainName: !GetAtt StatusPageBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${StatusPageOriginAccessIdentity}'
+        DefaultCacheBehavior:
+          TargetOriginId: StatusPageS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Managed-CachingOptimized
+        Aliases:
+          - !Sub 'status.${DomainName}'
+          - !Sub 'mcp-status.${DomainName}'
+        ViewerCertificate:
+          AcmCertificateArn: !Ref WildcardCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        Tags:
+          - Key: Environment
+            Value: !Ref Environment
+          - Key: Purpose
+            Value: 'Status Page Distribution'
+
+  # ============================================================================
+  # S3 BUCKETS FOR STATIC CONTENT
+  # ============================================================================
+  
+  # MCP Documentation Bucket
+  MCPDocsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'mcp-docs-${DomainName}-${Environment}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: 'MCP Documentation Storage'
+
+  # SDK Bucket
+  SDKBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'sdk-${DomainName}-${Environment}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: 'SDK Downloads Storage'
+
+  # API Documentation Bucket
+  APIDocsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'api-docs-${DomainName}-${Environment}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: 'API Documentation Storage'
+
+  # Status Page Bucket
+  StatusPageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'status-${DomainName}-${Environment}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: 'Status Page Storage'
+
+  # ============================================================================
+  # CLOUDFRONT ORIGIN ACCESS IDENTITIES
+  # ============================================================================
+  
+  MCPDocsOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub 'OAI for MCP Documentation ${DomainName}'
+
+  SDKOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub 'OAI for SDK Downloads ${DomainName}'
+
+  APIDocsOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub 'OAI for API Documentation ${DomainName}'
+
+  StatusPageOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub 'OAI for Status Page ${DomainName}'
+
+  # ============================================================================
+  # S3 BUCKET POLICIES
+  # ============================================================================
+  
+  MCPDocsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref MCPDocsBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${MCPDocsOriginAccessIdentity}'
+            Action: s3:GetObject
+            Resource: !Sub '${MCPDocsBucket}/*'
+
+  SDKBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SDKBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${SDKOriginAccessIdentity}'
+            Action: s3:GetObject
+            Resource: !Sub '${SDKBucket}/*'
+
+  APIDocsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref APIDocsBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${APIDocsOriginAccessIdentity}'
+            Action: s3:GetObject
+            Resource: !Sub '${APIDocsBucket}/*'
+
+  StatusPageBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StatusPageBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${StatusPageOriginAccessIdentity}'
+            Action: s3:GetObject
+            Resource: !Sub '${StatusPageBucket}/*'
+
+  # ============================================================================
+  # APPLICATION LOAD BALANCER
+  # ============================================================================
+  
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub 'dcisionai-${Environment}-alb'
+      Scheme: internet-facing
+      Type: application
+      IpAddressType: ipv4
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: 'Application Load Balancer for DcisionAI Platform'
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub 'dcisionai-${Environment}-alb-sg'
+      GroupDescription: !Sub 'Security group for ALB ${Environment}'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP access
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS access
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: 'ALB Security Group'
+
+  # ============================================================================
+  # VPC AND NETWORKING (Referenced from existing stack)
+  # ============================================================================
+  
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub 'dcisionai-${Environment}-vpc'
+        - Key: Environment
+          Value: !Ref Environment
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub 'dcisionai-${Environment}-public-subnet-1'
+        - Key: Environment
+          Value: !Ref Environment
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub 'dcisionai-${Environment}-public-subnet-2'
+        - Key: Environment
+          Value: !Ref Environment
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub 'dcisionai-${Environment}-igw'
+        - Key: Environment
+          Value: !Ref Environment
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub 'dcisionai-${Environment}-public-routes'
+        - Key: Environment
+          Value: !Ref Environment
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref RouteTable
+
+  # ============================================================================
+  # DNS RECORDS
+  # ============================================================================
+  
+  # Root domain A record
+  RootDomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ApplicationLoadBalancer.DNSName
+        HostedZoneId: !GetAtt ApplicationLoadBalancer.CanonicalHostedZoneID
+
+  # www subdomain CNAME record
+  WWWSubdomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub 'www.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !Ref DomainName
+
+  # MCP subdomain CNAME record
+  MCPSubdomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub 'mcp.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !GetAtt MCPDocsDistribution.DomainName
+
+  # API subdomain CNAME record
+  APISubdomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub 'api.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !Sub '2dtpy57vn2.execute-api.us-east-1.amazonaws.com'
+
+  # SDK subdomain CNAME record
+  SDKSubdomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub 'sdk.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !GetAtt SDKDistribution.DomainName
+
+  # Portal subdomain CNAME record
+  PortalSubdomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub 'portal.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !GetAtt ApplicationLoadBalancer.DNSName
+
+  # Docs subdomain CNAME record
+  DocsSubdomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub 'docs.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !GetAtt APIDocsDistribution.DomainName
+
+  # Auth subdomain CNAME record
+  AuthSubdomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub 'auth.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !GetAtt ApplicationLoadBalancer.DNSName
+
+  # Monitoring subdomain CNAME record
+  MonitoringSubdomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub 'monitoring.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !GetAtt ApplicationLoadBalancer.DNSName
+
+  # Status subdomain CNAME record
+  StatusSubdomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub 'status.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !GetAtt StatusPageDistribution.DomainName
+
+  # MCP Status subdomain CNAME record
+  MCPStatusSubdomainRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub 'mcp-status.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !GetAtt StatusPageDistribution.DomainName
+
+Outputs:
+  # ============================================================================
+  # INFRASTRUCTURE OUTPUTS
+  # ============================================================================
+  
+  HostedZoneId:
+    Description: 'Route 53 Hosted Zone ID'
+    Value: !Ref HostedZone
+    Export:
+      Name: !Sub '${AWS::StackName}-HostedZoneId'
+
+  HostedZoneNameServers:
+    Description: 'Route 53 Hosted Zone Name Servers'
+    Value: !Join ['\n', !GetAtt HostedZone.NameServers]
+    Export:
+      Name: !Sub '${AWS::StackName}-HostedZoneNameServers'
+
+  WildcardCertificateArn:
+    Description: 'Wildcard SSL Certificate ARN'
+    Value: !Ref WildcardCertificate
+    Export:
+      Name: !Sub '${AWS::StackName}-WildcardCertificateArn'
+
+  ApplicationLoadBalancerDNS:
+    Description: 'Application Load Balancer DNS Name'
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+    Export:
+      Name: !Sub '${AWS::StackName}-ApplicationLoadBalancerDNS'
+
+  # ============================================================================
+  # CLOUDFRONT OUTPUTS
+  # ============================================================================
+  
+  MCPDocsDistributionDomain:
+    Description: 'MCP Documentation CloudFront Distribution Domain'
+    Value: !GetAtt MCPDocsDistribution.DomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-MCPDocsDistributionDomain'
+
+  SDKDistributionDomain:
+    Description: 'SDK Downloads CloudFront Distribution Domain'
+    Value: !GetAtt SDKDistribution.DomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-SDKDistributionDomain'
+
+  APIDocsDistributionDomain:
+    Description: 'API Documentation CloudFront Distribution Domain'
+    Value: !GetAtt APIDocsDistribution.DomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-APIDocsDistributionDomain'
+
+  StatusPageDistributionDomain:
+    Description: 'Status Page CloudFront Distribution Domain'
+    Value: !GetAtt StatusPageDistribution.DomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-StatusPageDistributionDomain'
+
+  # ============================================================================
+  # S3 BUCKET OUTPUTS
+  # ============================================================================
+  
+  MCPDocsBucketName:
+    Description: 'MCP Documentation S3 Bucket Name'
+    Value: !Ref MCPDocsBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-MCPDocsBucketName'
+
+  SDKBucketName:
+    Description: 'SDK Downloads S3 Bucket Name'
+    Value: !Ref SDKBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-SDKBucketName'
+
+  APIDocsBucketName:
+    Description: 'API Documentation S3 Bucket Name'
+    Value: !Ref APIDocsBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-APIDocsBucketName'
+
+  StatusPageBucketName:
+    Description: 'Status Page S3 Bucket Name'
+    Value: !Ref StatusPageBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-StatusPageBucketName'
+
+  # ============================================================================
+  # DNS CONFIGURATION INSTRUCTIONS
+  # ============================================================================
+  
+  DNSConfigurationInstructions:
+    Description: 'Instructions for configuring DNS in GoDaddy'
+    Value: !Sub |
+      🌐 DNS Configuration Instructions for ${DomainName}
+      
+      After this stack is deployed, you need to update your GoDaddy DNS settings:
+      
+      1. Go to GoDaddy DNS Management for ${DomainName}
+      2. Update the Name Servers to use AWS Route 53:
+         ${!Join ['\n         ', !GetAtt HostedZone.NameServers]}
+      
+      3. Wait for DNS propagation (24-48 hours)
+      
+      4. Test your subdomains:
+         - mcp.${DomainName} → MCP Documentation
+         - api.${DomainName} → Commercial API
+         - sdk.${DomainName} → SDK Downloads
+         - portal.${DomainName} → Customer Portal
+         - docs.${DomainName} → API Documentation
+         - auth.${DomainName} → Authentication Service
+         - monitoring.${DomainName} → System Monitoring
+         - status.${DomainName} → Service Status
+         - mcp-status.${DomainName} → MCP Service Status
+      
+      5. SSL certificates will be automatically validated once DNS is updated
+      
+      🎯 This setup implements your Dual-Track Architecture:
+         - MCP Track (mcp.*) for ecosystem integration
+         - Commercial Track (api.*, sdk.*, portal.*) for enterprise sales
+         - Shared Services (auth.*, monitoring.*, status.*) for infrastructure
+    Export:
+      Name: !Sub '${AWS::StackName}-DNSConfigurationInstructions'
+
+  # ============================================================================
+  # NEXT STEPS
+  # ============================================================================
+  
+  NextSteps:
+    Description: 'Next steps after domain infrastructure deployment'
+    Value: !Sub |
+      🚀 Next Steps for Phase 3B:
+      
+      1. ✅ Domain Infrastructure Deployed (COMPLETE)
+      2. 🔄 Update GoDaddy DNS with AWS Name Servers
+      3. ⏳ Wait for DNS propagation (24-48 hours)
+      4. 🔐 SSL certificates will auto-validate
+      5. 🎯 Deploy services to each subdomain:
+         - MCP server to mcp.${DomainName}
+         - Commercial API to api.${DomainName}
+         - Customer portal to portal.${DomainName}
+         - Documentation to docs.${DomainName}
+         - SDK to sdk.${DomainName}
+      
+      6. 🧪 Test all subdomains and SSL certificates
+      7. 📊 Monitor performance and security
+      8. 🚀 Phase 3C: Production Hardening
+    Export:
+      Name: !Sub '${AWS::StackName}-NextSteps'
