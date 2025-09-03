@@ -224,12 +224,10 @@ class APIKeyManager:
     async def validate_api_key(self, api_key: str) -> Dict[str, Any]:
         """Validate an API key and return its information."""
         try:
-            api_key_hash = self.hash_api_key(api_key)
-            
-            # Query DynamoDB
+            # Query DynamoDB with the original API key
             response = await asyncio.to_thread(
                 self.api_keys_table.get_item,
-                Key={'api_key': api_key_hash}
+                Key={'api_key': api_key}
             )
             
             if 'Item' not in response:

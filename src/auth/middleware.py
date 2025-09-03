@@ -273,22 +273,29 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     async def _validate_admin_key(self, admin_key: str, client_ip: str) -> AuthContext:
         """Validate admin key and return authentication context."""
         try:
+            logger.info(f"🔍 Validating admin key: {admin_key[:20]}...")
+            
             # Query DynamoDB for admin key
             response = await asyncio.to_thread(
                 self.admin_keys_table.get_item,
                 Key={'admin_key': admin_key}
             )
             
+            logger.info(f"📊 DynamoDB response: {response}")
+            
             if 'Item' not in response:
+                logger.warning("❌ Admin key not found in DynamoDB")
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid admin key"
                 )
             
             admin_key_data = response['Item']
+            logger.info(f"✅ Admin key data retrieved: {list(admin_key_data.keys())}")
             
             # Check if admin key is active
             if admin_key_data.get('status') != 'active':
+                logger.warning(f"❌ Admin key status: {admin_key_data.get('status')}")
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Admin key is inactive"
@@ -296,22 +303,30 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             
             # Get tenant information
             tenant_id = admin_key_data['tenant_id']
-            tenant_info = await self._get_tenant_info(tenant_id)
+            logger.info(f"🏢 Tenant ID: {tenant_id}")
             
+            tenant_info = await self._get_tenant_info(tenant_id)
+            logger.info(f"✅ Tenant info retrieved: {tenant_info}")
+            
+            logger.info("🔐 Creating AuthContext for admin key")
             return AuthContext(
                 tenant_id=tenant_id,
                 user_id=admin_key_data.get('user_id'),
                 permissions=admin_key_data.get('permissions', []),
-                admin_key_id=admin_key_data.get('admin_key_id'),
+                api_key_id=admin_key_data.get('admin_key'),
                 auth_method="admin_key",
                 ip_address=client_ip,
                 rate_limit_key=f"rate_limit:{tenant_id}:admin"
             )
             
         except HTTPException:
+            logger.info("🔄 Re-raising HTTPException")
             raise
         except Exception as e:
-            logger.error(f"Admin key validation error: {e}")
+            logger.error(f"❌ Admin key validation error: {e}")
+            logger.error(f"❌ Error type: {type(e)}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Admin key validation error"
