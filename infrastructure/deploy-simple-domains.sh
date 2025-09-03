@@ -285,7 +285,7 @@ main() {
     echo "This script will deploy Phase 1 of our enhanced domain infrastructure:"
     echo "• Route 53 Hosted Zone for DNS management"
     echo "• S3 buckets for static content storage"
-    echo "• Basic DNS records for subdomains"
+    echo "• Basic DNS records for subdomains (preserving existing website)"
     echo "• Foundation for CloudFront and SSL certificates"
     echo
     

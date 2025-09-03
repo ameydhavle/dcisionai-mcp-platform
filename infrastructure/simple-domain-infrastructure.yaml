@@ -126,7 +126,7 @@ Resources:
   # BASIC DNS RECORDS
   # ============================================================================
   
-  # Root domain A record (placeholder)
+  # Root domain A record (preserve existing Vercel hosting)
   RootDomainRecord:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -135,9 +135,9 @@ Resources:
       Type: A
       TTL: '300'
       ResourceRecords:
-        - '127.0.0.1' # Placeholder - will be updated after service deployment
+        - '76.76.21.21' # Current Vercel hosting IP - preserve existing website
 
-  # www subdomain CNAME record
+  # www subdomain CNAME record (preserve existing Vercel hosting)
   WWWSubdomainRecord:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -146,7 +146,7 @@ Resources:
       Type: CNAME
       TTL: '300'
       ResourceRecords:
-        - !Ref DomainName
+        - 'cname.vercel-dns.com' # Current Vercel hosting - preserve existing website
 
   # API subdomain CNAME record (points to existing API Gateway)
   APISubdomainRecord:
@@ -255,10 +255,12 @@ Outputs:
       3. Wait for DNS propagation (24-48 hours)
       
       4. Test your subdomains:
-         - api.${DomainName} → Commercial API (WORKING)
-         - portal.${DomainName} → Customer Portal (placeholder)
-         - auth.${DomainName} → Authentication Service (placeholder)
-         - monitoring.${DomainName} → System Monitoring (placeholder)
+         - dcisionai.com → Existing Vercel website (PRESERVED)
+         - www.dcisionai.com → Existing Vercel website (PRESERVED)
+         - api.dcisionai.com → Commercial API (WORKING)
+         - portal.dcisionai.com → Customer Portal (placeholder)
+         - auth.dcisionai.com → Authentication Service (placeholder)
+         - monitoring.dcisionai.com → System Monitoring (placeholder)
       
       5. Next steps:
          - Deploy CloudFront distributions for static content
