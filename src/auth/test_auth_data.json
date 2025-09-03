@@ -1,0 +1,111 @@
+{
+  "tenants": [
+    {
+      "tenant_id": "test-tenant-001",
+      "tenant_name": "Test Manufacturing Company",
+      "description": "Test tenant for authentication development",
+      "max_api_keys": 20,
+      "status": "active",
+      "created_at": "2025-09-03T03:23:23.748494",
+      "updated_at": "2025-09-03T03:23:23.748614",
+      "settings": {
+        "rate_limit_per_minute": 1000,
+        "rate_limit_burst": 100,
+        "ip_restrictions": [],
+        "allowed_domains": []
+      }
+    },
+    {
+      "tenant_id": "test-tenant-002",
+      "tenant_name": "Test Finance Company",
+      "description": "Second test tenant for multi-tenant testing",
+      "max_api_keys": 15,
+      "status": "active",
+      "created_at": "2025-09-03T03:23:23.907393",
+      "updated_at": "2025-09-03T03:23:23.907396",
+      "settings": {
+        "rate_limit_per_minute": 1000,
+        "rate_limit_burst": 100,
+        "ip_restrictions": [],
+        "allowed_domains": []
+      }
+    }
+  ],
+  "api_keys": [
+    {
+      "api_key": "dcisionai_e5950189bb828e616a4ba975d9da6a8d40cd5f3ff445c31959e851ac8081db94",
+      "api_key_hash": "02d2e952bc6f25d63c9bb3bb5852d4f77f2e59655bb6fee728feb71bc1404272",
+      "tenant_id": "test-tenant-001",
+      "user_id": "test-user-001",
+      "key_name": "Test API Key - Regular User",
+      "permissions": [
+        "read",
+        "write"
+      ],
+      "expires_at": "2026-09-03T03:23:23.832001",
+      "warning": "Store this API key securely - it will not be shown again!"
+    },
+    {
+      "api_key": "dcisionai_9bd7ef0265e4c405d333a785a208c63d7b8905b55bcaaa992638643fe461ddfa",
+      "api_key_hash": "bff194756ffa4f7c451a5f0ca56e44f671e6dda894c6918f8f9c588b88efa4b3",
+      "tenant_id": "test-tenant-001",
+      "user_id": "test-user-002",
+      "key_name": "Test API Key - Read Only",
+      "permissions": [
+        "read"
+      ],
+      "expires_at": "2026-09-03T03:23:23.874779",
+      "warning": "Store this API key securely - it will not be shown again!"
+    },
+    {
+      "api_key": "dcisionai_1cfb97d1c01ba38b2a47cc3a9413402aff0b58a3cb135c0a7ccf1e92365962c4",
+      "api_key_hash": "8d019a79fec52dfc7c8bb18d651992ab62f429d342ebdc023f5af8bf54a69bb5",
+      "tenant_id": "test-tenant-001",
+      "user_id": "test-user-003",
+      "key_name": "Test API Key - Expired",
+      "permissions": [
+        "read",
+        "write"
+      ],
+      "expires_at": "2025-09-03T03:23:23.892635",
+      "warning": "Store this API key securely - it will not be shown again!"
+    },
+    {
+      "api_key": "dcisionai_97f0d139f4796a26d4d536da3d7dfdac14223987d9607281a81d9521b11fbe97",
+      "api_key_hash": "084d983bad4f03cd9cb2721915193a775c62d2dfd796356f3afbb37440d80244",
+      "tenant_id": "test-tenant-002",
+      "user_id": "test-user-004",
+      "key_name": "Test API Key - Finance Tenant",
+      "permissions": [
+        "read",
+        "write",
+        "finance"
+      ],
+      "expires_at": "2026-09-03T03:23:23.925964",
+      "warning": "Store this API key securely - it will not be shown again!"
+    }
+  ],
+  "admin_keys": [
+    {
+      "admin_key": "dcisionai_admin_4978b8141c54f121e490519bf684b0e787db80d0fbca705c2d6ab789a659ab56",
+      "admin_key_hash": "90f95a1c57059d4163e60bdbfd11bdfa710580e5b759167102185ebe24e37278",
+      "tenant_id": "test-tenant-001",
+      "user_id": "test-admin-001",
+      "key_name": "Test Admin Key - Admin User",
+      "permissions": [
+        "admin",
+        "read",
+        "write",
+        "manage_users",
+        "manage_keys"
+      ],
+      "expires_at": "2026-09-03T03:23:23.854675",
+      "warning": "Store this admin key securely - it will not be shown again!"
+    }
+  ],
+  "testing_instructions": {
+    "start_app": "python test_auth_app.py",
+    "base_url": "http://localhost:8003",
+    "swagger_ui": "http://localhost:8003/docs"
+  }
+}
