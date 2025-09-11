@@ -1,0 +1,45 @@
+site_name: DcisionAI Documentation
+site_description: Complete documentation for the DcisionAI Manufacturing MCP Server
+site_url: https://docs.dcisionai.com
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Quick Start: CUSTOMER_QUICK_START_GUIDE.md
+  - Architecture: Architecture.md
+  - Deployment Status: DEPLOYMENT_STATUS.md
+  - Customer Integration: CUSTOMER_INTEGRATION_SUMMARY.md
+  - Dual Track Strategy: DUAL_TRACK_STRATEGY.md
+  - Implementation Plan: Plan.md
+
+plugins:
+  - search
+  - mkdocstrings
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - md_in_html
