@@ -108,7 +108,7 @@ class CustomerScenarioE2ETester:
             
             start_time = time.time()
             
-            result = await intent_swarm.classify_intent(
+            result = intent_swarm.classify_intent(
                 query=customer_query,
                 context={
                     "company": self.customer_scenario['company'],
@@ -118,12 +118,7 @@ class CustomerScenarioE2ETester:
             )
             
             # The result is already the final result, not a coroutine
-            if hasattr(result, 'get'):
-                # It's a dictionary, use it directly
-                final_result = result
-            else:
-                # It might be a coroutine, await it
-                final_result = await result
+            final_result = result
             
             end_time = time.time()
             response_time = end_time - start_time
@@ -175,12 +170,13 @@ class CustomerScenarioE2ETester:
             
             start_time = time.time()
             
-            result = await data_swarm.analyze_data(
-                data=self.customer_scenario['data'],
-                intent_result=intent_result.get("result", {}),
+            result = data_swarm.analyze_data_requirements(
+                user_query=f"Analyze data for {self.customer_scenario['company']} production optimization",
+                intent_result=intent_result,
                 context={
                     "company": self.customer_scenario['company'],
-                    "analysis_type": "production_optimization"
+                    "analysis_type": "production_optimization",
+                    "data": self.customer_scenario['data']
                 }
             )
             
@@ -234,9 +230,9 @@ class CustomerScenarioE2ETester:
             
             start_time = time.time()
             
-            result = await model_swarm.build_model(
-                intent_result=intent_result.get("result", {}),
-                data_result=data_result.get("result", {}),
+            result = model_swarm.build_optimization_model(
+                intent_result=intent_result,
+                data_result=data_result,
                 context={
                     "company": self.customer_scenario['company'],
                     "model_type": "production_optimization"
@@ -296,8 +292,8 @@ class CustomerScenarioE2ETester:
             
             start_time = time.time()
             
-            result = await solver_swarm.solve_optimization(
-                model_result=model_result.get("result", {}),
+            result = solver_swarm.solve_optimization_model(
+                model_result=model_result,
                 context={
                     "company": self.customer_scenario['company'],
                     "solver_type": "production_optimization"

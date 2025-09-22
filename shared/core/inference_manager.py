@@ -1,691 +1,617 @@
 #!/usr/bin/env python3
 """
-DcisionAI Platform - Enhanced Inference Manager
-===============================================
+DcisionAI Platform - AWS Bedrock Inference Profile Manager
+=========================================================
 
-Phase 2: Cross-region inference optimization with AWS Bedrock.
-Handles intelligent region selection, quota management, and performance monitoring.
+Enterprise-grade inference management using AWS Bedrock Inference Profiles:
+- Cross-region optimization via AWS native inference profiles
+- Automatic region selection and failover
+- Cost tracking and usage monitoring
+- Multi-tenant quota management
+
+Leverages AWS Bedrock Inference Profiles for production-ready cross-region optimization.
 """
 
+import asyncio
+import json
 import logging
 import time
-import asyncio
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass
+import uuid
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from enum import Enum
+from typing import Dict, Any, List, Optional, Union
+from contextvars import ContextVar
+
 import boto3
-import yaml
-from pathlib import Path
+from botocore.exceptions import ClientError, NoCredentialsError
+
+from .base_agent import TenantContext, get_current_tenant
+
+logger = logging.getLogger(__name__)
+
+class OptimizationFocus(Enum):
+    """Optimization focus areas - maps to AWS Bedrock inference profile types."""
+    LATENCY = "latency"
+    THROUGHPUT = "throughput"
+    COST = "cost"
+    RELIABILITY = "reliability"
+
+@dataclass
+class InferenceProfile:
+    """AWS Bedrock Inference Profile configuration."""
+    profile_arn: str
+    profile_name: str
+    regions: List[str]
+    model_id: str
+    optimization_focus: OptimizationFocus
+    cost_tier: str = "standard"
+    sla_tier: str = "pro"
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "profile_arn": self.profile_arn,
+            "profile_name": self.profile_name,
+            "regions": self.regions,
+            "model_id": self.model_id,
+            "optimization_focus": self.optimization_focus.value,
+            "cost_tier": self.cost_tier,
+            "sla_tier": self.sla_tier
+        }
 
 @dataclass
 class InferenceRequest:
-    """Represents an inference request with metadata."""
+    """Inference request with tenant context."""
     request_id: str
+    tenant_context: TenantContext
     domain: str
     request_type: str
     payload: Dict[str, Any]
-    user_location: Optional[str] = None
+    inference_profile: Optional[str] = None  # Profile ARN or name
+    timeout: int = 60
     priority: str = "normal"
-    timeout: int = 300
-    created_at: datetime = None
+    created_at: datetime = field(default_factory=datetime.utcnow)
     
     def __post_init__(self):
-        if self.created_at is None:
-            self.created_at = datetime.now()
+        if not self.request_id:
+            self.request_id = str(uuid.uuid4())
 
 @dataclass
 class InferenceResult:
-    """Represents the result of an inference operation."""
+    """Inference execution result."""
     request_id: str
     success: bool
-    data: Any
+    result: Dict[str, Any]
+    profile_used: str
     region_used: str
     execution_time: float
     cost: float
-    metadata: Dict[str, Any]
-    timestamp: datetime = None
-    
-    def __post_init__(self):
-        if self.timestamp is None:
-            self.timestamp = datetime.now()
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    error: Optional[str] = None
+    completed_at: datetime = field(default_factory=datetime.utcnow)
 
-@dataclass
-class RegionMetrics:
-    """Metrics for a specific AWS region."""
-    region: str
-    current_load: float  # 0.0 to 1.0
-    latency_ms: float
-    quota_usage: float  # 0.0 to 1.0
-    error_rate: float
-    cost_per_token: float
-    last_updated: datetime
-    health_status: str  # "healthy", "degraded", "unhealthy"
-
-class InferenceManager:
+class BedrockInferenceManager:
     """
-    Enhanced inference manager for cross-region optimization.
+    AWS Bedrock Inference Profile Manager for AgentCore.
     
     Features:
-    - Intelligent region selection
-    - Quota management and monitoring
-    - Performance optimization
-    - Cost tracking
-    - Health monitoring
+    - Uses AWS Bedrock Inference Profiles for cross-region optimization
+    - Automatic region selection and failover
+    - Cost tracking and usage monitoring
+    - Multi-tenant quota management
+    - Integration with AgentCore runtime
     """
     
-    def __init__(self, config_path: str = "shared/config/inference_profiles.yaml"):
-        """Initialize the inference manager with configuration."""
-        self.logger = logging.getLogger("inference_manager")
-        self.logger.setLevel(logging.INFO)
+    def __init__(self, 
+                 region: str = "us-east-1",
+                 default_model: str = "anthropic.claude-3-sonnet-20240229-v1:0"):
+        """
+        Initialize the Bedrock Inference Profile Manager.
         
-        # Load configuration
-        self.config = self._load_config(config_path)
+        Args:
+            region: AWS region for the manager
+            default_model: Default model ID to use
+        """
+        self.region = region
+        self.default_model = default_model
         
         # Initialize AWS clients
-        self.bedrock_client = boto3.client('bedrock', region_name='us-east-1')
-        self.cloudwatch_client = boto3.client('cloudwatch', region_name='us-east-1')
+        try:
+            self.bedrock_client = boto3.client('bedrock', region_name=region)
+            self.bedrock_runtime = boto3.client('bedrock-runtime', region_name=region)
+            logger.info(f"✅ AWS Bedrock clients initialized in {region}")
+        except (NoCredentialsError, ClientError) as e:
+            logger.error(f"❌ Failed to initialize AWS clients: {e}")
+            raise
         
-        # Initialize state
-        self.region_metrics: Dict[str, RegionMetrics] = {}
+        # Inference profiles cache
+        self.inference_profiles: Dict[str, InferenceProfile] = {}
+        self.profile_cache_expiry: Optional[datetime] = None
+        self.cache_ttl = timedelta(minutes=15)  # Cache profiles for 15 minutes
+        
+        # Performance tracking
         self.request_history: List[InferenceRequest] = []
-        self.performance_cache: Dict[str, Any] = {}
+        self.result_history: List[InferenceResult] = []
         
-        # Background task management
-        self._background_tasks: List[asyncio.Task] = []
-        self._running = True
+        # Multi-tenant quotas
+        self.tenant_quotas: Dict[str, Dict[str, int]] = {}
         
-        # Start background tasks
-        self._start_background_tasks()
+        # Default inference profiles for common use cases
+        self._initialize_default_profiles()
         
-        self.logger.info("✅ Enhanced Inference Manager initialized successfully")
+        logger.info("✅ Bedrock Inference Profile Manager initialized successfully")
     
-    def _load_config(self, config_path: str) -> Dict[str, Any]:
-        """Load inference configuration from YAML file."""
-        try:
-            config_file = Path(config_path)
-            if config_file.exists():
-                with open(config_file, 'r') as f:
-                    config = yaml.safe_load(f)
-                self.logger.info(f"✅ Loaded inference configuration from {config_path}")
-                return config
-            else:
-                self.logger.warning(f"⚠️ Configuration file not found: {config_path}")
-                return self._get_default_config()
-        except Exception as e:
-            self.logger.error(f"❌ Failed to load configuration: {e}")
-            return self._get_default_config()
-    
-    def _get_default_config(self) -> Dict[str, Any]:
-        """Get default configuration if file loading fails."""
-        return {
-            "inference_profiles": {
-                "manufacturing": {
-                    "regions": ["us-east-1", "us-west-2"],
-                    "max_throughput": 1000
-                },
-                "finance": {
-                    "regions": ["us-east-1", "us-west-2"],
-                    "max_throughput": 500
-                },
-                "pharma": {
-                    "regions": ["us-east-1", "eu-west-1"],
-                    "max_throughput": 750
-                }
-            },
-            "global_settings": {
-                "default_timeout": 300,
-                "max_retries": 3
-            }
+    def _initialize_default_profiles(self):
+        """Initialize default inference profiles for common use cases."""
+        # These profiles are created via AWS CLI and are now ACTIVE
+        # See infrastructure/inference-profiles-summary.md for ARNs
+        default_profiles = {
+            # Tier-based profiles
+            "dcisionai-gold-tier-production": InferenceProfile(
+                profile_arn="arn:aws:bedrock:us-east-1:808953421331:application-inference-profile/it9ypms13aut",
+                profile_name="dcisionai-gold-tier-production",
+                regions=["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"],
+                model_id=self.default_model,
+                optimization_focus=OptimizationFocus.LATENCY,
+                sla_tier="gold"
+            ),
+            "dcisionai-pro-tier-production": InferenceProfile(
+                profile_arn="arn:aws:bedrock:us-east-1:808953421331:application-inference-profile/d0fxmnqls2sx",
+                profile_name="dcisionai-pro-tier-production",
+                regions=["us-east-1", "us-west-2", "eu-west-1"],
+                model_id=self.default_model,
+                optimization_focus=OptimizationFocus.COST,
+                sla_tier="pro"
+            ),
+            "dcisionai-free-tier-production": InferenceProfile(
+                profile_arn="arn:aws:bedrock:us-east-1:808953421331:application-inference-profile/y5bn061vrmh5",
+                profile_name="dcisionai-free-tier-production",
+                regions=["us-east-1", "us-west-2"],
+                model_id=self.default_model,
+                optimization_focus=OptimizationFocus.COST,
+                sla_tier="free"
+            ),
+            
+            # Domain-specific profiles
+            "dcisionai-manufacturing-latency-production": InferenceProfile(
+                profile_arn="arn:aws:bedrock:us-east-1:808953421331:application-inference-profile/kkz1l5bo5td8",
+                profile_name="dcisionai-manufacturing-latency-production",
+                regions=["us-east-1", "us-west-2"],
+                model_id=self.default_model,
+                optimization_focus=OptimizationFocus.LATENCY
+            ),
+            "dcisionai-manufacturing-cost-production": InferenceProfile(
+                profile_arn="arn:aws:bedrock:us-east-1:808953421331:application-inference-profile/ero4w7afnw84",
+                profile_name="dcisionai-manufacturing-cost-production",
+                regions=["us-east-1", "us-west-2", "eu-west-1"],
+                model_id=self.default_model,
+                optimization_focus=OptimizationFocus.COST
+            ),
+            "dcisionai-manufacturing-reliability-production": InferenceProfile(
+                profile_arn="arn:aws:bedrock:us-east-1:808953421331:application-inference-profile/m7g5wcozgkm0",
+                profile_name="dcisionai-manufacturing-reliability-production",
+                regions=["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"],
+                model_id=self.default_model,
+                optimization_focus=OptimizationFocus.RELIABILITY
+            )
         }
+        
+        self.inference_profiles.update(default_profiles)
+        logger.info(f"✅ Initialized {len(default_profiles)} tenant-dedicated inference profiles")
     
-    def _start_background_tasks(self):
-        """Start background tasks for monitoring and optimization."""
+    async def start(self):
+        """Start the inference manager."""
         try:
-            # Create background tasks
-            self._background_tasks = [
-                asyncio.create_task(self._update_region_metrics()),
-                asyncio.create_task(self._cleanup_old_requests()),
-                asyncio.create_task(self._update_performance_cache())
-            ]
-            self.logger.info("✅ Background tasks started successfully")
+            # Refresh inference profiles from AWS
+            await self._refresh_inference_profiles()
+            
+            logger.info("✅ Bedrock Inference Profile Manager started successfully")
+            
         except Exception as e:
-            self.logger.error(f"❌ Failed to start background tasks: {e}")
+            logger.error(f"❌ Failed to start Bedrock Inference Profile Manager: {e}")
             raise
     
-    async def _update_region_metrics(self):
-        """Update region metrics every minute."""
-        while self._running:
-            try:
-                await self._refresh_region_metrics()
-                await asyncio.sleep(60)  # Update every minute
-            except Exception as e:
-                self.logger.error(f"❌ Error updating region metrics: {e}")
-                await asyncio.sleep(300)  # Wait 5 minutes on error
-    
-    async def _refresh_region_metrics(self):
-        """Refresh metrics for all regions."""
+    async def stop(self):
+        """Stop the inference manager."""
         try:
-            for domain, profile in self.config.get("inference_profiles", {}).items():
-                for region in profile.get("regions", []):
-                    metrics = await self._get_region_metrics(region, domain)
-                    self.region_metrics[region] = metrics
+            # Clear caches
+            self.inference_profiles.clear()
+            self.profile_cache_expiry = None
             
-            # Ensure we have at least some basic metrics for testing
-            if not self.region_metrics:
-                self.logger.warning("⚠️ No region metrics available, initializing with default metrics")
-                self._initialize_default_region_metrics()
-                
-        except Exception as e:
-            self.logger.error(f"❌ Failed to refresh region metrics: {e}")
-            # Initialize default metrics as fallback
-            self._initialize_default_region_metrics()
-    
-    def _initialize_default_region_metrics(self):
-        """Initialize default region metrics for testing and fallback scenarios."""
-        default_regions = ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
-        
-        for region in default_regions:
-            self.region_metrics[region] = RegionMetrics(
-                region=region,
-                current_load=0.3,  # 30% load
-                latency_ms=500.0,  # 500ms latency
-                quota_usage=0.4,   # 40% quota usage
-                error_rate=0.01,   # 1% error rate
-                cost_per_token=0.0008,  # $0.0008 per token
-                last_updated=datetime.now(),
-                health_status="healthy"
-            )
-        
-        self.logger.info(f"✅ Initialized {len(default_regions)} default region metrics")
-    
-    async def _get_region_metrics(self, region: str, domain: str) -> RegionMetrics:
-        """Get current metrics for a specific region."""
-        try:
-            # Get CloudWatch metrics for the region
-            current_load = await self._get_region_load(region, domain)
-            latency = await self._get_region_latency(region)
-            quota_usage = await self._get_quota_usage(region, domain)
-            error_rate = await self._get_error_rate(region, domain)
-            cost_per_token = await self._get_cost_per_token(region, domain)
-            
-            # Determine health status
-            health_status = self._determine_health_status(
-                current_load, latency, quota_usage, error_rate
-            )
-            
-            return RegionMetrics(
-                region=region,
-                current_load=current_load,
-                latency_ms=latency,
-                quota_usage=quota_usage,
-                error_rate=error_rate,
-                cost_per_token=cost_per_token,
-                last_updated=datetime.now(),
-                health_status=health_status
-            )
+            logger.info("✅ Bedrock Inference Profile Manager stopped successfully")
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to get metrics for region {region}: {e}")
-            # Return degraded metrics
-            return RegionMetrics(
-                region=region,
-                current_load=0.5,
-                latency_ms=5000,
-                quota_usage=0.5,
-                error_rate=0.1,
-                cost_per_token=0.001,
-                last_updated=datetime.now(),
-                health_status="degraded"
-            )
-    
-    async def _get_region_load(self, region: str, domain: str) -> float:
-        """Get current load for a region (0.0 to 1.0)."""
-        try:
-            # Query CloudWatch for current request count vs capacity
-            response = self.cloudwatch_client.get_metric_statistics(
-                Namespace="AWS/Bedrock",
-                MetricName="RequestCount",
-                Dimensions=[
-                    {"Name": "Region", "Value": region},
-                    {"Name": "Domain", "Value": domain}
-                ],
-                StartTime=datetime.now() - timedelta(minutes=5),
-                EndTime=datetime.now(),
-                Period=300,
-                Statistics=["Sum"]
-            )
-            
-            if response["Datapoints"]:
-                current_requests = response["Datapoints"][0]["Sum"]
-                max_capacity = self.config["inference_profiles"][domain]["max_throughput"]
-                return min(current_requests / max_capacity, 1.0)
-            
-            return 0.5  # Default to 50% if no data
-            
-        except Exception as e:
-            self.logger.warning(f"⚠️ Could not get load for region {region}: {e}")
-            return 0.5
-    
-    async def _get_region_latency(self, region: str) -> float:
-        """Get current latency for a region in milliseconds."""
-        try:
-            # Query CloudWatch for latency metrics
-            response = self.cloudwatch_client.get_metric_statistics(
-                Namespace="AWS/Bedrock",
-                MetricName="ResponseTime",
-                Dimensions=[{"Name": "Region", "Value": region}],
-                StartTime=datetime.now() - timedelta(minutes=5),
-                EndTime=datetime.now(),
-                Period=300,
-                Statistics=["Average"]
-            )
-            
-            if response["Datapoints"]:
-                return response["Datapoints"][0]["Average"]
-            
-            return 1000.0  # Default to 1 second
-            
-        except Exception as e:
-            self.logger.warning(f"⚠️ Could not get latency for region {region}: {e}")
-            return 1000.0
-    
-    async def _get_quota_usage(self, region: str, domain: str) -> float:
-        """Get current quota usage for a region (0.0 to 1.0)."""
-        try:
-            # Query CloudWatch for quota usage
-            response = self.cloudwatch_client.get_metric_statistics(
-                Namespace="AWS/Bedrock",
-                MetricName="QuotaUsage",
-                Dimensions=[
-                    {"Name": "Region", "Value": region},
-                    {"Name": "Domain", "Value": domain}
-                ],
-                StartTime=datetime.now() - timedelta(minutes=5),
-                EndTime=datetime.now(),
-                Period=300,
-                Statistics=["Maximum"]
-            )
-            
-            if response["Datapoints"]:
-                return response["Datapoints"][0]["Maximum"] / 100.0  # Convert percentage
-            
-            return 0.5  # Default to 50%
-            
-        except Exception as e:
-            self.logger.warning(f"⚠️ Could not get quota usage for region {region}: {e}")
-            return 0.5
-    
-    async def _get_error_rate(self, region: str, domain: str) -> float:
-        """Get current error rate for a region (0.0 to 1.0)."""
-        try:
-            # Query CloudWatch for error rate
-            response = self.cloudwatch_client.get_metric_statistics(
-                Namespace="AWS/Bedrock",
-                MetricName="ErrorRate",
-                Dimensions=[
-                    {"Name": "Region", "Value": region},
-                    {"Name": "Domain", "Value": domain}
-                ],
-                StartTime=datetime.now() - timedelta(minutes=5),
-                EndTime=datetime.now(),
-                Period=300,
-                Statistics=["Average"]
-            )
-            
-            if response["Datapoints"]:
-                return response["Datapoints"][0]["Average"] / 100.0  # Convert percentage
-            
-            return 0.01  # Default to 1%
-            
-        except Exception as e:
-            self.logger.warning(f"⚠️ Could not get error rate for region {region}: {e}")
-            return 0.01
-    
-    async def _get_cost_per_token(self, region: str, domain: str) -> float:
-        """Get current cost per token for a region."""
-        # This would typically query AWS Cost Explorer or similar
-        # For now, return estimated costs based on region
-        cost_map = {
-            "us-east-1": 0.0008,
-            "us-west-2": 0.0008,
-            "eu-west-1": 0.0009,
-            "ap-southeast-1": 0.0010
-        }
-        return cost_map.get(region, 0.0010)
-    
-    def _determine_health_status(self, load: float, latency: float, 
-                                quota: float, error_rate: float) -> str:
-        """Determine health status based on metrics."""
-        if error_rate > 0.1 or quota > 0.9 or latency > 10000:
-            return "unhealthy"
-        elif error_rate > 0.05 or quota > 0.8 or latency > 5000:
-            return "degraded"
-        else:
-            return "healthy"
-    
-    def select_optimal_region(self, request: InferenceRequest) -> str:
-        """
-        Select the optimal region for an inference request.
-        
-        Selection criteria:
-        1. Health status (healthy > degraded > unhealthy)
-        2. Current load (lower is better)
-        3. Latency (lower is better)
-        4. Quota availability (lower usage is better)
-        5. Cost optimization
-        6. Geographic proximity (if user location provided)
-        """
-        domain = request.domain
-        profile = self.config["inference_profiles"].get(domain, {})
-        available_regions = profile.get("regions", ["us-east-1"])
-        
-        if not available_regions:
-            self.logger.warning(f"⚠️ No regions available for domain {domain}")
-            return "us-east-1"  # Fallback
-        
-        # Filter regions by health status - ensure proper access to region_metrics
-        healthy_regions = []
-        degraded_regions = []
-        
-        for region in available_regions:
-            if region in self.region_metrics:
-                metrics = self.region_metrics[region]
-                if hasattr(metrics, 'health_status'):
-                    if metrics.health_status == "healthy":
-                        healthy_regions.append(region)
-                    elif metrics.health_status == "degraded":
-                        degraded_regions.append(region)
-                else:
-                    # If metrics don't have health_status, treat as degraded
-                    degraded_regions.append(region)
-            else:
-                # If region not in metrics, treat as degraded
-                degraded_regions.append(region)
-        
-        # Prioritize healthy regions
-        candidate_regions = healthy_regions + degraded_regions
-        
-        if not candidate_regions:
-            self.logger.warning(f"⚠️ No healthy regions available for domain {domain}")
-            return available_regions[0]  # Use first available as fallback
-        
-        # Score each region
-        region_scores = []
-        for region in candidate_regions:
-            metrics = self.region_metrics.get(region)
-            if not metrics:
-                continue
-            
-            # Ensure metrics has required attributes
-            if not hasattr(metrics, 'current_load') or not hasattr(metrics, 'latency_ms'):
-                continue
-            
-            # Calculate score (lower is better)
-            score = (
-                metrics.current_load * 0.3 +      # 30% weight
-                (metrics.latency_ms / 10000) * 0.3 +  # 30% weight
-                metrics.quota_usage * 0.2 +       # 20% weight
-                metrics.cost_per_token * 1000 * 0.1 +  # 10% weight
-                metrics.error_rate * 0.1          # 10% weight
-            )
-            
-            # Geographic proximity bonus (if user location provided)
-            if request.user_location:
-                proximity_bonus = self._calculate_proximity_bonus(region, request.user_location)
-                score -= proximity_bonus
-            
-            region_scores.append((region, score))
-        
-        # Sort by score and return best region
-        if region_scores:
-            region_scores.sort(key=lambda x: x[1])
-            optimal_region = region_scores[0][0]
-            
-            self.logger.info(f"🎯 Selected region {optimal_region} for {domain} request "
-                           f"(score: {region_scores[0][1]:.4f})")
-            
-            return optimal_region
-        else:
-            # Fallback if no valid regions found
-            self.logger.warning(f"⚠️ No valid regions found for {domain}, using fallback")
-            return available_regions[0]
-    
-    def _calculate_proximity_bonus(self, region: str, user_location: str) -> float:
-        """Calculate proximity bonus for region selection."""
-        # Simple proximity mapping - in production, use proper geolocation
-        proximity_map = {
-            "us-east-1": {"us": 0.1, "eu": 0.05, "ap": 0.0},
-            "us-west-2": {"us": 0.1, "eu": 0.05, "ap": 0.05},
-            "eu-west-1": {"us": 0.05, "eu": 0.1, "ap": 0.05},
-            "ap-southeast-1": {"us": 0.0, "eu": 0.05, "ap": 0.1}
-        }
-        
-        # Determine user continent (simplified)
-        if user_location.lower() in ["us", "usa", "united states", "canada"]:
-            continent = "us"
-        elif user_location.lower() in ["eu", "europe", "uk", "germany", "france"]:
-            continent = "eu"
-        elif user_location.lower() in ["ap", "asia", "japan", "singapore", "australia"]:
-            continent = "ap"
-        else:
-            continent = "us"  # Default
-        
-        return proximity_map.get(region, {}).get(continent, 0.0)
+            logger.error(f"❌ Error stopping Bedrock Inference Profile Manager: {e}")
     
     async def execute_inference(self, request: InferenceRequest) -> InferenceResult:
         """
-        Execute inference with optimal region selection and monitoring.
+        Execute inference using AWS Bedrock Inference Profiles.
+        
+        Args:
+            request: Inference request with tenant context
+            
+        Returns:
+            Inference result with performance metrics
         """
         start_time = time.time()
         
         try:
-            # Select optimal region
-            optimal_region = self.select_optimal_region(request)
+            # Validate tenant quotas
+            if not await self._check_tenant_quotas(request.tenant_context):
+                return InferenceResult(
+                    request_id=request.request_id,
+                    success=False,
+                    result={},
+                    profile_used="none",
+                    region_used="none",
+                    execution_time=0.0,
+                    cost=0.0,
+                    error="Tenant quota exceeded"
+                )
             
-            # Execute inference in selected region
-            result = await self._execute_in_region(request, optimal_region)
+            # Select or use specified inference profile
+            profile = await self._select_inference_profile(request)
+            if not profile:
+                return InferenceResult(
+                    request_id=request.request_id,
+                    success=False,
+                    result={},
+                    profile_used="none",
+                    region_used="none",
+                    execution_time=0.0,
+                    cost=0.0,
+                    error="No suitable inference profile available"
+                )
             
-            # Calculate execution time and cost
+            # Execute inference using the profile
+            result = await self._execute_with_profile(request, profile)
+            
+            # Update metrics
             execution_time = time.time() - start_time
-            cost = self._calculate_request_cost(request, optimal_region, execution_time)
+            result.execution_time = execution_time
+            result.completed_at = datetime.utcnow()
             
-            # Create result object
-            inference_result = InferenceResult(
-                request_id=request.request_id,
-                success=result.get("success", False),
-                data=result.get("data"),
-                region_used=optimal_region,
-                execution_time=execution_time,
-                cost=cost,
-                metadata={
-                    "domain": request.domain,
-                    "request_type": request.request_type,
-                    "user_location": request.user_location,
-                    "priority": request.priority
-                }
-            )
+            # Store results
+            self.result_history.append(result)
             
-            # Log success
-            self.logger.info(f"✅ Inference completed in {optimal_region} "
-                           f"({execution_time:.2f}s, ${cost:.4f})")
+            # Update tenant usage
+            await self._update_tenant_usage(request.tenant_context, result)
             
-            return inference_result
+            logger.info(f"✅ Inference completed using profile {profile.profile_name} in {execution_time:.2f}s")
+            
+            return result
             
         except Exception as e:
             execution_time = time.time() - start_time
-            self.logger.error(f"❌ Inference failed: {e}")
+            logger.error(f"❌ Inference failed: {e}")
             
             return InferenceResult(
                 request_id=request.request_id,
                 success=False,
-                data=None,
-                region_used="unknown",
+                result={},
+                profile_used="none",
+                region_used="none",
                 execution_time=execution_time,
                 cost=0.0,
-                metadata={"error": str(e)}
+                error=str(e)
             )
     
-    async def _execute_in_region(self, request: InferenceRequest, region: str) -> Dict[str, Any]:
-        """Execute inference in a specific region."""
-        # This would integrate with the actual inference service
-        # For now, simulate the execution
-        
-        # Simulate region-specific processing time
-        region_latency = self.region_metrics.get(region, {}).latency_ms or 1000
-        await asyncio.sleep(region_latency / 1000)  # Convert to seconds
-        
-        # Simulate successful inference
-        return {
-            "success": True,
-            "data": f"Inference result for {request.domain} in {region}",
-            "region": region
-        }
+    async def _select_inference_profile(self, request: InferenceRequest) -> Optional[InferenceProfile]:
+        """Select the appropriate inference profile for the request."""
+        try:
+            # If specific profile requested, use it
+            if request.inference_profile:
+                profile = self.inference_profiles.get(request.inference_profile)
+                if profile:
+                    return profile
+                # Try to find by name if ARN not found
+                for p in self.inference_profiles.values():
+                    if p.profile_name == request.inference_profile:
+                        return p
+            
+            # Auto-select based on domain and tenant preferences
+            domain = request.domain
+            tenant = request.tenant_context
+            
+            # Check for domain-specific profiles
+            domain_profiles = [
+                p for p in self.inference_profiles.values()
+                if domain in p.profile_name.lower()
+            ]
+            
+            if domain_profiles:
+                # Select based on tenant SLA tier
+                if tenant.sla_tier.value == "gold":
+                    # Gold tier gets reliability-focused profiles
+                    reliability_profiles = [p for p in domain_profiles 
+                                         if p.optimization_focus == OptimizationFocus.RELIABILITY]
+                    if reliability_profiles:
+                        return reliability_profiles[0]
+                
+                # Default to latency-optimized for most use cases
+                latency_profiles = [p for p in domain_profiles 
+                                  if p.optimization_focus == OptimizationFocus.LATENCY]
+                if latency_profiles:
+                    return latency_profiles[0]
+                
+                # Fallback to any available profile
+                return domain_profiles[0]
+            
+            # Fallback to default profiles
+            default_profile = self.inference_profiles.get("dcisionai-manufacturing-latency")
+            if default_profile:
+                logger.info(f"🎯 Using default inference profile: {default_profile.profile_name}")
+                return default_profile
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error selecting inference profile: {e}")
+            return None
     
-    def _calculate_request_cost(self, request: InferenceRequest, region: str, 
-                               execution_time: float) -> float:
-        """Calculate the cost of a request."""
-        base_cost = self.region_metrics.get(region, {}).cost_per_token or 0.001
-        
-        # Estimate token count based on request size
-        payload_size = len(str(request.payload))
-        estimated_tokens = payload_size // 4  # Rough estimate
-        
-        # Add execution time cost
-        time_cost = execution_time * 0.0001  # $0.0001 per second
-        
-        return (base_cost * estimated_tokens) + time_cost
-    
-    async def _cleanup_old_requests(self):
-        """Clean up old request history."""
-        while self._running:
-            try:
-                cutoff_time = datetime.now() - timedelta(hours=24)
-                self.request_history = [
-                    req for req in self.request_history 
-                    if req.created_at > cutoff_time
-                ]
-                await asyncio.sleep(3600)  # Clean up every hour
-            except Exception as e:
-                self.logger.error(f"❌ Error cleaning up requests: {e}")
-                await asyncio.sleep(3600)
-    
-    async def _update_performance_cache(self):
-        """Update performance cache with recent metrics."""
-        while self._running:
-            try:
-                # Update cache with recent performance data
-                self.performance_cache = {
-                    "last_updated": datetime.now().isoformat(),
-                    "total_requests": len(self.request_history),
-                    "region_health": {
-                        region: metrics.health_status 
-                        for region, metrics in self.region_metrics.items()
-                    },
-                    "average_latency": self._calculate_average_latency(),
-                    "total_cost": self._calculate_total_cost()
+    async def _execute_with_profile(self, request: InferenceRequest, 
+                                   profile: InferenceProfile) -> InferenceResult:
+        """Execute inference using the specified inference profile."""
+        try:
+            # Prepare the request payload for Bedrock
+            bedrock_payload = self._prepare_bedrock_payload(request, profile)
+            
+            # Execute via Bedrock using the inference profile
+            response = await self._invoke_bedrock_with_profile(profile, bedrock_payload)
+            
+            # Parse response and extract metrics
+            result_data = self._parse_bedrock_response(response)
+            
+            # Estimate cost based on profile and usage
+            estimated_cost = self._estimate_cost(profile, result_data)
+            
+            # Determine which region was actually used (AWS handles this automatically)
+            region_used = profile.regions[0]  # AWS will route to optimal region
+            
+            return InferenceResult(
+                request_id=request.request_id,
+                success=True,
+                result=result_data,
+                profile_used=profile.profile_name,
+                region_used=region_used,
+                execution_time=0.0,  # Will be set by caller
+                cost=estimated_cost,
+                metadata={
+                    "profile_arn": profile.profile_arn,
+                    "model_id": profile.model_id,
+                    "optimization_focus": profile.optimization_focus.value
                 }
-                await asyncio.sleep(300)  # Update every 5 minutes
-            except Exception as e:
-                self.logger.error(f"❌ Error updating performance cache: {e}")
-                await asyncio.sleep(300)
+            )
+            
+        except Exception as e:
+            logger.error(f"Error executing with profile {profile.profile_name}: {e}")
+            raise
     
-    def _calculate_average_latency(self) -> float:
-        """Calculate average latency across all regions."""
-        latencies = [m.latency_ms for m in self.region_metrics.values() if m.latency_ms]
-        return sum(latencies) / len(latencies) if latencies else 0.0
+    def _prepare_bedrock_payload(self, request: InferenceRequest, 
+                                 profile: InferenceProfile) -> Dict[str, Any]:
+        """Prepare the request payload for AWS Bedrock."""
+        # Format depends on the model being used
+        if "claude" in profile.model_id.lower():
+            # Claude format
+            return {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 4096,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": f"Domain: {request.domain}\nRequest Type: {request.request_type}\nPayload: {json.dumps(request.payload)}"
+                            }
+                        ]
+                    }
+                ]
+            }
+        else:
+            # Generic format
+            return {
+                "prompt": f"Domain: {request.domain}\nRequest Type: {request.request_type}\nPayload: {json.dumps(request.payload)}",
+                "max_tokens": 4096
+            }
     
-    def _calculate_total_cost(self) -> float:
-        """Calculate total cost from recent requests."""
-        # This would typically query a cost database
-        # For now, return estimated cost
-        return len(self.request_history) * 0.01  # $0.01 per request estimate
+    async def _invoke_bedrock_with_profile(self, profile: InferenceProfile, 
+                                          payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Invoke AWS Bedrock using the inference profile."""
+        try:
+            # Use the inference profile ARN as the model ID
+            # AWS will automatically route to the optimal region
+            response = self.bedrock_runtime.invoke_model(
+                modelId=profile.profile_arn,  # Use profile ARN instead of model ID
+                body=json.dumps(payload)
+            )
+            
+            # Parse response body
+            response_body = json.loads(response['body'].read())
+            return response_body
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == 'ThrottlingException':
+                logger.warning(f"⚠️ Throttling detected for profile {profile.profile_name}")
+                # Could implement retry logic here
+                raise
+            else:
+                logger.error(f"❌ Bedrock API error: {error_code} - {e}")
+                raise
+        except Exception as e:
+            logger.error(f"❌ Unexpected error invoking Bedrock: {e}")
+            raise
+    
+    def _parse_bedrock_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
+        """Parse the Bedrock API response."""
+        try:
+            # Extract content based on model type
+            if 'content' in response:
+                # Claude format
+                content = response['content'][0]['text']
+            elif 'completion' in response:
+                # Generic completion format
+                content = response['completion']
+            else:
+                content = str(response)
+            
+            return {
+                "content": content,
+                "model_response": response,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Error parsing Bedrock response: {e}")
+            return {
+                "content": "Error parsing response",
+                "error": str(e),
+                "raw_response": response
+            }
+    
+    def _estimate_cost(self, profile: InferenceProfile, result_data: Dict[str, Any]) -> float:
+        """Estimate the cost of the inference request."""
+        # This is a simplified cost estimation
+        # In production, you'd use AWS Cost Explorer or similar
+        
+        base_cost = 0.001  # Base cost per request
+        
+        # Adjust based on optimization focus
+        if profile.optimization_focus == OptimizationFocus.COST:
+            base_cost *= 0.8  # 20% discount for cost-optimized profiles
+        elif profile.optimization_focus == OptimizationFocus.RELIABILITY:
+            base_cost *= 1.2  # 20% premium for reliability-focused profiles
+        
+        # Adjust based on SLA tier
+        if profile.sla_tier == "gold":
+            base_cost *= 1.5  # 50% premium for gold tier
+        
+        return base_cost
+    
+    async def _check_tenant_quotas(self, tenant_context: TenantContext) -> bool:
+        """Check if tenant has available quotas."""
+        tenant_id = tenant_context.tenant_id
+        
+        # Get current usage
+        current_usage = self.tenant_quotas.get(tenant_id, {})
+        
+        # Check basic quotas (simplified)
+        if current_usage.get("requests_per_minute", 0) > 1000:
+            return False
+        
+        if current_usage.get("concurrent_jobs", 0) > 10:
+            return False
+        
+        return True
+    
+    async def _update_tenant_usage(self, tenant_context: TenantContext, result: InferenceResult):
+        """Update tenant usage metrics."""
+        tenant_id = tenant_context.tenant_id
+        
+        if tenant_id not in self.tenant_quotas:
+            self.tenant_quotas[tenant_id] = {}
+        
+        # Update usage counters
+        self.tenant_quotas[tenant_id]["total_requests"] = \
+            self.tenant_quotas[tenant_id].get("total_requests", 0) + 1
+        
+        self.tenant_quotas[tenant_id]["total_cost"] = \
+            self.tenant_quotas[tenant_id].get("total_cost", 0.0) + result.cost
+    
+    async def _refresh_inference_profiles(self):
+        """Refresh inference profiles from AWS Bedrock."""
+        try:
+            # Query AWS Bedrock for profile status
+            bedrock_client = boto3.client('bedrock', region_name=self.region)
+            
+            # Get all inference profiles
+            response = bedrock_client.list_inference_profiles()
+            profiles = response.get('inferenceProfileSummaries', [])
+            
+            # Check our profiles are still active
+            active_count = 0
+            for profile_name, profile in self.inference_profiles.items():
+                # Find matching profile in AWS
+                aws_profile = next((p for p in profiles if p.get('profileName') == profile_name), None)
+                if aws_profile and aws_profile.get('status') == 'ACTIVE':
+                    active_count += 1
+                    logger.debug(f"✅ {profile_name} is active in AWS")
+                else:
+                    logger.warning(f"⚠️ {profile_name} not found or inactive in AWS")
+            
+            # Mark cache as fresh
+            self.profile_cache_expiry = datetime.utcnow() + self.cache_ttl
+            
+            logger.info(f"✅ Refreshed inference profile status: {active_count}/{len(self.inference_profiles)} active")
+            
+        except Exception as e:
+            logger.error(f"Error refreshing inference profiles: {e}")
+            # Profiles are already configured with real ARNs, so this is not critical
     
     def get_performance_summary(self) -> Dict[str, Any]:
-        """Get a summary of current performance metrics."""
-        return {
-            "timestamp": datetime.now().isoformat(),
-            "region_metrics": {
-                region: {
-                    "health": metrics.health_status,
-                    "load": metrics.current_load,
-                    "latency_ms": metrics.latency_ms,
-                    "quota_usage": metrics.quota_usage,
-                    "error_rate": metrics.error_rate
+        """Get comprehensive performance metrics."""
+        total_requests = len(self.result_history)
+        successful_requests = len([r for r in self.result_history if r.success])
+        
+        if total_requests == 0:
+            return {"error": "No requests processed yet"}
+        
+        avg_execution_time = sum(r.execution_time for r in self.result_history) / total_requests
+        avg_cost = sum(r.cost for r in self.result_history) / total_requests
+        success_rate = successful_requests / total_requests
+        
+        # Profile usage statistics
+        profile_stats = {}
+        for profile_name in set(r.profile_used for r in self.result_history):
+            profile_results = [r for r in self.result_history if r.profile_used == profile_name]
+            if profile_results:
+                profile_stats[profile_name] = {
+                    "requests": len(profile_results),
+                    "avg_execution_time": sum(r.execution_time for r in profile_results) / len(profile_results),
+                    "avg_cost": sum(r.cost for r in profile_results) / len(profile_results)
                 }
-                for region, metrics in self.region_metrics.items()
-            },
-            "performance_cache": self.performance_cache,
-            "total_requests": len(self.request_history),
-            "config": {
-                "domains": list(self.config["inference_profiles"].keys()),
-                "total_regions": sum(len(p["regions"]) for p in self.config["inference_profiles"].values())
-            }
+        
+        return {
+            "total_requests": total_requests,
+            "successful_requests": successful_requests,
+            "success_rate": success_rate,
+            "avg_execution_time": avg_execution_time,
+            "avg_cost": avg_cost,
+            "profile_stats": profile_stats,
+            "tenant_quotas": self.tenant_quotas,
+            "available_profiles": [p.profile_name for p in self.inference_profiles.values()]
         }
     
     def health_check(self) -> Dict[str, Any]:
-        """Perform a health check of the inference manager."""
+        """Perform system health check."""
         try:
-            # Check if all regions have recent metrics
-            stale_threshold = datetime.now() - timedelta(minutes=10)
-            stale_regions = [
-                region for region, metrics in self.region_metrics.items()
-                if metrics.last_updated < stale_threshold
-            ]
-            
-            # Check overall health
-            unhealthy_regions = [
-                region for region, metrics in self.region_metrics.items()
-                if metrics.health_status == "unhealthy"
-            ]
-            
-            health_status = "healthy"
-            if unhealthy_regions:
-                health_status = "degraded"
-            if stale_regions:
-                health_status = "degraded"
+            # Check AWS credentials and connectivity
+            self.bedrock_client.list_foundation_models()
             
             return {
-                "status": health_status,
-                "timestamp": datetime.now().isoformat(),
-                "total_regions": len(self.region_metrics),
-                "healthy_regions": len([r for r in self.region_metrics.values() if r.health_status == "healthy"]),
-                "degraded_regions": len([r for r in self.region_metrics.values() if r.health_status == "degraded"]),
-                "unhealthy_regions": len([r for r in self.region_metrics.values() if r.health_status == "unhealthy"]),
-                "stale_regions": stale_regions,
-                "unhealthy_regions_list": unhealthy_regions
+                "status": "healthy",
+                "aws_connectivity": "connected",
+                "available_profiles": len(self.inference_profiles),
+                "region": self.region,
+                "cache_status": "fresh" if self.profile_cache_expiry and self.profile_cache_expiry > datetime.utcnow() else "stale"
             }
             
         except Exception as e:
             return {
                 "status": "unhealthy",
+                "aws_connectivity": "disconnected",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "region": self.region
             }
     
     async def cleanup(self):
-        """Cleanup resources and stop background tasks."""
+        """Cleanup inference manager resources."""
         try:
-            self.logger.info("🔄 Stopping background tasks...")
-            self._running = False
-            
-            # Cancel all background tasks
-            for task in self._background_tasks:
-                if not task.done():
-                    task.cancel()
-                    try:
-                        await task
-                    except asyncio.CancelledError:
-                        pass
-            
-            self.logger.info("✅ Inference Manager cleanup completed")
-            
+            await self.stop()
+            logger.info("✅ Bedrock Inference Profile Manager cleanup completed")
         except Exception as e:
-            self.logger.error(f"❌ Error during cleanup: {e}")
-    
-    def __del__(self):
-        """Destructor to ensure cleanup."""
-        try:
-            if hasattr(self, '_running') and self._running:
-                self.logger.warning("⚠️ Inference Manager destroyed without cleanup")
-        except:
-            pass
+            logger.error(f"❌ Error during cleanup: {e}")
+
+# Alias for backward compatibility
+InferenceManager = BedrockInferenceManager

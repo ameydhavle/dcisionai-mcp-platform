@@ -1,0 +1,190 @@
+# AWS AgentCore Configuration for DcisionAI Manufacturing MCP Server
+# Production deployment configuration with swarm architecture
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dcisionai-manufacturing-mcp
+  namespace: agentcore
+data:
+  # Application Configuration
+  APP_NAME: "DcisionAI Manufacturing MCP Server"
+  APP_VERSION: "2.0.0"
+  ENVIRONMENT: "production"
+  
+  # MCP Server Configuration
+  MCP_SERVER_HOST: "0.0.0.0"
+  MCP_SERVER_PORT: "8000"
+  MCP_SERVER_WORKERS: "4"
+  
+  # AWS Bedrock Configuration
+  AWS_REGION: "us-east-1"
+  BEDROCK_MODEL_ID: "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+  INFERENCE_PROFILE_ID: "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+  
+  # Swarm Architecture Configuration
+  INTENT_SWARM_AGENTS: "5"
+  DATA_SWARM_AGENTS: "3"
+  MODEL_SWARM_AGENTS: "4"
+  SOLVER_SWARM_AGENTS: "6"
+  
+  # Cross-Region Configuration
+  CROSS_REGION_ENABLED: "true"
+  REGIONS: "us-east-1,us-west-2,eu-west-1,ap-southeast-1,us-east-2,us-west-1"
+  
+  # Performance Configuration
+  MAX_PARALLEL_REQUESTS: "5"
+  REQUEST_TIMEOUT: "300"
+  RETRY_ATTEMPTS: "4"
+  RETRY_DELAY: "1"
+  
+  # Logging Configuration
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  ENABLE_METRICS: "true"
+  
+  # Security Configuration
+  ENABLE_AUTH: "true"
+  API_KEY_REQUIRED: "true"
+  
+  # Health Check Configuration
+  HEALTH_CHECK_INTERVAL: "30"
+  HEALTH_CHECK_TIMEOUT: "10"
+  HEALTH_CHECK_RETRIES: "3"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dcisionai-manufacturing-mcp
+  namespace: agentcore
+  labels:
+    app: dcisionai-manufacturing-mcp
+    version: "2.0.0"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dcisionai-manufacturing-mcp
+  template:
+    metadata:
+      labels:
+        app: dcisionai-manufacturing-mcp
+        version: "2.0.0"
+    spec:
+      containers:
+      - name: mcp-server
+        image: dcisionai-manufacturing-mcp:2.0.0
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: dcisionai-manufacturing-mcp
+              key: AWS_REGION
+        - name: BEDROCK_MODEL_ID
+          valueFrom:
+            configMapKeyRef:
+              name: dcisionai-manufacturing-mcp
+              key: BEDROCK_MODEL_ID
+        - name: INFERENCE_PROFILE_ID
+          valueFrom:
+            configMapKeyRef:
+              name: dcisionai-manufacturing-mcp
+              key: INFERENCE_PROFILE_ID
+        - name: CROSS_REGION_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: dcisionai-manufacturing-mcp
+              key: CROSS_REGION_ENABLED
+        - name: MAX_PARALLEL_REQUESTS
+          valueFrom:
+            configMapKeyRef:
+              name: dcisionai-manufacturing-mcp
+              key: MAX_PARALLEL_REQUESTS
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: dcisionai-manufacturing-mcp
+              key: LOG_LEVEL
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dcisionai-manufacturing-mcp-service
+  namespace: agentcore
+  labels:
+    app: dcisionai-manufacturing-mcp
+spec:
+  selector:
+    app: dcisionai-manufacturing-mcp
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dcisionai-manufacturing-mcp-ingress
+  namespace: agentcore
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  tls:
+  - hosts:
+    - dcisionai-manufacturing-mcp.agentcore.local
+    secretName: dcisionai-manufacturing-mcp-tls
+  rules:
+  - host: dcisionai-manufacturing-mcp.agentcore.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dcisionai-manufacturing-mcp-service
+            port:
+              number: 8000

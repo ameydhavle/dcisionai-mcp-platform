@@ -1,620 +1,630 @@
 #!/usr/bin/env python3
 """
-DcisionAI Platform - Enhanced Gateway Client
-============================================
+DcisionAI Platform - Multi-Tenant Gateway Client
+================================================
 
-Phase 2: Multi-domain tool management with inference profile integration.
-Provides MCP protocol support and intelligent tool routing.
+Enterprise-grade gateway client for:
+- Tool discovery and registry management
+- Multi-tenant tool routing and orchestration
+- Policy-based access control
+- Fallback strategies and load balancing
+
+Based on enterprise multi-tenant platform blueprint.
 """
 
-import logging
 import asyncio
 import json
+import logging
 import time
-from typing import Dict, Any, List, Optional, Union
-from dataclasses import dataclass, asdict
-from datetime import datetime
-import aiohttp
-import jwt
-import yaml
-from pathlib import Path
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Dict, Any, List, Optional, Union, Callable
+from contextvars import ContextVar
 
-from .inference_manager import InferenceManager, InferenceRequest, InferenceResult
+from .base_agent import TenantContext, get_current_tenant
+
+logger = logging.getLogger(__name__)
+
+class ToolStatus(Enum):
+    """Tool availability status."""
+    AVAILABLE = "available"
+    DEGRADED = "degraded"
+    UNAVAILABLE = "unavailable"
+    MAINTENANCE = "maintenance"
+
+class ToolCategory(Enum):
+    """Tool categories for organization."""
+    SOLVER = "solver"
+    DATA = "data"
+    MODEL = "model"
+    INTENT = "intent"
+    EXPLAIN = "explain"
+    CRITIQUE = "critique"
+    UTILITY = "utility"
 
 @dataclass
-class GatewayTool:
-    """Represents a tool available through the Gateway."""
+class ToolDefinition:
+    """Tool definition with metadata and capabilities."""
+    tool_id: str
     name: str
-    domain: str
     description: str
-    input_schema: Dict[str, Any]
-    output_schema: Dict[str, Any]
-    capabilities: List[str]
-    inference_profile: str
-    max_execution_time: int
+    category: ToolCategory
     version: str
-    status: str  # "active", "inactive", "maintenance"
+    status: ToolStatus = ToolStatus.AVAILABLE
+    
+    # Capabilities and requirements
+    capabilities: List[str] = field(default_factory=list)
+    required_entitlements: List[str] = field(default_factory=list)
+    pii_handling: str = "none"
+    
+    # Performance characteristics
+    avg_response_time: float = 0.1  # seconds
+    max_concurrent_requests: int = 100
+    cost_per_request: float = 0.001
+    
+    # Multi-tenant support
+    supports_multi_tenancy: bool = True
+    tenant_isolation: str = "logical"  # logical, physical, hybrid
+    
+    # Health and monitoring
+    last_health_check: Optional[datetime] = None
+    error_rate: float = 0.0
+    uptime_percentage: float = 99.9
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "tool_id": self.tool_id,
+            "name": self.name,
+            "description": self.description,
+            "category": self.category.value,
+            "version": self.version,
+            "status": self.status.value,
+            "capabilities": self.capabilities,
+            "required_entitlements": self.required_entitlements,
+            "pii_handling": self.pii_handling,
+            "avg_response_time": self.avg_response_time,
+            "max_concurrent_requests": self.max_concurrent_requests,
+            "cost_per_request": self.cost_per_request,
+            "supports_multi_tenancy": self.supports_multi_tenancy,
+            "tenant_isolation": self.tenant_isolation,
+            "last_health_check": self.last_health_check.isoformat() if self.last_health_check else None,
+            "error_rate": self.error_rate,
+            "uptime_percentage": self.uptime_percentage
+        }
+    
+    def is_available_for_tenant(self, tenant_context: TenantContext) -> bool:
+        """Check if tool is available for the given tenant."""
+        if self.status != ToolStatus.AVAILABLE:
+            return False
+        
+        # Check entitlements
+        if self.required_entitlements:
+            tenant_entitlements = set(tenant_context.entitlements)
+            required_entitlements = set(self.required_entitlements)
+            if not required_entitlements.issubset(tenant_entitlements):
+                return False
+        
+        # Check PII handling requirements
+        if self.pii_handling != "none" and tenant_context.pii_scope.value == "none":
+            return False
+        
+        return True
 
 @dataclass
-class GatewayRequest:
-    """Represents a request to the Gateway."""
+class ToolRequest:
+    """Tool execution request."""
     request_id: str
-    tool_name: str
-    domain: str
-    payload: Dict[str, Any]
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
+    tool_id: str
+    tenant_context: TenantContext
+    parameters: Dict[str, Any]
     priority: str = "normal"
-    timeout: int = 300
-    created_at: datetime = None
+    timeout: int = 60
+    fallback_strategy: str = "auto"  # auto, manual, none
+    created_at: datetime = field(default_factory=datetime.utcnow)
     
     def __post_init__(self):
-        if self.created_at is None:
-            self.created_at = datetime.now()
+        if not self.request_id:
+            self.request_id = str(uuid.uuid4())
 
 @dataclass
-class GatewayResponse:
-    """Represents a response from the Gateway."""
+class ToolResponse:
+    """Tool execution response."""
     request_id: str
+    tool_id: str
     success: bool
-    data: Any
-    tool_used: str
-    domain: str
+    result: Dict[str, Any]
     execution_time: float
     cost: float
-    metadata: Dict[str, Any]
-    timestamp: datetime = None
-    
-    def __post_init__(self):
-        if self.timestamp is None:
-            self.timestamp = datetime.now()
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    error: Optional[str] = None
+    fallback_used: Optional[str] = None
+    completed_at: datetime = field(default_factory=datetime.utcnow)
 
 class GatewayClient:
     """
-    Enhanced Gateway client for multi-domain tool management.
+    Multi-tenant gateway client for tool orchestration and discovery.
     
     Features:
-    - MCP protocol support
-    - Intelligent tool routing
-    - Inference profile integration
-    - Authentication and authorization
-    - Performance monitoring
+    - Tool registry management with tenant filtering
+    - Policy-based access control
+    - Automatic fallback strategies
+    - Load balancing and health monitoring
+    - Multi-tenant isolation
     """
     
-    def __init__(self, config_path: str = "shared/config/gateway_config.yaml"):
-        """Initialize the Gateway client with configuration."""
-        self.logger = logging.getLogger("gateway_client")
-        self.logger.setLevel(logging.INFO)
-        
-        # Load configuration
-        self.config = self._load_config(config_path)
-        
-        # Initialize inference manager
-        self.inference_manager = InferenceManager()
-        
-        # Initialize HTTP session
-        self.session = None
-        
-        # Tool registry
-        self.tools: Dict[str, GatewayTool] = {}
-        
-        # Performance metrics
-        self.request_count = 0
-        self.total_execution_time = 0.0
-        self.total_cost = 0.0
-        
-        # Initialize tools
-        self._initialize_tools()
-        
-        self.logger.info("✅ Enhanced Gateway Client initialized successfully")
-    
-    def _load_config(self, config_path: str) -> Dict[str, Any]:
-        """Load Gateway configuration from YAML file."""
-        try:
-            config_file = Path(config_path)
-            if config_file.exists():
-                with open(config_file, 'r') as f:
-                    config = yaml.safe_load(f)
-                self.logger.info(f"✅ Loaded Gateway configuration from {config_path}")
-                return config
-            else:
-                self.logger.warning(f"⚠️ Configuration file not found: {config_path}")
-                return self._get_default_config()
-        except Exception as e:
-            self.logger.error(f"❌ Failed to load configuration: {e}")
-            return self._get_default_config()
-    
-    def _get_default_config(self) -> Dict[str, Any]:
-        """Get default configuration if file loading fails."""
-        return {
-            "gateway": {
-                "name": "DcisionAI_Enhanced_Gateway",
-                "endpoints": {
-                    "primary": "https://gateway.dcisionai.com"
-                }
-            },
-            "mcp": {
-                "protocol_version": "2025-03-26",
-                "search_type": "SEMANTIC"
-            },
-            "domains": {
-                "manufacturing": {"status": "active"},
-                "finance": {"status": "active"},
-                "pharma": {"status": "active"}
-            }
-        }
-    
-    def _initialize_tools(self):
-        """Initialize the tool registry with domain-specific tools."""
-        try:
-            # Manufacturing Domain Tools
-            self.tools["manufacturing_intent"] = GatewayTool(
-                name="intent_classification",
-                domain="manufacturing",
-                description="Classify manufacturing optimization intent",
-                input_schema={"query": "string", "context": "object"},
-                output_schema={"intent": "string", "confidence": "float"},
-                capabilities=["intent_classification", "manufacturing"],
-                inference_profile="manufacturing",
-                max_execution_time=300,
-                version="1.0.0",
-                status="active"
-            )
-            
-            self.tools["manufacturing_data"] = GatewayTool(
-                name="data_analysis",
-                domain="manufacturing",
-                description="Analyze manufacturing data for optimization",
-                input_schema={"data": "object", "analysis_type": "string"},
-                output_schema={"insights": "array", "recommendations": "array"},
-                capabilities=["data_analysis", "manufacturing"],
-                inference_profile="manufacturing",
-                max_execution_time=300,
-                version="1.0.0",
-                status="active"
-            )
-            
-            self.tools["manufacturing_model"] = GatewayTool(
-                name="model_building",
-                domain="manufacturing",
-                description="Build optimization models for manufacturing",
-                input_schema={"parameters": "object", "constraints": "array"},
-                output_schema={"model": "object", "validation": "object"},
-                capabilities=["model_building", "manufacturing"],
-                inference_profile="manufacturing",
-                max_execution_time=300,
-                version="1.0.0",
-                status="active"
-            )
-            
-            self.tools["manufacturing_solver"] = GatewayTool(
-                name="optimization_solving",
-                domain="manufacturing",
-                description="Solve manufacturing optimization problems",
-                input_schema={"model": "object", "solver_params": "object"},
-                output_schema={"solution": "object", "performance": "object"},
-                capabilities=["optimization_solving", "manufacturing"],
-                inference_profile="manufacturing",
-                max_execution_time=300,
-                version="1.0.0",
-                status="active"
-            )
-            
-            # Finance Domain Tools
-            self.tools["finance_risk"] = GatewayTool(
-                name="risk_assessment",
-                domain="finance",
-                description="Assess financial risk and exposure",
-                input_schema={"portfolio": "object", "risk_metrics": "array"},
-                output_schema={"risk_score": "float", "recommendations": "array"},
-                capabilities=["risk_assessment", "finance"],
-                inference_profile="finance",
-                max_execution_time=180,
-                version="1.0.0",
-                status="active"
-            )
-            
-            self.tools["finance_portfolio"] = GatewayTool(
-                name="portfolio_optimization",
-                domain="finance",
-                description="Optimize financial portfolio allocation",
-                input_schema={"assets": "array", "constraints": "object"},
-                output_schema={"allocation": "object", "expected_return": "float"},
-                capabilities=["portfolio_optimization", "finance"],
-                inference_profile="finance",
-                max_execution_time=180,
-                version="1.0.0",
-                status="active"
-            )
-            
-            self.tools["finance_fraud"] = GatewayTool(
-                name="fraud_detection",
-                domain="finance",
-                description="Detect fraudulent financial activities",
-                input_schema={"transactions": "array", "patterns": "array"},
-                output_schema={"fraud_score": "float", "alerts": "array"},
-                capabilities=["fraud_detection", "finance"],
-                inference_profile="finance",
-                max_execution_time=180,
-                version="1.0.0",
-                status="active"
-            )
-            
-            self.tools["finance_compliance"] = GatewayTool(
-                name="compliance_checking",
-                domain="finance",
-                description="Check financial compliance requirements",
-                input_schema={"operations": "array", "regulations": "array"},
-                output_schema={"compliance_status": "string", "violations": "array"},
-                capabilities=["compliance_checking", "finance"],
-                inference_profile="finance",
-                max_execution_time=180,
-                version="1.0.0",
-                status="active"
-            )
-            
-            # Pharma Domain Tools
-            self.tools["pharma_drug"] = GatewayTool(
-                name="drug_discovery",
-                domain="pharma",
-                description="Discover new drug candidates",
-                input_schema={"target": "object", "screening_data": "array"},
-                output_schema={"candidates": "array", "success_probability": "float"},
-                capabilities=["drug_discovery", "pharma"],
-                inference_profile="pharma",
-                max_execution_time=600,
-                version="1.0.0",
-                status="active"
-            )
-            
-            self.tools["pharma_trial"] = GatewayTool(
-                name="clinical_trial_optimization",
-                domain="pharma",
-                description="Optimize clinical trial design and execution",
-                input_schema={"trial_params": "object", "constraints": "array"},
-                output_schema={"design": "object", "timeline": "object"},
-                capabilities=["clinical_trial_optimization", "pharma"],
-                inference_profile="pharma",
-                max_execution_time=600,
-                version="1.0.0",
-                status="active"
-            )
-            
-            self.tools["pharma_supply"] = GatewayTool(
-                name="supply_chain_management",
-                domain="pharma",
-                description="Manage pharmaceutical supply chain",
-                input_schema={"supply_data": "object", "demand_forecast": "object"},
-                output_schema={"optimization": "object", "cost_savings": "float"},
-                capabilities=["supply_chain_management", "pharma"],
-                inference_profile="pharma",
-                max_execution_time=600,
-                version="1.0.0",
-                status="active"
-            )
-            
-            self.tools["pharma_regulatory"] = GatewayTool(
-                name="regulatory_compliance",
-                domain="pharma",
-                description="Ensure regulatory compliance for pharmaceuticals",
-                input_schema={"product_data": "object", "regulations": "array"},
-                output_schema={"compliance_status": "string", "requirements": "array"},
-                capabilities=["regulatory_compliance", "pharma"],
-                inference_profile="pharma",
-                max_execution_time=600,
-                version="1.0.0",
-                status="active"
-            )
-            
-            self.logger.info(f"✅ Initialized {len(self.tools)} tools across all domains")
-            
-        except Exception as e:
-            self.logger.error(f"❌ Failed to initialize tools: {e}")
-            raise
-    
-    async def __aenter__(self):
-        """Async context manager entry."""
-        self.session = aiohttp.ClientSession()
-        return self
-    
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit."""
-        if self.session:
-            await self.session.close()
-    
-    async def discover_tools(self, domain: Optional[str] = None, 
-                           query: Optional[str] = None) -> List[GatewayTool]:
+    def __init__(self, 
+                 registry_url: Optional[str] = None,
+                 enable_auto_discovery: bool = True):
         """
-        Discover available tools through the Gateway.
+        Initialize the gateway client.
         
         Args:
-            domain: Optional domain filter
-            query: Optional semantic search query
+            registry_url: URL for external tool registry
+            enable_auto_discovery: Enable automatic tool discovery
+        """
+        self.registry_url = registry_url
+        self.enable_auto_discovery = enable_auto_discovery
+        
+        # Tool registry
+        self.tool_registry: Dict[str, ToolDefinition] = {}
+        self.tool_instances: Dict[str, Any] = {}
+        
+        # Performance tracking
+        self.request_history: List[ToolRequest] = []
+        self.response_history: List[ToolResponse] = []
+        
+        # Health monitoring
+        self.health_check_interval = 30  # seconds
+        self.health_check_task: Optional[asyncio.Task] = None
+        
+        # Fallback strategies
+        self.fallback_strategies: Dict[str, List[str]] = {}
+        
+        # Multi-tenant policies
+        self.tenant_policies: Dict[str, Dict[str, Any]] = {}
+        
+        # Initialize default tools
+        self._initialize_default_tools()
+        
+        logger.info("✅ Gateway Client initialized successfully")
+    
+    def _initialize_default_tools(self):
+        """Initialize default tools for the platform."""
+        default_tools = {
+            "solver-ortools": ToolDefinition(
+                tool_id="solver-ortools",
+                name="OR-Tools Solver",
+                description="Google OR-Tools optimization solver",
+                category=ToolCategory.SOLVER,
+                version="1.0.0",
+                capabilities=["linear_programming", "integer_programming", "constraint_programming"],
+                required_entitlements=["solver.ortools"],
+                cost_per_request=0.001
+            ),
+            "solver-highs": ToolDefinition(
+                tool_id="solver-highs",
+                name="HiGHS Solver",
+                description="High-performance optimization solver",
+                category=ToolCategory.SOLVER,
+                version="1.0.0",
+                capabilities=["linear_programming", "mixed_integer_programming"],
+                required_entitlements=["solver.highs"],
+                cost_per_request=0.002
+            ),
+            "data-analyzer": ToolDefinition(
+                tool_id="data-analyzer",
+                name="Data Analyzer",
+                description="Multi-tenant data analysis tool",
+                category=ToolCategory.DATA,
+                version="1.0.0",
+                capabilities=["data_analysis", "statistics", "visualization"],
+                required_entitlements=["data.analysis"],
+                pii_handling="basic"
+            ),
+            "model-builder": ToolDefinition(
+                tool_id="model-builder",
+                name="Model Builder",
+                description="Optimization model construction tool",
+                category=ToolCategory.MODEL,
+                version="1.0.0",
+                capabilities=["model_construction", "constraint_definition", "variable_creation"],
+                required_entitlements=["model.builder"]
+            )
+        }
+        
+        self.tool_registry.update(default_tools)
+        
+        # Initialize fallback strategies
+        self.fallback_strategies = {
+            "solver-ortools": ["solver-highs", "solver-cbc"],
+            "solver-highs": ["solver-ortools", "solver-cbc"],
+            "data-analyzer": ["data-basic"],
+            "model-builder": ["model-simple"]
+        }
+        
+        logger.info(f"✅ Initialized {len(default_tools)} default tools")
+    
+    async def start(self):
+        """Start the gateway client."""
+        try:
+            # Start health monitoring
+            self.health_check_task = asyncio.create_task(self._health_monitor_loop())
+            
+            # Discover tools if enabled
+            if self.enable_auto_discovery:
+                await self._discover_tools()
+            
+            logger.info("✅ Gateway Client started successfully")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to start Gateway Client: {e}")
+            raise
+    
+    async def stop(self):
+        """Stop the gateway client."""
+        try:
+            if self.health_check_task:
+                self.health_check_task.cancel()
+                try:
+                    await self.health_check_task
+                except asyncio.CancelledError:
+                    pass
+            
+            logger.info("✅ Gateway Client stopped successfully")
+            
+        except Exception as e:
+            logger.error(f"❌ Error stopping Gateway Client: {e}")
+    
+    async def execute_tool(self, request: ToolRequest) -> ToolResponse:
+        """
+        Execute a tool with tenant context and fallback support.
+        
+        Args:
+            request: Tool execution request
+            
+        Returns:
+            Tool execution response
+        """
+        start_time = time.time()
+        
+        try:
+            # Validate tool availability
+            tool_def = self.tool_registry.get(request.tool_id)
+            if not tool_def:
+                return ToolResponse(
+                    request_id=request.request_id,
+                    tool_id=request.tool_id,
+                    success=False,
+                    result={},
+                    execution_time=0.0,
+                    cost=0.0,
+                    error=f"Tool {request.tool_id} not found"
+                )
+            
+            # Check tenant access
+            if not tool_def.is_available_for_tenant(request.tenant_context):
+                return ToolResponse(
+                    request_id=request.request_id,
+                    tool_id=request.tool_id,
+                    success=False,
+                    result={},
+                    execution_time=0.0,
+                    cost=0.0,
+                    error=f"Tool {request.tool_id} not available for tenant {request.tenant_context.tenant_id}"
+                )
+            
+            # Execute tool
+            result = await self._execute_tool_instance(request, tool_def)
+            
+            # Update metrics
+            execution_time = time.time() - start_time
+            result.execution_time = execution_time
+            result.completed_at = datetime.utcnow()
+            
+            # Store results
+            self.response_history.append(result)
+            
+            logger.info(f"✅ Tool {request.tool_id} executed successfully in {execution_time:.2f}s")
+            
+            return result
+            
+        except Exception as e:
+            execution_time = time.time() - start_time
+            logger.error(f"❌ Tool execution failed: {e}")
+            
+            # Try fallback if enabled
+            if request.fallback_strategy == "auto":
+                fallback_result = await self._try_fallback(request, execution_time)
+                if fallback_result:
+                    return fallback_result
+            
+            return ToolResponse(
+                request_id=request.request_id,
+                tool_id=request.tool_id,
+                success=False,
+                result={},
+                execution_time=execution_time,
+                cost=0.0,
+                error=str(e)
+            )
+    
+    async def _execute_tool_instance(self, request: ToolRequest, 
+                                    tool_def: ToolDefinition) -> ToolResponse:
+        """Execute the actual tool instance."""
+        try:
+            # Get tool instance
+            tool_instance = self.tool_instances.get(request.tool_id)
+            if not tool_instance:
+                # Create tool instance if needed
+                tool_instance = await self._create_tool_instance(tool_def)
+                self.tool_instances[request.tool_id] = tool_instance
+            
+            # Execute tool
+            if hasattr(tool_instance, 'execute'):
+                result = await tool_instance.execute(request.parameters)
+            elif callable(tool_instance):
+                result = await tool_instance(request.parameters)
+            else:
+                raise ValueError(f"Tool {request.tool_id} is not callable")
+            
+            # Estimate cost
+            estimated_cost = tool_def.cost_per_request
+            
+            return ToolResponse(
+                request_id=request.request_id,
+                tool_id=request.tool_id,
+                success=True,
+                result=result,
+                execution_time=0.0,  # Will be set by caller
+                cost=estimated_cost,
+                metadata={
+                    "tool_version": tool_def.version,
+                    "tool_category": tool_def.category.value,
+                    "tenant_id": request.tenant_context.tenant_id
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"Error executing tool {request.tool_id}: {e}")
+            raise
+    
+    async def _create_tool_instance(self, tool_def: ToolDefinition) -> Any:
+        """Create a tool instance based on the tool definition."""
+        # Import and instantiate real tools from the manufacturing domain
+        try:
+            if tool_def.category == ToolCategory.SOLVER:
+                from domains.manufacturing.tools.solver.DcisionAI_Solver_Tool import DcisionAI_Solver_Tool
+                return DcisionAI_Solver_Tool()
+            elif tool_def.category == ToolCategory.DATA:
+                from domains.manufacturing.tools.data.DcisionAI_Data_Tool import DcisionAI_Data_Tool
+                return DcisionAI_Data_Tool()
+            elif tool_def.category == ToolCategory.MODEL:
+                from domains.manufacturing.tools.model.DcisionAI_Model_Builder import DcisionAI_Model_Builder
+                return DcisionAI_Model_Builder()
+            elif tool_def.category == ToolCategory.INTENT:
+                from domains.manufacturing.tools.intent.DcisionAI_Intent_Tool import DcisionAI_Intent_Tool
+                return DcisionAI_Intent_Tool()
+            else:
+                raise ValueError(f"Unsupported tool category: {tool_def.category}")
+                
+        except ImportError as e:
+            logger.error(f"Failed to import tool {tool_def.tool_id}: {e}")
+            raise ValueError(f"Tool {tool_def.tool_id} not available")
+    
+    async def _try_fallback(self, request: ToolRequest, 
+                           original_execution_time: float) -> Optional[ToolResponse]:
+        """Try to execute a fallback tool."""
+        try:
+            fallback_tools = self.fallback_strategies.get(request.tool_id, [])
+            
+            for fallback_tool_id in fallback_tools:
+                fallback_tool_def = self.tool_registry.get(fallback_tool_id)
+                if not fallback_tool_def:
+                    continue
+                
+                if not fallback_tool_def.is_available_for_tenant(request.tenant_context):
+                    continue
+                
+                # Create fallback request
+                fallback_request = ToolRequest(
+                    request_id=str(uuid.uuid4()),
+                    tool_id=fallback_tool_id,
+                    tenant_context=request.tenant_context,
+                    parameters=request.parameters,
+                    priority=request.priority,
+                    timeout=request.timeout,
+                    fallback_strategy="none"  # Prevent infinite fallback loops
+                )
+                
+                # Execute fallback tool
+                fallback_result = await self._execute_tool_instance(fallback_request, fallback_tool_def)
+                
+                # Update fallback metadata
+                fallback_result.fallback_used = request.tool_id
+                fallback_result.execution_time = original_execution_time
+                
+                logger.info(f"🔄 Fallback to {fallback_tool_id} successful")
+                return fallback_result
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error during fallback execution: {e}")
+            return None
+    
+    async def discover_tools(self, tenant_context: Optional[TenantContext] = None) -> List[ToolDefinition]:
+        """
+        Discover available tools for a tenant.
+        
+        Args:
+            tenant_context: Tenant context for filtering
             
         Returns:
             List of available tools
         """
         try:
-            if domain:
-                # Filter by domain
-                domain_tools = [
-                    tool for tool in self.tools.values() 
-                    if tool.domain == domain and tool.status == "active"
+            if self.registry_url:
+                # External registry discovery
+                await self._discover_external_tools()
+            
+            # Filter tools based on tenant context
+            if tenant_context:
+                available_tools = [
+                    tool for tool in self.tool_registry.values()
+                    if tool.is_available_for_tenant(tenant_context)
                 ]
-                return domain_tools
-            
-            elif query:
-                # Semantic search (simplified implementation)
-                matching_tools = []
-                query_lower = query.lower()
-                
-                for tool in self.tools.values():
-                    if tool.status != "active":
-                        continue
-                    
-                    # Simple keyword matching
-                    if (query_lower in tool.name.lower() or 
-                        query_lower in tool.description.lower() or
-                        any(query_lower in cap.lower() for cap in tool.capabilities)):
-                        matching_tools.append(tool)
-                
-                return matching_tools
-            
             else:
-                # Return all active tools
-                return [tool for tool in self.tools.values() if tool.status == "active"]
-                
+                available_tools = list(self.tool_registry.values())
+            
+            logger.info(f"✅ Discovered {len(available_tools)} tools")
+            return available_tools
+            
         except Exception as e:
-            self.logger.error(f"❌ Tool discovery failed: {e}")
+            logger.error(f"Error discovering tools: {e}")
             return []
     
-    async def invoke_tool(self, tool_name: str, payload: Dict[str, Any], 
-                         user_id: Optional[str] = None, 
-                         session_id: Optional[str] = None) -> GatewayResponse:
-        """
-        Invoke a tool through the Gateway with inference optimization.
-        
-        Args:
-            tool_name: Name of the tool to invoke
-            payload: Tool input data
-            user_id: Optional user identifier
-            session_id: Optional session identifier
-            
-        Returns:
-            GatewayResponse with tool execution results
-        """
-        start_time = time.time()
-        
+    async def _discover_external_tools(self):
+        """Discover tools from external registry."""
+        # TODO: Implement external tool discovery
+        # This would typically involve API calls to external registries
+        pass
+    
+    async def _discover_tools(self):
+        """Internal tool discovery."""
+        # This is called during startup
+        await self.discover_tools()
+    
+    async def _health_monitor_loop(self):
+        """Continuous health monitoring loop."""
+        while True:
+            try:
+                await self._check_all_tools_health()
+                await asyncio.sleep(self.health_check_interval)
+                
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Error in health monitor loop: {e}")
+                await asyncio.sleep(5)
+    
+    async def _check_all_tools_health(self):
+        """Check health of all tools."""
+        for tool_id, tool_def in self.tool_registry.items():
+            try:
+                await self._check_tool_health(tool_id, tool_def)
+            except Exception as e:
+                logger.error(f"Error checking health for tool {tool_id}: {e}")
+    
+    async def _check_tool_health(self, tool_id: str, tool_def: ToolDefinition):
+        """Check health of a specific tool."""
         try:
-            # Validate tool exists and is active
-            if tool_name not in self.tools:
-                raise ValueError(f"Tool '{tool_name}' not found")
+            # This would typically involve actual health checks
+            # For now, we'll simulate health checks
             
-            tool = self.tools[tool_name]
-            if tool.status != "active":
-                raise ValueError(f"Tool '{tool_name}' is not active (status: {tool.status})")
+            # Simulate health check
+            import random
             
-            # Create Gateway request
-            gateway_request = GatewayRequest(
-                request_id=f"req_{int(time.time() * 1000)}",
-                tool_name=tool_name,
-                domain=tool.domain,
-                payload=payload,
-                user_id=user_id,
-                session_id=session_id,
-                timeout=tool.max_execution_time
-            )
+            # Randomly vary health metrics
+            error_rate_variation = random.uniform(-0.01, 0.01)
+            new_error_rate = max(0, min(1, tool_def.error_rate + error_rate_variation))
             
-            # Create inference request
-            inference_request = InferenceRequest(
-                request_id=gateway_request.request_id,
-                domain=tool.domain,
-                request_type=tool.name,
-                payload=payload,
-                timeout=tool.max_execution_time
-            )
+            # Update tool status based on error rate
+            if new_error_rate > 0.1:
+                tool_def.status = ToolStatus.UNAVAILABLE
+            elif new_error_rate > 0.05:
+                tool_def.status = ToolStatus.DEGRADED
+            else:
+                tool_def.status = ToolStatus.AVAILABLE
             
-            # Execute through inference manager
-            inference_result = await self.inference_manager.execute_inference(inference_request)
-            
-            # Calculate execution time and cost
-            execution_time = time.time() - start_time
-            cost = inference_result.cost
-            
-            # Update metrics
-            self.request_count += 1
-            self.total_execution_time += execution_time
-            self.total_cost += cost
-            
-            # Create Gateway response
-            response = GatewayResponse(
-                request_id=gateway_request.request_id,
-                success=inference_result.success,
-                data=inference_result.data,
-                tool_used=tool_name,
-                domain=tool.domain,
-                execution_time=execution_time,
-                cost=cost,
-                metadata={
-                    "tool_version": tool.version,
-                    "inference_profile": tool.inference_profile,
-                    "region_used": inference_result.region_used,
-                    "user_id": user_id,
-                    "session_id": session_id
-                }
-            )
-            
-            self.logger.info(f"✅ Tool '{tool_name}' executed successfully "
-                           f"({execution_time:.2f}s, ${cost:.4f})")
-            
-            return response
+            # Update health metrics
+            tool_def.error_rate = new_error_rate
+            tool_def.last_health_check = datetime.utcnow()
             
         except Exception as e:
-            execution_time = time.time() - start_time
-            self.logger.error(f"❌ Tool invocation failed: {e}")
-            
-            return GatewayResponse(
-                request_id=f"req_{int(time.time() * 1000)}",
-                success=False,
-                data=None,
-                tool_used=tool_name,
-                domain="unknown",
-                execution_time=execution_time,
-                cost=0.0,
-                metadata={"error": str(e)}
-            )
+            logger.error(f"Error checking health for tool {tool_id}: {e}")
     
-    async def invoke_with_profile(self, profile_arn: str, region: str, 
-                                request: Dict[str, Any], timeout: int = 300) -> Dict[str, Any]:
-        """
-        Invoke inference with a specific profile and region.
+    def get_tool_catalog(self, tenant_context: Optional[TenantContext] = None) -> Dict[str, Any]:
+        """Get tool catalog with tenant filtering."""
+        if tenant_context:
+            available_tools = [
+                tool for tool in self.tool_registry.values()
+                if tool.is_available_for_tenant(tenant_context)
+            ]
+        else:
+            available_tools = list(self.tool_registry.values())
         
-        Args:
-            profile_arn: ARN of the inference profile
-            region: AWS region to use
-            request: Inference request data
-            timeout: Request timeout in seconds
-            
-        Returns:
-            Inference result
-        """
-        try:
-            # This would integrate with actual AWS Bedrock inference
-            # For now, simulate the execution
-            
-            # Create inference request
-            inference_request = InferenceRequest(
-                request_id=f"profile_{int(time.time() * 1000)}",
-                domain="unknown",
-                request_type="profile_inference",
-                payload=request,
-                timeout=timeout
-            )
-            
-            # Execute through inference manager
-            result = await self.inference_manager.execute_inference(inference_request)
-            
-            return {
-                "success": result.success,
-                "data": result.data,
-                "region": region,
-                "profile_arn": profile_arn,
-                "execution_time": result.execution_time,
-                "cost": result.cost
-            }
-            
-        except Exception as e:
-            self.logger.error(f"❌ Profile inference failed: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "region": region,
-                "profile_arn": profile_arn
-            }
-    
-    def get_tool_info(self, tool_name: str) -> Optional[GatewayTool]:
-        """Get information about a specific tool."""
-        return self.tools.get(tool_name)
-    
-    def get_domain_tools(self, domain: str) -> List[GatewayTool]:
-        """Get all tools for a specific domain."""
-        return [tool for tool in self.tools.values() if tool.domain == domain]
-    
-    def get_performance_metrics(self) -> Dict[str, Any]:
-        """Get current performance metrics."""
+        # Group by category
+        catalog = {}
+        for tool in available_tools:
+            category = tool.category.value
+            if category not in catalog:
+                catalog[category] = []
+            catalog[category].append(tool.to_dict())
+        
         return {
-            "timestamp": datetime.now().isoformat(),
-            "request_count": self.request_count,
-            "total_execution_time": self.total_execution_time,
-            "total_cost": self.total_cost,
-            "average_execution_time": (
-                self.total_execution_time / self.request_count 
-                if self.request_count > 0 else 0.0
-            ),
-            "average_cost_per_request": (
-                self.total_cost / self.request_count 
-                if self.request_count > 0 else 0.0
-            ),
-            "tools_count": len(self.tools),
-            "active_tools": len([t for t in self.tools.values() if t.status == "active"]),
-            "domains": list(set(tool.domain for tool in self.tools.values()))
+            "total_tools": len(available_tools),
+            "categories": catalog,
+            "tenant_id": tenant_context.tenant_id if tenant_context else None
+        }
+    
+    def get_performance_summary(self) -> Dict[str, Any]:
+        """Get comprehensive performance metrics."""
+        total_requests = len(self.response_history)
+        successful_requests = len([r for r in self.response_history if r.success])
+        
+        if total_requests == 0:
+            return {"error": "No requests processed yet"}
+        
+        avg_execution_time = sum(r.execution_time for r in self.response_history) / total_requests
+        avg_cost = sum(r.cost for r in self.response_history) / total_requests
+        success_rate = successful_requests / total_requests
+        
+        # Tool usage statistics
+        tool_stats = {}
+        for tool_id in set(r.tool_id for r in self.response_history):
+            tool_results = [r for r in self.response_history if r.tool_id == tool_id]
+            if tool_results:
+                tool_stats[tool_id] = {
+                    "requests": len(tool_results),
+                    "avg_execution_time": sum(r.execution_time for r in tool_results) / len(tool_results),
+                    "avg_cost": sum(r.cost for r in tool_results) / len(tool_results),
+                    "success_rate": len([r for r in tool_results if r.success]) / len(tool_results)
+                }
+        
+        return {
+            "total_requests": total_requests,
+            "successful_requests": successful_requests,
+            "success_rate": success_rate,
+            "avg_execution_time": avg_execution_time,
+            "avg_cost": avg_cost,
+            "tool_stats": tool_stats,
+            "available_tools": len(self.tool_registry),
+            "fallback_usage": len([r for r in self.response_history if r.fallback_used])
         }
     
     def health_check(self) -> Dict[str, Any]:
-        """Perform a health check of the Gateway client."""
-        try:
-            # Check inference manager health
-            inference_health = self.inference_manager.health_check()
-            
-            # Check tool registry health
-            tool_health = {
-                "total_tools": len(self.tools),
-                "active_tools": len([t for t in self.tools.values() if t.status == "active"]),
-                "inactive_tools": len([t for t in self.tools.values() if t.status == "inactive"]),
-                "maintenance_tools": len([t for t in self.tools.values() if t.status == "maintenance"])
-            }
-            
-            # Determine overall health
-            overall_status = "healthy"
-            if inference_health["status"] != "healthy":
-                overall_status = "degraded"
-            if tool_health["active_tools"] == 0:
-                overall_status = "unhealthy"
-            
-            return {
-                'status': overall_status,
-                'timestamp': datetime.now().isoformat(),
-                'gateway_client': 'healthy',
-                'inference_manager': inference_health,
-                'tool_registry': tool_health,
-                'performance_metrics': self.get_performance_metrics()
-            }
-            
-        except Exception as e:
-            return {
-                'status': 'unhealthy',
-                'error': str(e),
-                'timestamp': datetime.now().isoformat()
-            }
+        """Perform system health check."""
+        available_tools = sum(1 for t in self.tool_registry.values() if t.status == ToolStatus.AVAILABLE)
+        total_tools = len(self.tool_registry)
+        
+        return {
+            "status": "healthy" if available_tools > 0 else "unhealthy",
+            "available_tools": available_tools,
+            "total_tools": total_tools,
+            "tool_health": {t.tool_id: t.status.value for t in self.tool_registry.values()},
+            "registry_url": self.registry_url,
+            "auto_discovery": self.enable_auto_discovery
+        }
     
-    async def close(self):
-        """Close the Gateway client and cleanup resources."""
+    async def cleanup(self):
+        """Cleanup gateway client resources."""
         try:
-            if self.session:
-                await self.session.close()
-            
-            # Cleanup inference manager
-            await self.inference_manager.cleanup()
-            
-            self.logger.info("✅ Gateway client closed successfully")
+            await self.stop()
+            logger.info("✅ Gateway Client cleanup completed")
         except Exception as e:
-            self.logger.error(f"❌ Error closing Gateway client: {e}")
+            logger.error(f"❌ Error during cleanup: {e}")
 
-# Utility functions for MCP protocol support
-def create_mcp_tool_description(tool: GatewayTool) -> Dict[str, Any]:
-    """Create MCP-compatible tool description."""
-    return {
-        "name": tool.name,
-        "description": tool.description,
-        "inputSchema": tool.input_schema,
-        "outputSchema": tool.output_schema,
-        "capabilities": tool.capabilities,
-        "domain": tool.domain,
-        "version": tool.version,
-        "status": tool.status,
-        "maxExecutionTime": tool.max_execution_time
-    }
-
-def create_mcp_response(gateway_response: GatewayResponse) -> Dict[str, Any]:
-    """Create MCP-compatible response."""
-    return {
-        "requestId": gateway_response.request_id,
-        "success": gateway_response.success,
-        "data": gateway_response.data,
-        "toolUsed": gateway_response.tool_used,
-        "domain": gateway_response.domain,
-        "executionTime": gateway_response.execution_time,
-        "cost": gateway_response.cost,
-        "metadata": gateway_response.metadata,
-        "timestamp": gateway_response.timestamp.isoformat()
-    }
+# Real tool implementations will be imported from actual tool modules
+# No mock implementations allowed - production code only

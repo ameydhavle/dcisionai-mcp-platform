@@ -29,11 +29,11 @@ sys.path.insert(0, str(src_path))
 # Import AgentCore SDK
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 
-# Import our manufacturing tools
-from mcp_server.tools.manufacturing.intent.DcisionAI_Intent_Tool import create_dcisionai_intent_tool_v6
-from mcp_server.tools.manufacturing.data.DcisionAI_Data_Tool import create_data_tool
-from mcp_server.tools.manufacturing.model.DcisionAI_Model_Builder import create_model_builder_tool
-from mcp_server.tools.manufacturing.solver.DcisionAI_Solver_Tool import create_solver_tool
+# Import our manufacturing tools from consolidated location
+from domains.manufacturing.tools.intent.DcisionAI_Intent_Tool import create_dcisionai_intent_tool_v6
+from domains.manufacturing.tools.data.DcisionAI_Data_Tool import create_data_tool
+from domains.manufacturing.tools.model.DcisionAI_Model_Builder import create_model_builder_tool
+from domains.manufacturing.tools.solver.DcisionAI_Solver_Tool import create_solver_tool
 
 # Configure logging
 logging.basicConfig(

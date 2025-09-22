@@ -1,0 +1,13 @@
+{
+  "Production Optimization": {
+    "scenario_name": "Production Optimization",
+    "user_query": "I need to optimize my production schedule to minimize costs while meeting customer demand for our automotive parts manufacturing",
+    "overall_success": false,
+    "total_time": 0,
+    "stages": {
+      "intent": {
+        "success": false
+      }
+    }
+  }
+}

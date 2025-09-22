@@ -3,33 +3,34 @@ DcisionAI Platform - Manufacturing Tools Package
 ===============================================
 
 Advanced manufacturing optimization tools with swarm intelligence and A2A coordination.
+This package imports tools from the consolidated domains/manufacturing/tools location.
 """
 
-# Enhanced DcisionAI Tools (Production Ready)
+# Import tools from consolidated location
 try:
-    from .intent.DcisionAI_Intent_Tool import (
+    from domains.manufacturing.tools.intent.DcisionAI_Intent_Tool import (
         DcisionAI_Intent_Tool,
         IntentClassification,
         SwarmPerformanceMetrics,
-        create_dcisionai_intent_tool
+        create_dcisionai_intent_tool_v6
     )
     INTENT_TOOL_AVAILABLE = True
 except ImportError:
     DcisionAI_Intent_Tool = None
     IntentClassification = None
     SwarmPerformanceMetrics = None
-    create_dcisionai_intent_tool = None
+    create_dcisionai_intent_tool_v6 = None
     INTENT_TOOL_AVAILABLE = False
 
 try:
-    from .data.DcisionAI_Data_Tool import (
+    from domains.manufacturing.tools.data.DcisionAI_Data_Tool import (
         DcisionAI_Data_Tool,
         DataAnalysisResult,
         DataRequirement,
         DataSourceRecommendation,
         DataCategory,
         DataSource,
-        create_dcisionai_data_tool
+        create_data_tool
     )
     DATA_TOOL_AVAILABLE = True
 except ImportError:
@@ -39,124 +40,85 @@ except ImportError:
     DataSourceRecommendation = None
     DataCategory = None
     DataSource = None
-    create_dcisionai_data_tool = None
+    create_data_tool = None
     DATA_TOOL_AVAILABLE = False
+
+try:
+    from domains.manufacturing.tools.model.DcisionAI_Model_Builder import (
+        DcisionAI_Model_Builder,
+        ModelBuildingResult,
+        ModelType,
+        create_model_builder_tool
+    )
+    MODEL_TOOL_AVAILABLE = True
+except ImportError:
+    DcisionAI_Model_Builder = None
+    ModelBuildingResult = None
+    ModelType = None
+    create_model_builder_tool = None
+    MODEL_TOOL_AVAILABLE = False
+
+try:
+    from domains.manufacturing.tools.solver.DcisionAI_Solver_Tool import (
+        DcisionAI_Solver_Tool,
+        SolverResult,
+        SolverType,
+        create_solver_tool
+    )
+    SOLVER_TOOL_AVAILABLE = True
+except ImportError:
+    DcisionAI_Solver_Tool = None
+    SolverResult = None
+    SolverType = None
+    create_solver_tool = None
+    SOLVER_TOOL_AVAILABLE = False
 
 # Main Manufacturing Agent
 try:
-    from .DcisionAI_Manufacturing_Agent import (
-        DcisionAI_Manufacturing_Agent,
-        WorkflowResult,
-        WorkflowStage,
-        ToolStatus,
-        create_dcisionai_manufacturing_agent
+    from domains.manufacturing.agents.DcisionAI_Manufacturing_Agent_v1 import (
+        DcisionAI_Manufacturing_Agent_v1
     )
     MANUFACTURING_AGENT_AVAILABLE = True
 except ImportError:
-    DcisionAI_Manufacturing_Agent = None
-    WorkflowResult = None
-    WorkflowStage = None
-    ToolStatus = None
-    create_dcisionai_manufacturing_agent = None
+    DcisionAI_Manufacturing_Agent_v1 = None
     MANUFACTURING_AGENT_AVAILABLE = False
 
-# Legacy tools (for backward compatibility)
-try:
-    from .model.model_builder_optimized import OptimizedModelBuilder
-    ModelBuilderStrandsSwarmOrchestrator = OptimizedModelBuilder  # Alias for compatibility
-except ImportError:
-    ModelBuilderStrandsSwarmOrchestrator = None
-
-# Solver tools
-try:
-    from .solver.solver_tool import SolverTool
-    from .solver.solver_swarm_orchestrator import SolverSwarmOrchestrator
-except ImportError:
-    SolverTool = None
-    SolverSwarmOrchestrator = None
-
-# Legacy data tools
-try:
-    from .data.data_tool import DataTool
-    DataSwarmOrchestrator = None  # Not implemented yet
-except ImportError:
-    DataTool = None
-    DataSwarmOrchestrator = None
-
-# Legacy intent tools
-try:
-    from .intent.intent_tool import IntentTool
-    IntentSwarmOrchestrator = None  # Not implemented yet
-except ImportError:
-    IntentTool = None
-    IntentSwarmOrchestrator = None
-
-# Critique tools
-try:
-    from .critique.critique_tool import CritiqueTool
-    from .critique.critique_swarm_orchestrator import CritiqueSwarmOrchestrator
-except ImportError:
-    CritiqueTool = None
-    CritiqueSwarmOrchestrator = None
-
-# Explain tools
-try:
-    from .explain.explain_tool import ExplainTool
-    from .explain.explain_swarm_orchestrator import ExplainSwarmOrchestrator
-except ImportError:
-    ExplainTool = None
-    ExplainSwarmOrchestrator = None
-
-# Swarm tools
-try:
-    from .swarm.adaptive_manufacturing_swarms import AdaptiveManufacturingSwarms
-    from .swarm.swarm_tool import SwarmTool
-    from .swarm.manufacturing_domain_optimizer import ManufacturingDomainOptimizer
-    from .swarm.strands_optimization_solver import StrandsOptimizationSolver
-except ImportError:
-    AdaptiveManufacturingSwarms = None
-    SwarmTool = None
-    ManufacturingDomainOptimizer = None
-    StrandsOptimizationSolver = None
-
+# Export consolidated tools
 __all__ = [
-    # Enhanced DcisionAI Tools (Production Ready)
+    # Intent tools
     "DcisionAI_Intent_Tool",
     "IntentClassification", 
     "SwarmPerformanceMetrics",
-    "create_dcisionai_intent_tool",
+    "create_dcisionai_intent_tool_v6",
+    
+    # Data tools
     "DcisionAI_Data_Tool",
     "DataAnalysisResult",
     "DataRequirement",
-    "DataSourceRecommendation", 
+    "DataSourceRecommendation",
     "DataCategory",
     "DataSource",
-    "create_dcisionai_data_tool",
-    "DcisionAI_Manufacturing_Agent",
-    "WorkflowResult",
-    "WorkflowStage",
-    "ToolStatus",
-    "create_dcisionai_manufacturing_agent",
+    "create_data_tool",
     
-    # Tool availability flags
+    # Model tools
+    "DcisionAI_Model_Builder",
+    "ModelBuildingResult",
+    "ModelType",
+    "create_model_builder_tool",
+    
+    # Solver tools
+    "DcisionAI_Solver_Tool",
+    "SolverResult",
+    "SolverType",
+    "create_solver_tool",
+    
+    # Agent
+    "DcisionAI_Manufacturing_Agent_v1",
+    
+    # Availability flags
     "INTENT_TOOL_AVAILABLE",
-    "DATA_TOOL_AVAILABLE", 
-    "MANUFACTURING_AGENT_AVAILABLE",
-    
-    # Legacy tools (for backward compatibility)
-    "ModelBuilderStrandsSwarmOrchestrator",
-    "SolverTool",
-    "SolverSwarmOrchestrator",
-    "DataTool",
-    "DataSwarmOrchestrator",
-    "IntentTool",
-    "IntentSwarmOrchestrator",
-    "CritiqueTool",
-    "CritiqueSwarmOrchestrator",
-    "ExplainTool",
-    "ExplainSwarmOrchestrator",
-    "AdaptiveManufacturingSwarms",
-    "SwarmTool",
-    "ManufacturingDomainOptimizer",
-    "StrandsOptimizationSolver"
+    "DATA_TOOL_AVAILABLE",
+    "MODEL_TOOL_AVAILABLE",
+    "SOLVER_TOOL_AVAILABLE",
+    "MANUFACTURING_AGENT_AVAILABLE"
 ]

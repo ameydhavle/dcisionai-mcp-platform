@@ -1,0 +1,15 @@
+{
+  "success": true,
+  "overall_score": 1.0,
+  "certification_status": "COMPLIANT",
+  "total_tests": 6,
+  "passed_tests": 6,
+  "test_results": [
+    "MCPTestResult(test_name='Protocol Version Support', status='PASS', score=1.0, details={'protocol_version': '2025-03-26', 'response': {'status': 'success', 'content_type': 'streaming'}}, error_message=None, execution_time=0.017410993576049805)",
+    "MCPTestResult(test_name='Connection Management', status='PASS', score=1.0, details={'http_status': 200, 'content_type': 'text/event-stream'}, error_message=None, execution_time=0.004180908203125)",
+    "MCPTestResult(test_name='Message Format Compliance', status='PASS', score=1.0, details={'http_status': 200, 'content_type': 'text/event-stream'}, error_message=None, execution_time=0.00267791748046875)",
+    "MCPTestResult(test_name='Tool Management', status='PASS', score=1.0, details={'method': 'tools/list', 'response': {'status': 'success', 'content_type': 'streaming'}}, error_message=None, execution_time=0.003437042236328125)",
+    "MCPTestResult(test_name='Resource Management', status='PASS', score=1.0, details={'method': 'resources/list', 'response': {'status': 'success', 'content_type': 'streaming'}}, error_message=None, execution_time=0.0025742053985595703)",
+    "MCPTestResult(test_name='Prompt Management', status='PASS', score=1.0, details={'method': 'prompts/list', 'response': {'status': 'success', 'content_type': 'streaming'}}, error_message=None, execution_time=0.002916097640991211)"
+  ]
+}

@@ -6,9 +6,10 @@ DcisionAI Platform - Manufacturing Domain
 Manufacturing optimization and production planning domain.
 """
 
-from .agents.DcisionAI_Manufacturing_Agent_v1 import DcisionAI_Manufacturing_Agent_v1
+# Import the invoke function from the AgentCore agent
+from .agents.DcisionAI_Manufacturing_Agent_v1 import invoke
 
 __version__ = "1.0.0"
 __all__ = [
-    "DcisionAI_Manufacturing_Agent_v1"
+    "invoke"
 ]

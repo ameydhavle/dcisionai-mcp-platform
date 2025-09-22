@@ -28,12 +28,11 @@ except ImportError:
     logging.warning("Strands framework not available - install with: pip install strands")
     # Don't raise error, just log warning
 
-try:
-    from ....utils.throttling import get_platform_throttle_manager
-except ImportError:
-    logging.warning("Throttling manager not available - using default")
-    def get_platform_throttle_manager():
-        return None
+# AgentCore provides built-in throttling, TPS management, and comprehensive metrics
+# No custom throttling needed - see: https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/observability-tool-metrics.html
+def get_platform_throttle_manager():
+    """AgentCore handles throttling automatically - no custom implementation needed."""
+    return None
 
 logger = logging.getLogger(__name__)
 

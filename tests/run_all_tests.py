@@ -6,7 +6,7 @@ DcisionAI MCP Platform - Test Runner
 Run all tests for the DcisionAI Manufacturing MCP Platform.
 
 Usage:
-    python tests/run_all_tests.py [--unit] [--integration] [--workflow] [--all]
+    python tests/run_all_tests.py [--unit] [--integration] [--workflow] [--mcp-compliance] [--all]
 
 Copyright (c) 2025 DcisionAI. All rights reserved.
 """
@@ -60,11 +60,75 @@ def run_tests_in_directory(directory: str, test_type: str):
     print(f"\n📊 {test_type} Test Results: {success_count}/{total_count} passed")
     return success_count == total_count
 
+
+def run_mcp_compliance_tests():
+    """Run MCP compliance tests"""
+    print(f"\n🔒 Running MCP Compliance tests...")
+    print("=" * 60)
+    
+    compliance_script = Path("tests/mcp_compliance/run_mcp_compliance_tests.py")
+    if not compliance_script.exists():
+        print(f"❌ MCP compliance script not found: {compliance_script}")
+        return False
+    
+    try:
+        print("📋 Running MCP Protocol Compliance Testing...")
+        result = subprocess.run([sys.executable, str(compliance_script)], 
+                              capture_output=True, text=True, timeout=600)  # 10 minutes for compliance tests
+        
+        if result.returncode == 0:
+            print(f"✅ MCP Compliance Tests - PASSED")
+            return True
+        else:
+            print(f"❌ MCP Compliance Tests - FAILED")
+            print(f"Error: {result.stderr}")
+            return False
+            
+    except subprocess.TimeoutExpired:
+        print(f"⏰ MCP Compliance Tests - TIMEOUT")
+        return False
+    except Exception as e:
+        print(f"💥 MCP Compliance Tests - ERROR: {e}")
+        return False
+
+
+def run_real_mcp_compliance_tests():
+    """Run real MCP server compliance tests"""
+    print(f"\n🚀 Running Real MCP Server Compliance tests...")
+    print("=" * 60)
+    
+    real_compliance_script = Path("tests/mcp_compliance/run_real_tests.py")
+    if not real_compliance_script.exists():
+        print(f"❌ Real MCP compliance test script not found: {real_compliance_script}")
+        return False
+    
+    try:
+        print("📋 Running Real MCP Server Compliance Testing...")
+        result = subprocess.run([sys.executable, str(real_compliance_script)], 
+                              capture_output=True, text=True, timeout=900)  # 15 minutes for real server tests
+        
+        if result.returncode == 0:
+            print(f"✅ Real MCP Server Compliance Tests - PASSED")
+            return True
+        else:
+            print(f"❌ Real MCP Server Compliance Tests - FAILED")
+            print(f"Error: {result.stderr}")
+            return False
+            
+    except subprocess.TimeoutExpired:
+        print(f"⏰ Real MCP Server Compliance Tests - TIMEOUT")
+        return False
+    except Exception as e:
+        print(f"💥 Real MCP Server Compliance Tests - ERROR: {e}")
+        return False
+
 def main():
     parser = argparse.ArgumentParser(description="Run DcisionAI MCP Platform tests")
     parser.add_argument("--unit", action="store_true", help="Run unit tests")
     parser.add_argument("--integration", action="store_true", help="Run integration tests")
     parser.add_argument("--workflow", action="store_true", help="Run workflow tests")
+    parser.add_argument("--mcp-compliance", action="store_true", help="Run MCP compliance tests")
+    parser.add_argument("--real-mcp", action="store_true", help="Run real MCP server compliance tests")
     parser.add_argument("--all", action="store_true", help="Run all tests")
     
     args = parser.parse_args()
@@ -73,7 +137,7 @@ def main():
     print("=" * 60)
     
     # If no specific test type is specified, run all
-    if not any([args.unit, args.integration, args.workflow, args.all]):
+    if not any([args.unit, args.integration, args.workflow, args.mcp_compliance, args.real_mcp, args.all]):
         args.all = True
     
     all_passed = True
@@ -86,6 +150,12 @@ def main():
     
     if args.workflow or args.all:
         all_passed &= run_tests_in_directory("tests/workflow", "Workflow")
+    
+    if args.mcp_compliance or args.all:
+        all_passed &= run_mcp_compliance_tests()
+    
+    if args.real_mcp or args.all:
+        all_passed &= run_real_mcp_compliance_tests()
     
     print("\n" + "=" * 60)
     if all_passed:

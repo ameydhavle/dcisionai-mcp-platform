@@ -6,8 +6,8 @@ DcisionAI Platform - Manufacturing Domain Agents
 Manufacturing domain agent implementations.
 """
 
-from .DcisionAI_Manufacturing_Agent_v1 import DcisionAI_Manufacturing_Agent_v1
+from .DcisionAI_Manufacturing_Agent_v1 import invoke
 
 __all__ = [
-    "DcisionAI_Manufacturing_Agent_v1"
+    "invoke"
 ]

@@ -6,7 +6,7 @@ DcisionAI Platform - Shared Components
 Shared framework components for the multi-domain DcisionAI platform.
 """
 
-from .core.base_agent import BaseAgent, AgentMetadata
+from .core.base_agent import BaseAgent, TenantContext, SLATier, PIIScope, ResourceQuota, RequestContext
 from .core.domain_manager import DomainManager, DomainInfo
 from .tools.base_tool import BaseTool, ToolMetadata, ToolResult
 from .deployment.base_deployer import BaseDeployer, DeploymentConfig, DeploymentResult
@@ -15,7 +15,11 @@ from .config.settings import settings, Settings
 __version__ = "1.0.0"
 __all__ = [
     "BaseAgent",
-    "AgentMetadata", 
+    "TenantContext",
+    "SLATier",
+    "PIIScope", 
+    "ResourceQuota",
+    "RequestContext",
     "DomainManager",
     "DomainInfo",
     "BaseTool",

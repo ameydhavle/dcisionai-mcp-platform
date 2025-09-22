@@ -1,0 +1,174 @@
+{
+  "intent_classification": {
+    "result": {
+      "intent": "unknown",
+      "confidence": 0.8,
+      "agreement_score": 0.6145299145299146,
+      "entities": [],
+      "objectives": [],
+      "reasoning": "AWS Bedrock authorization error: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again.",
+      "specialization_insights": {},
+      "consensus_metadata": {
+        "algorithm_used": "confidence_aggregation",
+        "participating_agents": [
+          "ops_research_agent",
+          "sustainability_agent",
+          "quality_agent",
+          "supply_chain_agent",
+          "production_systems_agent"
+        ],
+        "execution_time": 19.536975,
+        "swarm_id": "manufacturing_intent_swarm"
+      },
+      "individual_agent_results": {
+        "ops_research_agent": {
+          "specialization": "operations_research",
+          "region": "us-east-1",
+          "confidence": 0.8,
+          "result": {
+            "error": "An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again.",
+            "error_type": "ThrottlingException",
+            "agent_role": "intent_classifier",
+            "specialization": "operations_research",
+            "region": "us-east-1",
+            "timestamp": "2025-09-04T18:34:07.031140",
+            "status": "error",
+            "intent": "unknown",
+            "confidence": 0.0,
+            "entities": [],
+            "objectives": [],
+            "reasoning": "AWS Bedrock authorization error: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again.",
+            "specialization_insights": {}
+          },
+          "execution_time": 0.0,
+          "timestamp": "2025-09-04T18:34:07.031171"
+        },
+        "sustainability_agent": {
+          "specialization": "sustainability",
+          "region": "us-east-1",
+          "confidence": 0.8,
+          "result": {
+            "error": "An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again.",
+            "error_type": "ThrottlingException",
+            "agent_role": "intent_classifier",
+            "specialization": "sustainability",
+            "region": "us-east-1",
+            "timestamp": "2025-09-04T18:34:09.068698",
+            "status": "error",
+            "intent": "unknown",
+            "confidence": 0.0,
+            "entities": [],
+            "objectives": [],
+            "reasoning": "AWS Bedrock authorization error: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again.",
+            "specialization_insights": {}
+          },
+          "execution_time": 0.0,
+          "timestamp": "2025-09-04T18:34:09.068767"
+        },
+        "quality_agent": {
+          "specialization": "quality_control",
+          "region": "ap-southeast-1",
+          "confidence": 0.8,
+          "result": {
+            "id": "msg_bdrk_01PLH5r6VLDDws2ujpn9FUPB",
+            "type": "message",
+            "role": "assistant",
+            "model": "claude-3-5-sonnet-20241022",
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"specialist_analysis\": {\n    \"ops_research\": {\n      \"classification\": \"PRODUCTION_SCHEDULING\",\n      \"confidence\": 0.95,\n      \"reasoning\": \"Query explicitly involves scheduling optimization with capacity constraints, which is a core operations research problem using mathematical programming\"\n    },\n    \"production_systems\": {\n      \"classification\": \"PRODUCTION_SCHEDULING\",\n      \"confidence\": 0.90,\n      \"reasoning\": \"Direct production scheduling task with multiple products and setup considerations, core production planning focus\"\n    },\n    \"supply_chain\": {\n      \"classification\": \"NOT_MY_DOMAIN\",\n      \"confidence\": 0.0,\n      \"reasoning\": \"Query focuses on production scheduling rather than supply chain aspects\"\n    },\n    \"quality\": {\n      \"classification\": \"NOT_MY_DOMAIN\", \n      \"confidence\": 0.0,\n      \"reasoning\": \"No quality control or inspection elements mentioned\"\n    },\n    \"sustainability\": {\n      \"classification\": \"NOT_MY_DOMAIN\",\n      \"confidence\": 0.0,\n      \"reasoning\": \"No environmental or sustainability aspects mentioned\"\n    },\n    \"cost_optimization\": {\n      \"classification\": \"NOT_MY_DOMAIN\",\n      \"confidence\": 0.0,\n      \"reasoning\": \"While optimization is involved, primary focus is scheduling rather than cost\"\n    }\n  },\n  \"consensus\": {\n    \"primary_intent\": \"PRODUCTION_SCHEDULING\",\n    \"confidence\": 0.92,\n    \"entities\": [\n      \"products\",\n      \"setup times\",\n      \"capacity constraints\"\n    ],\n    \"objectives\": [\n      \"optimize production schedule\",\n      \"respect capacity constraints\",\n      \"account for setup times\"\n    ],\n    \"reasoning\": \"Strong agreement between operations research and production systems specialists that this is primarily a production scheduling problem. Other specialists correctly identified it as outside their domain. The presence of scheduling, setup times, and capacity constraints clearly indicates PRODUCTION_SCHEDULING classification.\",\n    \"agreement_score\": 1.0\n  }\n}"
+              }
+            ],
+            "stop_reason": "end_turn",
+            "stop_sequence": null,
+            "usage": {
+              "input_tokens": 1267,
+              "output_tokens": 482
+            },
+            "agent_metadata": {
+              "agent_role": "intent_classifier",
+              "specialization": "quality_control",
+              "region": "us-east-1",
+              "inference_profile": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+              "timestamp": "2025-09-04T18:34:11.756590",
+              "config": {
+                "temperature": 0.2,
+                "max_tokens": 2000
+              }
+            }
+          },
+          "execution_time": 0.0,
+          "timestamp": "2025-09-04T18:34:11.756723"
+        },
+        "supply_chain_agent": {
+          "specialization": "supply_chain",
+          "region": "eu-west-1",
+          "confidence": 0.8,
+          "result": {
+            "error": "An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again.",
+            "error_type": "ThrottlingException",
+            "agent_role": "intent_classifier",
+            "specialization": "supply_chain",
+            "region": "us-east-1",
+            "timestamp": "2025-09-04T18:34:11.761190",
+            "status": "error",
+            "intent": "unknown",
+            "confidence": 0.0,
+            "entities": [],
+            "objectives": [],
+            "reasoning": "AWS Bedrock authorization error: An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again.",
+            "specialization_insights": {}
+          },
+          "execution_time": 0.0,
+          "timestamp": "2025-09-04T18:34:11.761204"
+        },
+        "production_systems_agent": {
+          "specialization": "production_systems",
+          "region": "us-west-2",
+          "confidence": 0.8,
+          "result": {
+            "id": "msg_bdrk_01VzSKUvkA1UnnQQJBRPXRDx",
+            "type": "message",
+            "role": "assistant",
+            "model": "claude-3-5-sonnet-20241022",
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"specialist_analysis\": {\n    \"ops_research\": {\n      \"classification\": \"PRODUCTION_SCHEDULING\",\n      \"confidence\": 0.95,\n      \"reasoning\": \"Query involves scheduling optimization with capacity constraints, which is core to operations research. Keywords: 'schedule', 'capacity constraints'\"\n    },\n    \"production_systems\": {\n      \"classification\": \"PRODUCTION_SCHEDULING\",\n      \"confidence\": 0.90,\n      \"reasoning\": \"Direct production scheduling problem with multiple products and setup considerations. Keywords: 'schedule production', 'setup times'\"\n    },\n    \"supply_chain\": {\n      \"classification\": \"NOT_MY_DOMAIN\",\n      \"confidence\": 0.0,\n      \"reasoning\": \"Query focuses on production scheduling rather than supply chain aspects\"\n    },\n    \"quality\": {\n      \"classification\": \"NOT_MY_DOMAIN\", \n      \"confidence\": 0.0,\n      \"reasoning\": \"No quality control or inspection elements mentioned\"\n    },\n    \"sustainability\": {\n      \"classification\": \"NOT_MY_DOMAIN\",\n      \"confidence\": 0.0,\n      \"reasoning\": \"No environmental or sustainability aspects mentioned\"\n    },\n    \"cost_optimization\": {\n      \"classification\": \"NOT_MY_DOMAIN\",\n      \"confidence\": 0.0,\n      \"reasoning\": \"While optimization is involved, primary focus is scheduling rather than cost\"\n    }\n  },\n  \"consensus\": {\n    \"primary_intent\": \"PRODUCTION_SCHEDULING\",\n    \"confidence\": 0.925,\n    \"entities\": [\n      \"products\",\n      \"setup times\",\n      \"capacity constraints\"\n    ],\n    \"objectives\": [\n      \"optimize production schedule\",\n      \"respect capacity constraints\",\n      \"account for setup times\"\n    ],\n    \"reasoning\": \"Strong agreement between operations research and production systems specialists that this is primarily a production scheduling problem. The presence of setup times and capacity constraints clearly indicates a scheduling optimization task.\",\n    \"agreement_score\": 1.0\n  }\n}"
+              }
+            ],
+            "stop_reason": "end_turn",
+            "stop_sequence": null,
+            "usage": {
+              "input_tokens": 1267,
+              "output_tokens": 480
+            },
+            "agent_metadata": {
+              "agent_role": "intent_classifier",
+              "specialization": "production_systems",
+              "region": "us-east-1",
+              "inference_profile": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+              "timestamp": "2025-09-04T18:34:21.982382",
+              "config": {
+                "temperature": 0.2,
+                "max_tokens": 2000
+              }
+            }
+          },
+          "execution_time": 0.0,
+          "timestamp": "2025-09-04T18:34:21.982509"
+        }
+      },
+      "timestamp": "2025-09-04T18:34:21.983952",
+      "status": "success"
+    },
+    "execution_time": 19.537669897079468,
+    "status": "success"
+  },
+  "error": "'dict' object has no attribute 'task_id'",
+  "summary": {
+    "total_execution_time": 19.538111925125122,
+    "success": false
+  }
+}

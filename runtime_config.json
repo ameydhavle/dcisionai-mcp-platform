@@ -1,0 +1,19 @@
+{
+    "runtimeName": "DcisionAI_Manufacturing_Agent_v4_Fixed_1757544385",
+    "imageUri": "808953421331.dkr.ecr.us-east-1.amazonaws.com/dcisionai-manufacturing-v4:latest",
+    "runtimeRoleArn": "arn:aws:iam::808953421331:role/AgentCoreRuntimeRole",
+    "runtimeConfiguration": {
+        "port": 8080,
+        "healthCheckPath": "/health",
+        "environmentVariables": {
+            "PYTHONPATH": "/app",
+            "PYTHONUNBUFFERED": "1"
+        }
+    },
+    "tags": {
+        "Project": "DcisionAI",
+        "Version": "v4.0.0",
+        "Environment": "Production",
+        "Fixed": "true"
+    }
+}

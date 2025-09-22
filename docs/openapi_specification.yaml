@@ -1,0 +1,955 @@
+openapi: 3.0.3
+info:
+  title: DcisionAI Platform API
+  description: Enterprise-grade AI platform API for tool invocation, job management, and tenant administration
+  version: 1.0.0
+  contact:
+    name: DcisionAI Platform Support
+    email: support@dcisionai.com
+    url: https://dcisionai.com/support
+  license:
+    name: Proprietary
+    url: https://dcisionai.com/license
+
+servers:
+  - url: https://api.dcisionai.com/v1
+    description: Production API
+  - url: https://api-staging.dcisionai.com/v1
+    description: Staging API
+  - url: https://api-dev.dcisionai.com/v1
+    description: Development API
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /invoke:
+    post:
+      summary: Invoke DcisionAI Tool
+      description: Execute a DcisionAI tool with parameters
+      operationId: invokeTool
+      tags: [Runtime API]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolInvocationRequest'
+      responses:
+        '200':
+          description: Tool execution successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolInvocationResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /invoke/async:
+    post:
+      summary: Invoke Tool Asynchronously
+      description: Submit a tool execution job for background processing
+      operationId: invokeToolAsync
+      tags: [Runtime API]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsyncToolInvocationRequest'
+      responses:
+        '202':
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncJobResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /jobs/{job_id}:
+    get:
+      summary: Get Job Status
+      description: Retrieve the current status of an asynchronous job
+      operationId: getJobStatus
+      tags: [Job Management]
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique job identifier
+      responses:
+        '200':
+          description: Job status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /jobs:
+    get:
+      summary: List Jobs
+      description: Retrieve a paginated list of jobs for the authenticated tenant
+      operationId: listJobs
+      tags: [Job Management]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed, failed, cancelled]
+          description: Filter jobs by status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of jobs to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of jobs to skip
+      responses:
+        '200':
+          description: Jobs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobListResponse'
+
+  /tools:
+    get:
+      summary: List Available Tools
+      description: Retrieve a list of all available DcisionAI tools
+      operationId: listTools
+      tags: [Tool Discovery]
+      responses:
+        '200':
+          description: Tools retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolListResponse'
+
+  /tools/{tool_name}:
+    get:
+      summary: Get Tool Details
+      description: Retrieve detailed information about a specific tool
+      operationId: getToolDetails
+      tags: [Tool Discovery]
+      parameters:
+        - name: tool_name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tool identifier
+      responses:
+        '200':
+          description: Tool details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolDetails'
+        '404':
+          description: Tool not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tenants:
+    post:
+      summary: Create Tenant
+      description: Create a new tenant account (Admin only)
+      operationId: createTenant
+      tags: [Tenant Management]
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantCreateRequest'
+      responses:
+        '201':
+          description: Tenant created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tenants/{tenant_id}:
+    put:
+      summary: Update Tenant
+      description: Update tenant configuration and settings
+      operationId: updateTenant
+      tags: [Tenant Management]
+      parameters:
+        - name: tenant_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tenant identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantUpdateRequest'
+      responses:
+        '200':
+          description: Tenant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+
+  /tenants/{tenant_id}/api-keys:
+    post:
+      summary: Create API Key
+      description: Create a new API key for the specified tenant
+      operationId: createApiKey
+      tags: [API Key Management]
+      parameters:
+        - name: tenant_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tenant identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiKeyCreateRequest'
+      responses:
+        '201':
+          description: API key created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResponse'
+
+  /tenants/{tenant_id}/usage:
+    get:
+      summary: Get Tenant Usage
+      description: Retrieve current usage statistics for the tenant
+      operationId: getTenantUsage
+      tags: [Tenant Management]
+      parameters:
+        - name: tenant_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tenant identifier
+      responses:
+        '200':
+          description: Usage statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantUsage'
+
+  /health:
+    get:
+      summary: Service Health Check
+      description: Check the overall health status of the DcisionAI Platform
+      operationId: getHealth
+      tags: [Observability]
+      responses:
+        '200':
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /health/detailed:
+    get:
+      summary: Detailed Health Check
+      description: Get detailed health information for all platform components
+      operationId: getDetailedHealth
+      tags: [Observability]
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedHealthStatus'
+
+  /metrics:
+    get:
+      summary: Get Metrics
+      description: Retrieve platform metrics and analytics data
+      operationId: getMetrics
+      tags: [Observability]
+      parameters:
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [api_calls, job_executions, response_times, error_rates]
+          description: Metric type to retrieve
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+          description: Time period for metrics
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [1m, 5m, 1h, 1d]
+            default: 1h
+          description: Data granularity
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  /webhooks:
+    post:
+      summary: Create Webhook
+      description: Create a new webhook for event notifications
+      operationId: createWebhook
+      tags: [Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookCreateRequest'
+      responses:
+        '201':
+          description: Webhook created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+    AdminAuth:
+      type: apiKey
+      in: header
+      name: X-Admin-Key
+      description: Admin API key for tenant management
+
+  schemas:
+    ToolInvocationRequest:
+      type: object
+      required: [tool_name, parameters]
+      properties:
+        tool_name:
+          type: string
+          description: Name of the tool to invoke
+          example: "dcisionai_intent_tool"
+        parameters:
+          type: object
+          description: Tool-specific parameters
+          additionalProperties: true
+        execution_mode:
+          type: string
+          enum: [synchronous, asynchronous]
+          default: synchronous
+          description: Execution mode for the tool
+        timeout:
+          type: integer
+          minimum: 1
+          maximum: 3600
+          default: 300
+          description: Execution timeout in seconds
+        metadata:
+          $ref: '#/components/schemas/RequestMetadata'
+
+    ToolInvocationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, error]
+        execution_id:
+          type: string
+          description: Unique execution identifier
+        result:
+          type: object
+          description: Tool execution result
+          additionalProperties: true
+        execution_time:
+          type: number
+          format: float
+          description: Execution time in seconds
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+
+    AsyncToolInvocationRequest:
+      type: object
+      required: [tool_name, parameters]
+      properties:
+        tool_name:
+          type: string
+          description: Name of the tool to invoke
+        parameters:
+          type: object
+          description: Tool-specific parameters
+          additionalProperties: true
+        callback_url:
+          type: string
+          format: uri
+          description: Webhook callback URL
+        webhook_secret:
+          type: string
+          description: Secret for webhook signature verification
+
+    AsyncJobResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+        job_id:
+          type: string
+          description: Unique job identifier
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time
+        status_url:
+          type: string
+          description: URL to check job status
+
+    JobStatus:
+      type: object
+      properties:
+        job_id:
+          type: string
+          description: Unique job identifier
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled]
+        progress:
+          $ref: '#/components/schemas/JobProgress'
+        result:
+          type: object
+          description: Job execution result
+          nullable: true
+        error:
+          $ref: '#/components/schemas/JobError'
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    JobProgress:
+      type: object
+      properties:
+        current_step:
+          type: string
+          description: Current execution step
+        percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Completion percentage
+        estimated_remaining:
+          type: string
+          description: Estimated time remaining (HH:MM:SS)
+
+    JobError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+
+    JobListResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobSummary'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+
+    JobSummary:
+      type: object
+      properties:
+        job_id:
+          type: string
+        tool_name:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        execution_time:
+          type: integer
+          description: Execution time in seconds
+          nullable: true
+
+    ToolListResponse:
+      type: object
+      properties:
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolSummary'
+
+    ToolSummary:
+      type: object
+      properties:
+        name:
+          type: string
+        display_name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        category:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        rate_limit:
+          type: string
+        timeout:
+          type: integer
+
+    ToolDetails:
+      allOf:
+        - $ref: '#/components/schemas/ToolSummary'
+        - type: object
+          properties:
+            input_schema:
+              type: object
+              description: JSON Schema for tool inputs
+            output_schema:
+              type: object
+              description: JSON Schema for tool outputs
+
+    TenantCreateRequest:
+      type: object
+      required: [tenant_id, name, contact_email, plan]
+      properties:
+        tenant_id:
+          type: string
+          description: Unique tenant identifier
+        name:
+          type: string
+          description: Tenant display name
+        contact_email:
+          type: string
+          format: email
+          description: Primary contact email
+        plan:
+          type: string
+          enum: [starter, professional, enterprise]
+          description: Subscription plan
+        settings:
+          $ref: '#/components/schemas/TenantSettings'
+
+    TenantSettings:
+      type: object
+      properties:
+        max_concurrent_jobs:
+          type: integer
+          minimum: 1
+          default: 10
+        rate_limit:
+          type: string
+          default: "1000/hour"
+        storage_limit_gb:
+          type: integer
+          minimum: 1
+          default: 100
+        custom_domain:
+          type: string
+          format: hostname
+
+    TenantResponse:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+        name:
+          type: string
+        contact_email:
+          type: string
+        plan:
+          type: string
+        settings:
+          $ref: '#/components/schemas/TenantSettings'
+        created_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, suspended, inactive]
+
+    TenantUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        contact_email:
+          type: string
+          format: email
+        plan:
+          type: string
+        settings:
+          $ref: '#/components/schemas/TenantSettings'
+
+    ApiKeyCreateRequest:
+      type: object
+      required: [name, permissions]
+      properties:
+        name:
+          type: string
+          description: API key display name
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [read, write, admin]
+          description: API key permissions
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration date
+        ip_restrictions:
+          type: array
+          items:
+            type: string
+            format: cidr
+          description: IP address restrictions
+
+    ApiKeyResponse:
+      type: object
+      properties:
+        api_key:
+          type: string
+          description: Generated API key
+        api_key_id:
+          type: string
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TenantUsage:
+      type: object
+      properties:
+        current_period:
+          type: string
+          description: Current billing period (YYYY-MM)
+        api_calls:
+          $ref: '#/components/schemas/UsageMetric'
+        storage:
+          $ref: '#/components/schemas/UsageMetric'
+        concurrent_jobs:
+          $ref: '#/components/schemas/ConcurrentJobUsage'
+
+    UsageMetric:
+      type: object
+      properties:
+        used:
+          type: number
+        limit:
+          type: number
+        remaining:
+          type: number
+
+    ConcurrentJobUsage:
+      type: object
+      properties:
+        current:
+          type: integer
+        limit:
+          type: integer
+        available:
+          type: integer
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: string
+        response_time:
+          type: string
+
+    DetailedHealthStatus:
+      allOf:
+        - $ref: '#/components/schemas/HealthStatus'
+        - type: object
+          properties:
+            services:
+              type: object
+              additionalProperties:
+                type: string
+                enum: [healthy, degraded, unhealthy]
+
+    MetricsResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+        period:
+          type: string
+        granularity:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricDataPoint'
+
+    MetricDataPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+        tenant_id:
+          type: string
+
+    WebhookCreateRequest:
+      type: object
+      required: [name, url, events]
+      properties:
+        name:
+          type: string
+          description: Webhook display name
+        url:
+          type: string
+          format: uri
+          description: Webhook endpoint URL
+        events:
+          type: array
+          items:
+            type: string
+            enum: [job.completed, job.failed, job.started]
+          description: Events to trigger webhook
+        secret:
+          type: string
+          description: Secret for signature verification
+        retry_policy:
+          $ref: '#/components/schemas/RetryPolicy'
+
+    RetryPolicy:
+      type: object
+      properties:
+        max_retries:
+          type: integer
+          minimum: 0
+          maximum: 10
+          default: 3
+        backoff_multiplier:
+          type: number
+          minimum: 1.0
+          maximum: 10.0
+          default: 2.0
+        initial_delay:
+          type: integer
+          minimum: 1000
+          maximum: 60000
+          default: 1000
+          description: Initial delay in milliseconds
+
+    WebhookResponse:
+      type: object
+      properties:
+        webhook_id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        events:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        created_at:
+          type: string
+          format: date-time
+
+    RequestMetadata:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Client-provided request identifier
+        customer_id:
+          type: string
+          description: Customer identifier
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+        tags:
+          type: array
+          items:
+            type: string
+          description: Custom tags for request categorization
+
+    PaginationInfo:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of items
+        limit:
+          type: integer
+          description: Maximum items per page
+        offset:
+          type: integer
+          description: Number of items skipped
+        has_more:
+          type: boolean
+          description: Whether more items are available
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              description: Additional error details
+              additionalProperties: true
+            request_id:
+              type: string
+              description: Request identifier for tracking
+            timestamp:
+              type: string
+              format: date-time
+              description: Error timestamp
+
+tags:
+  - name: Runtime API
+    description: Core tool invocation and execution endpoints
+  - name: Job Management
+    description: Asynchronous job management and monitoring
+  - name: Tool Discovery
+    description: Tool information and capabilities
+  - name: Tenant Management
+    description: Tenant account management and configuration
+  - name: API Key Management
+    description: API key creation and management
+  - name: Observability
+    description: Health checks, metrics, and monitoring
+  - name: Webhooks
+    description: Event notification webhooks
+
+externalDocs:
+  description: DcisionAI Platform Documentation
+  url: https://docs.dcisionai.com

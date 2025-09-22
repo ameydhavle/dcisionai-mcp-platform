@@ -1,77 +1,43 @@
-# Cleanup Archive - DcisionAI MCP Platform
+# CI/CD Workflows - Temporarily Disabled
 
-## 📦 Archived Files
+## 🚫 Why CI/CD is Disabled
 
-This directory contains files that were moved from the production codebase during cleanup and organization.
+The CI/CD workflows have been **temporarily disabled** because we've completely changed the deployment architecture from the old FastAPI-based approach to the new **AgentCore SDK integration approach**.
 
-## 🗂️ File Organization
+## 🔄 What Changed
 
-### `src/mcp_server/` - Old MCP Server Files
+- **Old Approach**: Custom FastAPI server with complex deployment scripts
+- **New Approach**: Direct AgentCore SDK integration using `bedrock-agentcore` package
+- **Deployment**: Now uses `scripts/deployment/deploy_DcisionAI_Manufacturing_Agent_v1.py` instead of the old scripts
 
-#### Moved Files:
-- **`manufacturing_workflow_graph.py`** - Old workflow graph implementation
-  - **Reason**: Replaced by production workflow in tools
-  - **Date**: August 26, 2025
-  
-- **`synchronous_manufacturing_workflow.py`** - Old synchronous workflow
-  - **Reason**: Replaced by production workflow orchestration
-  - **Date**: August 26, 2025
-  
-- **`simple_manufacturing_workflow.py`** - Old simple workflow
-  - **Reason**: Replaced by production workflow orchestration
-  - **Date**: August 26, 2025
-  
-- **`run_server.py`** - Old server script
-  - **Reason**: Replaced by production main.py and DcisionAI_Manufacturing_Agent.py
-  - **Date**: August 26, 2025
+## 📁 Disabled Files
 
-## 🎯 Production Architecture
+- `ci-cd.yml.disabled` - Old CI/CD pipeline for FastAPI deployment
+- `test.yml.disabled` - Old test workflow for MCP server
 
-The production codebase now follows the clean architecture defined in `PROJECT_STRUCTURE.md`:
+## 🚀 Current Deployment Method
 
-### Core Production Files:
-- `src/mcp_server/DcisionAI_Manufacturing_Agent.py` - FastAPI agent
-- `src/mcp_server/fastmcp_server.py` - MCP server implementation
-- `src/mcp_server/http_server.py` - HTTP server implementation
-- `src/mcp_server/main.py` - Main server entry point
-- `src/mcp_server/tools/manufacturing/` - Manufacturing tools
+The platform is now deployed using:
+```bash
+python scripts/deployment/deploy_DcisionAI_Manufacturing_Agent_v1.py
+```
 
-### Test Files:
-- `tests/unit/` - Unit tests
-- `tests/integration/` - Integration tests
-- `tests/workflow/` - Workflow tests
+## 🔧 Re-enabling CI/CD
 
-## 🔄 Migration Notes
+To re-enable CI/CD, we need to:
+1. Update the workflows to use the new AgentCore SDK approach
+2. Update the Docker build process to use `Dockerfile.DcisionAI_Manufacturing_Agent_v1`
+3. Update the deployment scripts to use the new architecture
+4. Update the test workflows to test the new AgentCore agents
 
-### Workflow Implementation
-- **Old**: Multiple workflow files in root directory
-- **New**: Integrated workflow in `src/mcp_server/tools/manufacturing/`
+## 📋 Next Steps
 
-### Server Architecture
-- **Old**: Multiple server entry points
-- **New**: Single production entry point with FastAPI agent
+1. ✅ **COMPLETED**: Deploy using AgentCore SDK (working)
+2. 🔄 **PENDING**: Update CI/CD workflows for new architecture
+3. 🔄 **PENDING**: Add automated testing for AgentCore agents
 
-### Testing
-- **Old**: Test files scattered in root directory
-- **New**: Organized test suite in `tests/` directory
+## 📞 Contact
 
-## 📋 Cleanup Summary
-
-### ✅ Completed
-- [x] Moved obsolete workflow files to archive
-- [x] Organized test files into proper structure
-- [x] Maintained production architecture
-- [x] Documented all changes
-
-### 🎯 Benefits
-- **Clean Structure**: Organized, maintainable codebase
-- **Production Ready**: All components working in AgentCore
-- **Documented**: Complete deployment and structure guides
-- **Archived**: Obsolete files preserved for reference
-- **Deployable**: One-command deployment process
-
----
-
-**Archive Date**: August 26, 2025  
-**Archive Version**: 1.0.0  
-**Status**: ✅ Clean and Production Ready
+For questions about the new deployment approach, see:
+- `HANDOFF_DcisionAI_MCP_Platform_Complete.md`
+- `AGENTCORE_DEPLOYMENT_SUCCESS.md`
