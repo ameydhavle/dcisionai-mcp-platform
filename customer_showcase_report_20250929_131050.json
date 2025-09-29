@@ -1,0 +1,416 @@
+{
+  "showcase_metadata": {
+    "timestamp": "2025-09-29T13:10:50.102965",
+    "total_scenarios": 4,
+    "successful_scenarios": 0,
+    "total_execution_time": 541.8777792453766,
+    "platform_version": "2.0.0-swarm",
+    "architecture": "18-agent peer-to-peer swarm"
+  },
+  "customer_scenarios": [
+    {
+      "company_name": "ACME Manufacturing",
+      "industry": "Automotive Parts Manufacturing",
+      "problem_description": "Optimize production line efficiency across 3 manufacturing lines with 50 workers, considering skill sets, line capacities, and cost constraints",
+      "optimization_goals": [
+        "Maximize production throughput",
+        "Minimize labor costs",
+        "Optimize worker skill utilization",
+        "Reduce production bottlenecks"
+      ],
+      "data_context": {
+        "total_workers": 50,
+        "production_lines": 3,
+        "worker_skills": [
+          "assembly",
+          "quality_control",
+          "packaging",
+          "maintenance"
+        ],
+        "line_capacities": [
+          100,
+          120,
+          80
+        ],
+        "worker_efficiency": {
+          "assembly": 0.95,
+          "quality_control": 0.9,
+          "packaging": 0.98,
+          "maintenance": 0.85
+        },
+        "cost_per_hour": 25.0,
+        "overtime_multiplier": 1.5,
+        "demand_forecast": 2500
+      },
+      "expected_benefits": [
+        "15-20% increase in production efficiency",
+        "10-15% reduction in labor costs",
+        "Improved worker satisfaction through better skill matching",
+        "Reduced production bottlenecks and downtime"
+      ],
+      "complexity_level": "intermediate"
+    },
+    {
+      "company_name": "Global Auto Parts",
+      "industry": "Automotive Supply Chain",
+      "problem_description": "Optimize supply chain for 5 warehouses across different regions, considering demand forecasting, inventory costs, and transportation constraints",
+      "optimization_goals": [
+        "Minimize total supply chain costs",
+        "Maximize service level to customers",
+        "Optimize inventory levels across warehouses",
+        "Reduce transportation costs"
+      ],
+      "data_context": {
+        "warehouse_count": 5,
+        "regions": [
+          "North America",
+          "Europe",
+          "Asia",
+          "South America",
+          "Africa"
+        ],
+        "demand_forecast": {
+          "North America": 1000,
+          "Europe": 800,
+          "Asia": 1200,
+          "South America": 400,
+          "Africa": 200
+        },
+        "inventory_costs": {
+          "holding_cost_per_unit": 2.5,
+          "stockout_cost_per_unit": 15.0,
+          "transportation_cost_per_unit": 5.0
+        },
+        "warehouse_capacities": [
+          2000,
+          1500,
+          2500,
+          1000,
+          800
+        ],
+        "lead_times": {
+          "North America": 2,
+          "Europe": 3,
+          "Asia": 4,
+          "South America": 5,
+          "Africa": 7
+        }
+      },
+      "expected_benefits": [
+        "20-25% reduction in total supply chain costs",
+        "95%+ service level achievement",
+        "30% reduction in inventory holding costs",
+        "Optimized transportation routes and costs"
+      ],
+      "complexity_level": "advanced"
+    },
+    {
+      "company_name": "Precision Electronics",
+      "industry": "Electronics Manufacturing",
+      "problem_description": "Optimize quality control processes for electronic component production, balancing quality standards with production costs and throughput",
+      "optimization_goals": [
+        "Maximize product quality and reliability",
+        "Minimize quality control costs",
+        "Optimize inspection frequency and methods",
+        "Reduce defect rates and rework"
+      ],
+      "data_context": {
+        "production_volume": 10000,
+        "quality_standards": {
+          "defect_rate_threshold": 0.001,
+          "reliability_target": 0.999,
+          "inspection_coverage": 0.95
+        },
+        "inspection_methods": [
+          "visual",
+          "automated",
+          "functional",
+          "environmental"
+        ],
+        "inspection_costs": {
+          "visual": 0.5,
+          "automated": 2.0,
+          "functional": 5.0,
+          "environmental": 10.0
+        },
+        "defect_rates": {
+          "visual": 0.002,
+          "automated": 0.0005,
+          "functional": 0.0001,
+          "environmental": 5e-05
+        },
+        "rework_cost_per_unit": 25.0
+      },
+      "expected_benefits": [
+        "40% reduction in quality control costs",
+        "50% reduction in defect rates",
+        "Improved product reliability and customer satisfaction",
+        "Optimized inspection processes and resource allocation"
+      ],
+      "complexity_level": "advanced"
+    },
+    {
+      "company_name": "Green Manufacturing Co.",
+      "industry": "Sustainable Manufacturing",
+      "problem_description": "Optimize manufacturing processes for environmental sustainability, balancing production efficiency with carbon footprint reduction and energy consumption",
+      "optimization_goals": [
+        "Minimize carbon footprint and environmental impact",
+        "Maximize energy efficiency",
+        "Optimize waste reduction and recycling",
+        "Maintain production efficiency and profitability"
+      ],
+      "data_context": {
+        "production_capacity": 5000,
+        "energy_sources": {
+          "renewable": 0.6,
+          "fossil_fuel": 0.4
+        },
+        "carbon_footprint": {
+          "current_emissions": 2.5,
+          "target_emissions": 1.5,
+          "renewable_emissions": 0.3,
+          "fossil_fuel_emissions": 4.0
+        },
+        "waste_management": {
+          "current_waste_rate": 0.05,
+          "recycling_rate": 0.7,
+          "waste_disposal_cost": 50.0,
+          "recycling_revenue": 20.0
+        },
+        "energy_costs": {
+          "renewable": 0.08,
+          "fossil_fuel": 0.12
+        }
+      },
+      "expected_benefits": [
+        "40% reduction in carbon footprint",
+        "25% improvement in energy efficiency",
+        "60% increase in waste recycling",
+        "Maintained profitability with sustainable practices"
+      ],
+      "complexity_level": "advanced"
+    }
+  ],
+  "test_results": [
+    {
+      "scenario_name": "ACME Manufacturing",
+      "success": false,
+      "execution_time": 135.37106108665466,
+      "confidence_score": 0.8,
+      "agent_swarm_used": "Complete Swarm (18 agents)",
+      "performance_metrics": {
+        "intent_classification": {
+          "execution_time": 7.142431020736694,
+          "agents_used": 5,
+          "agreement_score": 1.0
+        },
+        "data_analysis": {
+          "execution_time": 18.733609199523926,
+          "agents_used": 3,
+          "agreement_score": 1.0
+        },
+        "model_building": {
+          "execution_time": 89.51280307769775,
+          "agents_used": 4,
+          "agreement_score": 1.0
+        }
+      },
+      "error_message": "Optimization solver failed: 'SwarmResult' object has no attribute 'get'"
+    },
+    {
+      "scenario_name": "Global Auto Parts",
+      "success": false,
+      "execution_time": 125.00586414337158,
+      "confidence_score": 0.8,
+      "agent_swarm_used": "Complete Swarm (18 agents)",
+      "performance_metrics": {
+        "intent_classification": {
+          "execution_time": 7.479927062988281,
+          "agents_used": 5,
+          "agreement_score": 1.0
+        },
+        "data_analysis": {
+          "execution_time": 17.484006881713867,
+          "agents_used": 3,
+          "agreement_score": 1.0
+        },
+        "model_building": {
+          "execution_time": 83.24711990356445,
+          "agents_used": 4,
+          "agreement_score": 1.0
+        }
+      },
+      "error_message": "Optimization solver failed: 'SwarmResult' object has no attribute 'get'"
+    },
+    {
+      "scenario_name": "Precision Electronics",
+      "success": false,
+      "execution_time": 142.2319040298462,
+      "confidence_score": 0.8,
+      "agent_swarm_used": "Complete Swarm (18 agents)",
+      "performance_metrics": {
+        "intent_classification": {
+          "execution_time": 8.295161724090576,
+          "agents_used": 5,
+          "agreement_score": 1.0
+        },
+        "data_analysis": {
+          "execution_time": 16.777125120162964,
+          "agents_used": 3,
+          "agreement_score": 1.0
+        },
+        "model_building": {
+          "execution_time": 92.78592205047607,
+          "agents_used": 4,
+          "agreement_score": 1.0
+        }
+      },
+      "error_message": "Optimization solver failed: 'SwarmResult' object has no attribute 'get'"
+    },
+    {
+      "scenario_name": "Green Manufacturing Co.",
+      "success": false,
+      "execution_time": 139.26894998550415,
+      "confidence_score": 0.8,
+      "agent_swarm_used": "Complete Swarm (18 agents)",
+      "performance_metrics": {
+        "intent_classification": {
+          "execution_time": 7.481401205062866,
+          "agents_used": 5,
+          "agreement_score": 1.0
+        },
+        "data_analysis": {
+          "execution_time": 19.09689688682556,
+          "agents_used": 3,
+          "agreement_score": 1.0
+        },
+        "model_building": {
+          "execution_time": 96.82058215141296,
+          "agents_used": 4,
+          "agreement_score": 1.0
+        }
+      },
+      "error_message": "Optimization solver failed: 'SwarmResult' object has no attribute 'get'"
+    }
+  ],
+  "system_health": {
+    "timestamp": "2025-09-29T13:01:48.222254",
+    "overall_status": "healthy",
+    "components": {
+      "aws_bedrock": {
+        "status": "healthy",
+        "region": "us-east-1"
+      }
+    },
+    "swarm_status": {
+      "intent_swarm": {
+        "status": "healthy",
+        "agent_count": 5,
+        "details": {
+          "swarm_id": "manufacturing_intent_swarm",
+          "agent_count": 5,
+          "active_agents": 5,
+          "total_tasks": 0,
+          "average_confidence": 0.5,
+          "average_execution_time": 0.0,
+          "regions": [
+            "us-east-1",
+            "ap-southeast-1",
+            "us-west-2",
+            "eu-west-1"
+          ],
+          "specializations": [
+            "sustainability",
+            "quality_control",
+            "operations_research",
+            "production_systems",
+            "supply_chain"
+          ],
+          "timestamp": "2025-09-29T13:01:48.222270"
+        }
+      },
+      "data_swarm": {
+        "status": "healthy",
+        "agent_count": 3,
+        "details": {
+          "swarm_id": "manufacturing_data_swarm",
+          "agent_count": 3,
+          "active_agents": 3,
+          "total_tasks": 0,
+          "average_confidence": 0.5,
+          "average_execution_time": 0.0,
+          "regions": [
+            "us-east-1",
+            "us-west-2",
+            "eu-west-1"
+          ],
+          "specializations": [
+            "data_requirements",
+            "sample_data_generation",
+            "business_context"
+          ],
+          "timestamp": "2025-09-29T13:01:48.222289"
+        }
+      },
+      "model_swarm": {
+        "status": "healthy",
+        "agent_count": 4,
+        "details": {
+          "swarm_id": "manufacturing_model_swarm",
+          "agent_count": 4,
+          "active_agents": 4,
+          "total_tasks": 0,
+          "average_confidence": 0.5,
+          "average_execution_time": 0.0,
+          "regions": [
+            "us-east-1",
+            "ap-southeast-1",
+            "us-west-2",
+            "eu-west-1"
+          ],
+          "specializations": [
+            "constraint_modeling",
+            "solver_compatibility",
+            "mathematical_formulation",
+            "optimization_research"
+          ],
+          "timestamp": "2025-09-29T13:01:48.222304"
+        }
+      },
+      "solver_swarm": {
+        "status": "healthy",
+        "agent_count": 6,
+        "details": {
+          "swarm_id": "manufacturing_solver_swarm",
+          "agent_count": 6,
+          "active_agents": 6,
+          "total_tasks": 0,
+          "average_confidence": 0.5,
+          "average_execution_time": 0.0,
+          "regions": [
+            "us-west-2",
+            "us-west-1",
+            "us-east-1",
+            "ap-southeast-1",
+            "us-east-2",
+            "eu-west-1"
+          ],
+          "specializations": [
+            "or_tools_highs",
+            "pulp_cbc",
+            "cvxpy_optimization",
+            "or_tools_glop",
+            "solution_validation",
+            "or_tools_scip"
+          ],
+          "timestamp": "2025-09-29T13:01:48.222319"
+        }
+      }
+    }
+  },
+  "performance_summary": {
+    "average_execution_time": 135.46944481134415,
+    "average_confidence": 0.8,
+    "success_rate": 0.0
+  }
+}
