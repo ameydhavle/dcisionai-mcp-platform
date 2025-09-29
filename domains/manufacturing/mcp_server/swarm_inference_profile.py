@@ -61,7 +61,18 @@ class SwarmInferenceProfile:
         
         # Initialize Bedrock client in us-east-1 (primary region for inference profiles)
         # The inference profile will handle cross-region routing automatically
-        self.bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+        from botocore.config import Config
+        
+        # Configure timeout based on agent role - model building and solving need more time
+        timeout_seconds = 300 if self.agent_role in [AgentRole.MODEL_BUILDER, AgentRole.SOLVER_OPTIMIZER] else 120
+        
+        config = Config(
+            read_timeout=timeout_seconds,
+            connect_timeout=60,
+            retries={'max_attempts': 3}
+        )
+        
+        self.bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1', config=config)
         
         logger.info(f"🔧 SwarmInferenceProfile initialized: {agent_role.value} with cross-region inference profile")
         
@@ -73,7 +84,7 @@ class SwarmInferenceProfile:
             "max_tokens": 4000,
             "temperature": 0.1,
             "top_p": 0.9,
-            "timeout": 30,
+            "timeout": 300,  # 5 minutes for complex tasks
             "retry_attempts": 3,
             "retry_delay": 1.0
         }

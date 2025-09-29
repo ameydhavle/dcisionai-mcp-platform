@@ -1,8 +1,0 @@
-{
-  "agent_runtime_arn": "arn:aws:bedrock-agentcore:us-east-1:808953421331:runtime/DcisionAI_Manufacturing_Agent_v4_1757015134-2cxwp1BgzR",
-  "agent_runtime_name": "DcisionAI_Manufacturing_Agent_v4_1757015134",
-  "status": "CREATING",
-  "ecr_repo": "808953421331.dkr.ecr.us-east-1.amazonaws.com/dcisionai-manufacturing-v4",
-  "deployment_time": 1757015232.840723,
-  "version": "v4"
-}

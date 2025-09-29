@@ -49,9 +49,7 @@ result = await client.complete_manufacturing_optimization(
 
 - [Quick Start Guide](CUSTOMER_QUICK_START_GUIDE.md) - Get up and running in 5 minutes
 - [Architecture Overview](Architecture.md) - Technical architecture and design
-- [Deployment Status](DEPLOYMENT_STATUS.md) - Current system status
-- [Customer Integration](CUSTOMER_INTEGRATION_SUMMARY.md) - Integration guide
-- [Implementation Plan](Plan.md) - Development roadmap
+- [API Specification](openapi_specification.yaml) - Complete API reference
 
 ## 🆘 Support
 
