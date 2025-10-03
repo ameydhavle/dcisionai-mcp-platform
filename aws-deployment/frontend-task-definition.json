@@ -1,0 +1,35 @@
+{
+    "family": "dcisionai-manufacturing-frontend",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::808953421331:role/ecsTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::808953421331:role/ecsTaskRole",
+    "containerDefinitions": [
+        {
+            "name": "frontend",
+            "image": "808953421331.dkr.ecr.us-east-1.amazonaws.com/dcisionai-manufacturing-dcisionai:frontend-latest",
+            "portMappings": [
+                {
+                    "containerPort": 3000,
+                    "protocol": "tcp"
+                }
+            ],
+            "environment": [
+                {
+                    "name": "NODE_ENV",
+                    "value": "production"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/dcisionai-manufacturing-frontend",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "frontend"
+                }
+            }
+        }
+    ]
+}
