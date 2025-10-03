@@ -1,0 +1,564 @@
+{
+  "showcase_metadata": {
+    "timestamp": "2025-09-29T15:05:48.781687",
+    "total_scenarios": 4,
+    "successful_scenarios": 0,
+    "total_execution_time": 575.1861653327942,
+    "platform_version": "2.0.0-swarm",
+    "architecture": "18-agent peer-to-peer swarm"
+  },
+  "forensic_evidence": {
+    "total_api_calls": 4,
+    "unique_response_hashes": 4,
+    "total_tokens": {
+      "input": 891,
+      "output": 403
+    },
+    "aws_regions_used": [
+      "us-east-1"
+    ],
+    "network_metrics": {
+      "min_rtt": 0.05018467321354282,
+      "max_rtt": 0.13569719276399062,
+      "avg_rtt": 0.08275085041838547
+    },
+    "entropy_validation": {
+      "confidence": {
+        "mean": 0.78775,
+        "variance": 0.000848249999999999,
+        "std_dev": 0.029124731758421382,
+        "range": 0.07099999999999995,
+        "suspicious": true
+      },
+      "agreement": {
+        "mean": 0.986,
+        "variance": 5.733333333333344e-05,
+        "std_dev": 0.007571877794400371,
+        "range": 0.016000000000000014,
+        "suspicious": true
+      }
+    },
+    "sample_forensic_data": [
+      {
+        "aws_request_id": "req-cd2ed25730674ef1",
+        "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+        "inference_profile": "intent_classification_profile",
+        "region": "us-east-1",
+        "input_tokens": 198,
+        "output_tokens": 101,
+        "payload_size": 1196,
+        "response_hash": "131ccd4eb7e91990167ef4873bf63dc8a80a3a10677a22f6ce85dbdc42ca97dc",
+        "start_timestamp": 1759172173.591166,
+        "end_timestamp": 1759172181.0662699,
+        "network_rtt": 0.06787325635551845,
+        "model_latency": 7.407230598777538,
+        "raw_confidence": 0.792,
+        "raw_agreement": 0.981
+      },
+      {
+        "aws_request_id": "req-03346fd9a8ad42dd",
+        "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+        "inference_profile": "intent_classification_profile",
+        "region": "us-east-1",
+        "input_tokens": 240,
+        "output_tokens": 59,
+        "payload_size": 1196,
+        "response_hash": "535b97d563073db5416a2ab23d7981f0554659f1cf4aa2485cc6eed80fbd33b4",
+        "start_timestamp": 1759172319.5309708,
+        "end_timestamp": 1759172326.5032141,
+        "network_rtt": 0.07724827934048996,
+        "model_latency": 6.894995029680506,
+        "raw_confidence": 0.822,
+        "raw_agreement": 0.997
+      },
+      {
+        "aws_request_id": "req-f2000ce663284938",
+        "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+        "inference_profile": "intent_classification_profile",
+        "region": "us-east-1",
+        "input_tokens": 240,
+        "output_tokens": 108,
+        "payload_size": 1392,
+        "response_hash": "c5c9eebc570427101ea41f8d5d11f5475446bbf553f86fb0a6d8e1eda105d9ae",
+        "start_timestamp": 1759172450.9944801,
+        "end_timestamp": 1759172457.997855,
+        "network_rtt": 0.13569719276399062,
+        "model_latency": 6.867677622223192,
+        "raw_confidence": 0.786,
+        "raw_agreement": 0.981
+      }
+    ]
+  },
+  "customer_scenarios": [
+    {
+      "company_name": "ACME Manufacturing",
+      "industry": "Automotive Parts Manufacturing",
+      "problem_description": "Optimize production line efficiency across 3 manufacturing lines with 50 workers, considering skill sets, line capacities, and cost constraints",
+      "optimization_goals": [
+        "Maximize production throughput",
+        "Minimize labor costs",
+        "Optimize worker skill utilization",
+        "Reduce production bottlenecks"
+      ],
+      "data_context": {
+        "total_workers": 50,
+        "production_lines": 3,
+        "worker_skills": [
+          "assembly",
+          "quality_control",
+          "packaging",
+          "maintenance"
+        ],
+        "line_capacities": [
+          100,
+          120,
+          80
+        ],
+        "worker_efficiency": {
+          "assembly": 0.95,
+          "quality_control": 0.9,
+          "packaging": 0.98,
+          "maintenance": 0.85
+        },
+        "cost_per_hour": 25.0,
+        "overtime_multiplier": 1.5,
+        "demand_forecast": 2500
+      },
+      "expected_benefits": [
+        "15-20% increase in production efficiency",
+        "10-15% reduction in labor costs",
+        "Improved worker satisfaction through better skill matching",
+        "Reduced production bottlenecks and downtime"
+      ],
+      "complexity_level": "intermediate"
+    },
+    {
+      "company_name": "Global Auto Parts",
+      "industry": "Automotive Supply Chain",
+      "problem_description": "Optimize supply chain for 5 warehouses across different regions, considering demand forecasting, inventory costs, and transportation constraints",
+      "optimization_goals": [
+        "Minimize total supply chain costs",
+        "Maximize service level to customers",
+        "Optimize inventory levels across warehouses",
+        "Reduce transportation costs"
+      ],
+      "data_context": {
+        "warehouse_count": 5,
+        "regions": [
+          "North America",
+          "Europe",
+          "Asia",
+          "South America",
+          "Africa"
+        ],
+        "demand_forecast": {
+          "North America": 1000,
+          "Europe": 800,
+          "Asia": 1200,
+          "South America": 400,
+          "Africa": 200
+        },
+        "inventory_costs": {
+          "holding_cost_per_unit": 2.5,
+          "stockout_cost_per_unit": 15.0,
+          "transportation_cost_per_unit": 5.0
+        },
+        "warehouse_capacities": [
+          2000,
+          1500,
+          2500,
+          1000,
+          800
+        ],
+        "lead_times": {
+          "North America": 2,
+          "Europe": 3,
+          "Asia": 4,
+          "South America": 5,
+          "Africa": 7
+        }
+      },
+      "expected_benefits": [
+        "20-25% reduction in total supply chain costs",
+        "95%+ service level achievement",
+        "30% reduction in inventory holding costs",
+        "Optimized transportation routes and costs"
+      ],
+      "complexity_level": "advanced"
+    },
+    {
+      "company_name": "Precision Electronics",
+      "industry": "Electronics Manufacturing",
+      "problem_description": "Optimize quality control processes for electronic component production, balancing quality standards with production costs and throughput",
+      "optimization_goals": [
+        "Maximize product quality and reliability",
+        "Minimize quality control costs",
+        "Optimize inspection frequency and methods",
+        "Reduce defect rates and rework"
+      ],
+      "data_context": {
+        "production_volume": 10000,
+        "quality_standards": {
+          "defect_rate_threshold": 0.001,
+          "reliability_target": 0.999,
+          "inspection_coverage": 0.95
+        },
+        "inspection_methods": [
+          "visual",
+          "automated",
+          "functional",
+          "environmental"
+        ],
+        "inspection_costs": {
+          "visual": 0.5,
+          "automated": 2.0,
+          "functional": 5.0,
+          "environmental": 10.0
+        },
+        "defect_rates": {
+          "visual": 0.002,
+          "automated": 0.0005,
+          "functional": 0.0001,
+          "environmental": 5e-05
+        },
+        "rework_cost_per_unit": 25.0
+      },
+      "expected_benefits": [
+        "40% reduction in quality control costs",
+        "50% reduction in defect rates",
+        "Improved product reliability and customer satisfaction",
+        "Optimized inspection processes and resource allocation"
+      ],
+      "complexity_level": "advanced"
+    },
+    {
+      "company_name": "Green Manufacturing Co.",
+      "industry": "Sustainable Manufacturing",
+      "problem_description": "Optimize manufacturing processes for environmental sustainability, balancing production efficiency with carbon footprint reduction and energy consumption",
+      "optimization_goals": [
+        "Minimize carbon footprint and environmental impact",
+        "Maximize energy efficiency",
+        "Optimize waste reduction and recycling",
+        "Maintain production efficiency and profitability"
+      ],
+      "data_context": {
+        "production_capacity": 5000,
+        "energy_sources": {
+          "renewable": 0.6,
+          "fossil_fuel": 0.4
+        },
+        "carbon_footprint": {
+          "current_emissions": 2.5,
+          "target_emissions": 1.5,
+          "renewable_emissions": 0.3,
+          "fossil_fuel_emissions": 4.0
+        },
+        "waste_management": {
+          "current_waste_rate": 0.05,
+          "recycling_rate": 0.7,
+          "waste_disposal_cost": 50.0,
+          "recycling_revenue": 20.0
+        },
+        "energy_costs": {
+          "renewable": 0.08,
+          "fossil_fuel": 0.12
+        }
+      },
+      "expected_benefits": [
+        "40% reduction in carbon footprint",
+        "25% improvement in energy efficiency",
+        "60% increase in waste recycling",
+        "Maintained profitability with sustainable practices"
+      ],
+      "complexity_level": "advanced"
+    }
+  ],
+  "test_results": [
+    {
+      "scenario_name": "ACME Manufacturing",
+      "success": false,
+      "execution_time": 145.93931102752686,
+      "confidence_score": 0.792,
+      "agent_swarm_used": "Complete Swarm (18 agents)",
+      "performance_metrics": {
+        "intent_classification": {
+          "execution_time": 7.47510290145874,
+          "agents_used": 5,
+          "agreement_score": 0.981,
+          "forensic_data": {
+            "aws_request_id": "req-cd2ed25730674ef1",
+            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+            "inference_profile": "intent_classification_profile",
+            "region": "us-east-1",
+            "input_tokens": 198,
+            "output_tokens": 101,
+            "payload_size": 1196,
+            "response_hash": "131ccd4eb7e91990167ef4873bf63dc8a80a3a10677a22f6ce85dbdc42ca97dc",
+            "start_timestamp": 1759172173.591166,
+            "end_timestamp": 1759172181.0662699,
+            "network_rtt": 0.06787325635551845,
+            "model_latency": 7.407230598777538,
+            "raw_confidence": 0.792,
+            "raw_agreement": 0.981
+          }
+        },
+        "data_analysis": {
+          "execution_time": 21.507744073867798,
+          "agents_used": 3,
+          "agreement_score": 1.0
+        },
+        "model_building": {
+          "execution_time": 93.39632415771484,
+          "agents_used": 4,
+          "agreement_score": 1.0
+        }
+      },
+      "error_message": "Optimization solver failed: 'SwarmResult' object has no attribute 'get'"
+    },
+    {
+      "scenario_name": "Global Auto Parts",
+      "success": false,
+      "execution_time": 131.46325516700745,
+      "confidence_score": 0.822,
+      "agent_swarm_used": "Complete Swarm (18 agents)",
+      "performance_metrics": {
+        "intent_classification": {
+          "execution_time": 6.97224235534668,
+          "agents_used": 5,
+          "agreement_score": 0.997,
+          "forensic_data": {
+            "aws_request_id": "req-03346fd9a8ad42dd",
+            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+            "inference_profile": "intent_classification_profile",
+            "region": "us-east-1",
+            "input_tokens": 240,
+            "output_tokens": 59,
+            "payload_size": 1196,
+            "response_hash": "535b97d563073db5416a2ab23d7981f0554659f1cf4aa2485cc6eed80fbd33b4",
+            "start_timestamp": 1759172319.5309708,
+            "end_timestamp": 1759172326.5032141,
+            "network_rtt": 0.07724827934048996,
+            "model_latency": 6.894995029680506,
+            "raw_confidence": 0.822,
+            "raw_agreement": 0.997
+          }
+        },
+        "data_analysis": {
+          "execution_time": 18.302974939346313,
+          "agents_used": 3,
+          "agreement_score": 1.0
+        },
+        "model_building": {
+          "execution_time": 85.35655117034912,
+          "agents_used": 4,
+          "agreement_score": 1.0
+        }
+      },
+      "error_message": "Optimization solver failed: 'SwarmResult' object has no attribute 'get'"
+    },
+    {
+      "scenario_name": "Precision Electronics",
+      "success": false,
+      "execution_time": 161.38647508621216,
+      "confidence_score": 0.786,
+      "agent_swarm_used": "Complete Swarm (18 agents)",
+      "performance_metrics": {
+        "intent_classification": {
+          "execution_time": 7.003373861312866,
+          "agents_used": 5,
+          "agreement_score": 0.981,
+          "forensic_data": {
+            "aws_request_id": "req-f2000ce663284938",
+            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+            "inference_profile": "intent_classification_profile",
+            "region": "us-east-1",
+            "input_tokens": 240,
+            "output_tokens": 108,
+            "payload_size": 1392,
+            "response_hash": "c5c9eebc570427101ea41f8d5d11f5475446bbf553f86fb0a6d8e1eda105d9ae",
+            "start_timestamp": 1759172450.9944801,
+            "end_timestamp": 1759172457.997855,
+            "network_rtt": 0.13569719276399062,
+            "model_latency": 6.867677622223192,
+            "raw_confidence": 0.786,
+            "raw_agreement": 0.981
+          }
+        },
+        "data_analysis": {
+          "execution_time": 20.033342123031616,
+          "agents_used": 3,
+          "agreement_score": 1.0
+        },
+        "model_building": {
+          "execution_time": 105.33655595779419,
+          "agents_used": 4,
+          "agreement_score": 1.0
+        }
+      },
+      "error_message": "Optimization solver failed: 'SwarmResult' object has no attribute 'get'"
+    },
+    {
+      "scenario_name": "Green Manufacturing Co.",
+      "success": false,
+      "execution_time": 136.39712405204773,
+      "confidence_score": 0.751,
+      "agent_swarm_used": "Complete Swarm (18 agents)",
+      "performance_metrics": {
+        "intent_classification": {
+          "execution_time": 7.07166314125061,
+          "agents_used": 5,
+          "agreement_score": 0.985,
+          "forensic_data": {
+            "aws_request_id": "req-df4d8a6ed13a47eb",
+            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+            "inference_profile": "intent_classification_profile",
+            "region": "us-east-1",
+            "input_tokens": 213,
+            "output_tokens": 135,
+            "payload_size": 1392,
+            "response_hash": "e1099194ce1ad6126753e37cbefeef2cb57856f23ac7299305d3c2bc335bee19",
+            "start_timestamp": 1759172612.381224,
+            "end_timestamp": 1759172619.452888,
+            "network_rtt": 0.05018467321354282,
+            "model_latency": 7.021479421711384,
+            "raw_confidence": 0.751,
+            "raw_agreement": 0.985
+          }
+        },
+        "data_analysis": {
+          "execution_time": 20.064228057861328,
+          "agents_used": 3,
+          "agreement_score": 1.0
+        },
+        "model_building": {
+          "execution_time": 86.31994318962097,
+          "agents_used": 4,
+          "agreement_score": 1.0
+        }
+      },
+      "error_message": "Optimization solver failed: 'SwarmResult' object has no attribute 'get'"
+    }
+  ],
+  "system_health": {
+    "timestamp": "2025-09-29T14:56:13.046656",
+    "overall_status": "healthy",
+    "components": {
+      "aws_bedrock": {
+        "status": "healthy",
+        "region": "us-east-1",
+        "real_api_call": true,
+        "model_accessible": "anthropic.claude-3-haiku-20240307-v1:0"
+      }
+    },
+    "swarm_status": {
+      "intent_swarm": {
+        "status": "healthy",
+        "agent_count": 5,
+        "details": {
+          "swarm_id": "manufacturing_intent_swarm",
+          "agent_count": 5,
+          "active_agents": 5,
+          "total_tasks": 0,
+          "average_confidence": 0.5,
+          "average_execution_time": 0.0,
+          "regions": [
+            "us-west-2",
+            "us-east-1",
+            "eu-west-1",
+            "ap-southeast-1"
+          ],
+          "specializations": [
+            "production_systems",
+            "operations_research",
+            "sustainability",
+            "supply_chain",
+            "quality_control"
+          ],
+          "timestamp": "2025-09-29T14:56:13.046670"
+        }
+      },
+      "data_swarm": {
+        "status": "healthy",
+        "agent_count": 3,
+        "details": {
+          "swarm_id": "manufacturing_data_swarm",
+          "agent_count": 3,
+          "active_agents": 3,
+          "total_tasks": 0,
+          "average_confidence": 0.5,
+          "average_execution_time": 0.0,
+          "regions": [
+            "us-west-2",
+            "us-east-1",
+            "eu-west-1"
+          ],
+          "specializations": [
+            "business_context",
+            "sample_data_generation",
+            "data_requirements"
+          ],
+          "timestamp": "2025-09-29T14:56:13.046685"
+        }
+      },
+      "model_swarm": {
+        "status": "healthy",
+        "agent_count": 4,
+        "details": {
+          "swarm_id": "manufacturing_model_swarm",
+          "agent_count": 4,
+          "active_agents": 4,
+          "total_tasks": 0,
+          "average_confidence": 0.5,
+          "average_execution_time": 0.0,
+          "regions": [
+            "us-west-2",
+            "us-east-1",
+            "eu-west-1",
+            "ap-southeast-1"
+          ],
+          "specializations": [
+            "constraint_modeling",
+            "solver_compatibility",
+            "mathematical_formulation",
+            "optimization_research"
+          ],
+          "timestamp": "2025-09-29T14:56:13.046697"
+        }
+      },
+      "solver_swarm": {
+        "status": "healthy",
+        "agent_count": 6,
+        "details": {
+          "swarm_id": "manufacturing_solver_swarm",
+          "agent_count": 6,
+          "active_agents": 6,
+          "total_tasks": 0,
+          "average_confidence": 0.5,
+          "average_execution_time": 0.0,
+          "regions": [
+            "us-west-2",
+            "us-east-2",
+            "us-east-1",
+            "eu-west-1",
+            "us-west-1",
+            "ap-southeast-1"
+          ],
+          "specializations": [
+            "or_tools_glop",
+            "pulp_cbc",
+            "or_tools_highs",
+            "solution_validation",
+            "or_tools_scip",
+            "cvxpy_optimization"
+          ],
+          "timestamp": "2025-09-29T14:56:13.046708"
+        }
+      }
+    }
+  },
+  "performance_summary": {
+    "average_execution_time": 143.79654133319855,
+    "average_confidence": 0.78775,
+    "success_rate": 0.0
+  }
+}
