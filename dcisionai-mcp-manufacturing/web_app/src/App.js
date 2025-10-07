@@ -55,7 +55,12 @@ function App() {
       // Step 1: Intent Classification
       const intentResponse = await axios.post(`${baseUrl}/intent`, {
         problem_description: problemDescription
-      }, { timeout: 30000 });
+      }, { 
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       const intentMessage = {
         id: Date.now() + 1,
@@ -72,7 +77,12 @@ function App() {
       // Step 2: Data Analysis
       const dataResponse = await axios.post(`${baseUrl}/data`, {
         problem_description: problemDescription
-      }, { timeout: 30000 });
+      }, { 
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       const dataMessage = {
         id: Date.now() + 2,
@@ -89,7 +99,12 @@ function App() {
       // Step 3: Model Building
       const modelResponse = await axios.post(`${baseUrl}/model`, {
         problem_description: problemDescription
-      }, { timeout: 30000 });
+      }, { 
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       const modelMessage = {
         id: Date.now() + 3,
@@ -106,7 +121,12 @@ function App() {
       // Step 4: Optimization Solving
       const solveResponse = await axios.post(`${baseUrl}/solve`, {
         problem_description: problemDescription
-      }, { timeout: 30000 });
+      }, { 
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       const solveMessage = {
         id: Date.now() + 4,
