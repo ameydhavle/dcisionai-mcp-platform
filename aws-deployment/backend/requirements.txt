@@ -1,10 +1,6 @@
 # DcisionAI Manufacturing MCP Server Requirements
 # Minimal dependencies for self-contained deployment
 
-# Web Framework
-flask>=2.3.0
-flask-cors>=4.0.0
-
 # MCP Framework
 mcp>=1.0.0
 fastapi>=0.104.0

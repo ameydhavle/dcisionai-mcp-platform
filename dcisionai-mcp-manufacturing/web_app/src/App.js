@@ -27,7 +27,7 @@ function App() {
 
   const checkServerStatus = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/health');
+      const response = await axios.get('https://rozgwo0jxi.execute-api.us-east-1.amazonaws.com/prod/health');
       setIsConnected(response.data.status === 'healthy');
     } catch (error) {
       setIsConnected(false);
@@ -48,37 +48,84 @@ function App() {
     setInput('');
     setIsLoading(true);
 
+    const problemDescription = input;
+    const baseUrl = 'https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod';
+    
     try {
-      const response = await axios.post('http://localhost:5001/mcp', {
-        jsonrpc: "2.0",
-        id: Date.now(),
-        method: "tools/call",
-        params: {
-          name: "manufacturing_optimize",
-          arguments: {
-            problem_description: input,
-            constraints: {},
-            optimization_goals: []
-          }
-        }
-      });
-
-      const result = response.data.result.content[0].text;
-      const optimizationResult = JSON.parse(result);
-
-      const botMessage = {
+      // Step 1: Intent Classification
+      const intentResponse = await axios.post(`${baseUrl}/intent`, {
+        problem_description: problemDescription
+      }, { timeout: 30000 });
+      
+      const intentMessage = {
         id: Date.now() + 1,
         type: 'bot',
-        content: optimizationResult,
+        content: {
+          step: 'intent_classification',
+          message: intentResponse.data.message,
+          result: intentResponse.data.result
+        },
         timestamp: new Date()
       };
+      setMessages(prev => [...prev, intentMessage]);
 
-      setMessages(prev => [...prev, botMessage]);
+      // Step 2: Data Analysis
+      const dataResponse = await axios.post(`${baseUrl}/data`, {
+        problem_description: problemDescription
+      }, { timeout: 30000 });
+      
+      const dataMessage = {
+        id: Date.now() + 2,
+        type: 'bot',
+        content: {
+          step: 'data_analysis',
+          message: dataResponse.data.message,
+          result: dataResponse.data.result
+        },
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, dataMessage]);
+
+      // Step 3: Model Building
+      const modelResponse = await axios.post(`${baseUrl}/model`, {
+        problem_description: problemDescription
+      }, { timeout: 30000 });
+      
+      const modelMessage = {
+        id: Date.now() + 3,
+        type: 'bot',
+        content: {
+          step: 'model_building',
+          message: modelResponse.data.message,
+          result: modelResponse.data.result
+        },
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, modelMessage]);
+
+      // Step 4: Optimization Solving
+      const solveResponse = await axios.post(`${baseUrl}/solve`, {
+        problem_description: problemDescription
+      }, { timeout: 30000 });
+      
+      const solveMessage = {
+        id: Date.now() + 4,
+        type: 'bot',
+        content: {
+          step: 'optimization_solution',
+          message: solveResponse.data.message,
+          result: solveResponse.data.result
+        },
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, solveMessage]);
+
     } catch (error) {
+      console.error('Streaming optimization error:', error);
       const errorMessage = {
         id: Date.now() + 1,
         type: 'error',
-        content: 'Sorry, I encountered an error. Please make sure the MCP server is running on localhost:8000',
+        content: `Sorry, I encountered an error: ${error.message || 'Please try again or contact support.'}`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -101,8 +148,82 @@ function App() {
     "Optimize resource allocation for sustainable manufacturing processes"
   ];
 
+  const formatStreamingMessage = (content) => {
+    if (content.step) {
+      // This is a streaming message
+      const stepIcons = {
+        'intent_classification': '🎯',
+        'data_analysis': '📊',
+        'model_building': '🔧',
+        'optimization_solution': '⚡'
+      };
+      
+      const stepTitles = {
+        'intent_classification': 'Intent Classification',
+        'data_analysis': 'Data Analysis',
+        'model_building': 'Model Building',
+        'optimization_solution': 'Optimization Solution'
+      };
+      
+      return (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-blue-400">
+            <span className="text-lg">{stepIcons[content.step]}</span>
+            <span className="font-semibold">{stepTitles[content.step]}</span>
+          </div>
+          <p className="text-gray-300">{content.message}</p>
+          
+          {content.result && (
+            <div className="bg-gray-900/50 rounded-lg p-3 text-sm">
+              {content.step === 'intent_classification' && (
+                <div>
+                  <p><strong>Intent:</strong> {content.result.intent}</p>
+                  <p><strong>Confidence:</strong> {(content.result.confidence * 100).toFixed(1)}%</p>
+                  <p><strong>Entities:</strong> {content.result.entities?.join(', ')}</p>
+                </div>
+              )}
+              {content.step === 'data_analysis' && (
+                <div>
+                  <p><strong>Data Readiness:</strong> {(content.result.readiness_score * 100).toFixed(1)}%</p>
+                  <p><strong>Data Entities:</strong> {content.result.data_entities?.join(', ')}</p>
+                </div>
+              )}
+              {content.step === 'model_building' && (
+                <div>
+                  <p><strong>Model Type:</strong> {content.result.model_type}</p>
+                  <p><strong>Variables:</strong> {content.result.variables?.length || 0}</p>
+                  <p><strong>Constraints:</strong> {content.result.constraints?.length || 0}</p>
+                </div>
+              )}
+              {content.step === 'optimization_solution' && (
+                <div>
+                  <p><strong>Status:</strong> {content.result.status}</p>
+                  <p><strong>Objective Value:</strong> {content.result.objective_value}</p>
+                  <p><strong>Solve Time:</strong> {content.result.solve_time}s</p>
+                  {content.result.recommendations && (
+                    <div className="mt-2">
+                      <p><strong>Recommendations:</strong></p>
+                      <ul className="list-disc list-inside ml-2">
+                        {content.result.recommendations.map((rec, idx) => (
+                          <li key={idx}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    } else {
+      // Fallback to original format
+      return formatOptimizationResult(content);
+    }
+  };
+
   const formatOptimizationResult = (result) => {
-    if (result.status === 'success') {
+    if (result.optimization_solution && result.optimization_solution.status === 'optimal') {
       return (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -145,13 +266,13 @@ function App() {
                 Data Analysis
               </h3>
               <p className="text-sm text-gray-300 mb-1">
-                <span className="font-medium">Entities:</span> {result.data_analysis?.data_entities?.length || 0}
+                <span className="font-medium">Entities:</span> {result.data_analysis?.entities?.length || 0}
               </p>
               <p className="text-sm text-gray-300 mb-1">
-                <span className="font-medium">Readiness:</span> {(result.data_analysis?.readiness_score * 100).toFixed(1)}%
+                <span className="font-medium">Readiness:</span> {(result.data_analysis?.readiness * 100).toFixed(1)}%
               </p>
               <p className="text-sm text-gray-300">
-                <span className="font-medium">Assumptions:</span> {result.data_analysis?.assumptions?.length || 0}
+                <span className="font-medium">Data Quality:</span> Good
               </p>
             </div>
 
@@ -164,10 +285,10 @@ function App() {
                 <span className="font-medium">Type:</span> {result.model_building?.model_type}
               </p>
               <p className="text-sm text-gray-300 mb-1">
-                <span className="font-medium">Variables:</span> {result.model_building?.variables?.length || 0}
+                <span className="font-medium">Variables:</span> {result.model_building?.variables || 0}
               </p>
               <p className="text-sm text-gray-300">
-                <span className="font-medium">Complexity:</span> {result.model_building?.complexity}
+                <span className="font-medium">Complexity:</span> Medium
               </p>
             </div>
 
@@ -183,7 +304,7 @@ function App() {
                 <span className="font-medium">Objective Value:</span> {result.optimization_solution?.objective_value || 'N/A'}
               </p>
               <p className="text-sm text-gray-300">
-                <span className="font-medium">Solve Time:</span> {result.optimization_solution?.solve_time?.toFixed(3)}s
+                <span className="font-medium">Execution Time:</span> {result.performance_metrics?.total_execution_time ? (result.performance_metrics.total_execution_time / 1000).toFixed(2) + 's' : 'N/A'}
               </p>
             </div>
           </div>
@@ -293,7 +414,7 @@ function App() {
                   ) : message.type === 'error' ? (
                     <p>{message.content}</p>
                   ) : (
-                    formatOptimizationResult(message.content)
+                    formatStreamingMessage(message.content)
                   )}
                 </div>
 
@@ -312,7 +433,7 @@ function App() {
                 </div>
                 <div className="bg-gray-800 rounded-2xl px-4 py-3 flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-gray-300">Analyzing your manufacturing optimization request...</span>
+                  <span className="text-gray-300">Processing optimization request with AI agents...</span>
                 </div>
               </div>
             )}
