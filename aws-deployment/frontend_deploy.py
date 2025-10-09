@@ -306,7 +306,7 @@ def deploy_frontend(backend_url):
 
 if __name__ == "__main__":
     # AWS Lambda backend URL
-    backend_url = "https://qsykhd99ad.execute-api.us-east-1.amazonaws.com/prod"
+    backend_url = "https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod"
     
     print("🚀 Deploying DcisionAI Manufacturing Optimizer Frontend to AWS")
     print("=" * 70)

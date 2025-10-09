@@ -1,114 +1,106 @@
 #!/usr/bin/env python3
 """
-Complete CORS Fix for Streaming API
-==================================
-
-This script completely fixes CORS for all endpoints.
+Complete CORS Fix for API Gateway
 """
 
 import boto3
 import json
 
-def fix_cors_complete():
-    """Completely fix CORS for all endpoints."""
-    print("🔧 Completely fixing CORS for streaming API...")
+def fix_cors_for_all_endpoints():
+    """Fix CORS for all API Gateway endpoints."""
     
-    api_client = boto3.client('apigateway')
-    api_id = 'h5w9r03xkf'
+    api_gateway = boto3.client('apigateway')
+    api_id = 'ryjnyrgm19'
+    
+    print(f"🔧 Fixing CORS for API Gateway: {api_id}")
     
     # Get all resources
-    resources = api_client.get_resources(restApiId=api_id)
-    
-    endpoints = ['intent', 'data', 'model', 'solve', 'mcp', 'health']
+    resources = api_gateway.get_resources(restApiId=api_id)
     
     for resource in resources['items']:
-        resource_id = resource['id']
-        path_part = resource.get('pathPart', '')
-        
-        if path_part in endpoints:
-            print(f"🔧 Fixing CORS for /{path_part}...")
+        if resource.get('pathPart') in ['health', 'intent', 'data', 'model', 'solve']:
+            resource_id = resource['id']
+            path_part = resource['pathPart']
+            
+            print(f"🔧 Fixing CORS for /{path_part}")
             
             try:
                 # Delete existing OPTIONS method if it exists
                 try:
-                    api_client.delete_method(
+                    api_gateway.delete_method(
                         restApiId=api_id,
                         resourceId=resource_id,
                         httpMethod='OPTIONS'
                     )
-                    print(f"  ✅ Deleted existing OPTIONS method for /{path_part}")
+                    print(f"  ✅ Deleted existing OPTIONS method")
                 except:
                     pass
                 
-                # Create new OPTIONS method
-                api_client.put_method(
+                # Create OPTIONS method
+                api_gateway.put_method(
                     restApiId=api_id,
                     resourceId=resource_id,
                     httpMethod='OPTIONS',
                     authorizationType='NONE'
                 )
-                print(f"  ✅ Created OPTIONS method for /{path_part}")
+                print(f"  ✅ Created OPTIONS method")
                 
-                # Create mock integration
-                api_client.put_integration(
+                # Create MOCK integration
+                api_gateway.put_integration(
                     restApiId=api_id,
                     resourceId=resource_id,
                     httpMethod='OPTIONS',
                     type='MOCK',
+                    integrationHttpMethod='OPTIONS',
                     requestTemplates={
                         'application/json': '{"statusCode": 200}'
                     }
                 )
-                print(f"  ✅ Created integration for /{path_part}")
+                print(f"  ✅ Created MOCK integration")
                 
                 # Create method response
-                api_client.put_method_response(
+                api_gateway.put_method_response(
                     restApiId=api_id,
                     resourceId=resource_id,
                     httpMethod='OPTIONS',
                     statusCode='200',
                     responseParameters={
-                        'method.response.header.Access-Control-Allow-Origin': True,
+                        'method.response.header.Access-Control-Allow-Headers': True,
                         'method.response.header.Access-Control-Allow-Methods': True,
-                        'method.response.header.Access-Control-Allow-Headers': True
+                        'method.response.header.Access-Control-Allow-Origin': True
                     }
                 )
-                print(f"  ✅ Created method response for /{path_part}")
+                print(f"  ✅ Created method response")
                 
-                # Create integration response
-                api_client.put_integration_response(
+                # Create integration response with proper header mapping
+                api_gateway.put_integration_response(
                     restApiId=api_id,
                     resourceId=resource_id,
                     httpMethod='OPTIONS',
                     statusCode='200',
                     responseParameters={
-                        'method.response.header.Access-Control-Allow-Origin': "'*'",
-                        'method.response.header.Access-Control-Allow-Methods': "'GET,POST,OPTIONS'",
-                        'method.response.header.Access-Control-Allow-Headers': "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+                        'integration.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                        'integration.response.header.Access-Control-Allow-Methods': "'GET,POST,OPTIONS'",
+                        'integration.response.header.Access-Control-Allow-Origin': "'*'"
+                    },
+                    responseTemplates={
+                        'application/json': ''
                     }
                 )
-                print(f"  ✅ Created integration response for /{path_part}")
+                print(f"  ✅ Created integration response")
                 
             except Exception as e:
-                print(f"  ❌ Error fixing /{path_part}: {e}")
+                print(f"  ❌ Error fixing CORS for /{path_part}: {e}")
     
-    # Deploy the changes
-    try:
-        api_client.create_deployment(
-            restApiId=api_id,
-            stageName='prod',
-            description='Complete CORS fix deployment'
-        )
-        print("✅ Deployed CORS fixes to prod stage")
-    except Exception as e:
-        print(f"⚠️  Deployment warning: {e}")
+    # Deploy the API
+    print(f"🚀 Deploying API with CORS fixes...")
+    deployment = api_gateway.create_deployment(
+        restApiId=api_id,
+        stageName='prod'
+    )
+    print(f"✅ API deployed successfully")
     
-    print("\n🌐 Complete CORS Fix Applied!")
-    print("All endpoints should now support CORS properly.")
-
-def main():
-    """Main function."""
-    fix_cors_complete()
+    return True
 
 if __name__ == "__main__":
-    main()
+    fix_cors_for_all_endpoints()

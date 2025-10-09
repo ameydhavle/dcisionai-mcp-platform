@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, CheckCircle, AlertCircle, BarChart3, Settings, Zap, Eye, X } from 'lucide-react';
 import axios from 'axios';
+import Sidebar from './components/Sidebar';
+import ManufacturingHero from './components/ManufacturingHero';
+import ValueProposition from './components/ValueProposition';
 import './App.css';
 
 function App() {
@@ -10,6 +13,11 @@ function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [showModelModal, setShowModelModal] = useState(false);
   const [currentModel, setCurrentModel] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeSection, setActiveSection] = useState('home');
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [showValueProposition, setShowValueProposition] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -23,6 +31,16 @@ function App() {
   useEffect(() => {
     // Check if MCP server is running
     checkServerStatus();
+    
+    // Check if mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const checkServerStatus = async () => {
@@ -92,6 +110,22 @@ function App() {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const startDecisionChallenge = (query) => {
+    setInput(query);
+    setShowValueProposition(false);
+    // Auto-send the message after a brief delay
+    setTimeout(() => {
+      sendMessage();
+    }, 100);
+  };
+
+  const startNewAnalysis = () => {
+    setMessages([]);
+    setInput('');
+    setShowValueProposition(false);
+    setActiveSection('home');
   };
 
   const exampleQueries = [
@@ -213,140 +247,174 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
-      {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold">DcisionAI Manufacturing Optimizer</h1>
-                <p className="text-sm text-gray-400">AI-powered manufacturing optimization</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="text-sm text-gray-400">
-                {isConnected ? 'Connected' : 'Disconnected'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-black flex">
+      {/* Mobile Overlay */}
+      {isMobile && showMobileSidebar && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setShowMobileSidebar(false)}
+        />
+      )}
+      
+      {/* Sidebar */}
+        <Sidebar
+          isCollapsed={isMobile ? false : sidebarCollapsed}
+          onToggle={() => isMobile ? setShowMobileSidebar(!showMobileSidebar) : setSidebarCollapsed(!sidebarCollapsed)}
+          activeSection={activeSection}
+          onSectionChange={(section) => {
+            setActiveSection(section);
+            if (isMobile) setShowMobileSidebar(false);
+          }}
+          isMobile={isMobile}
+          onClose={() => setShowMobileSidebar(false)}
+          onStartNewAnalysis={startNewAnalysis}
+        />
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
-        {messages.length === 0 ? (
-          /* Welcome Screen */
-          <div className="flex-1 flex items-center justify-center p-8">
-            <div className="text-center max-w-2xl">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Bot className="w-8 h-8 text-white" />
-              </div>
-              <h2 className="text-3xl font-bold mb-4">Welcome to DcisionAI Manufacturing Optimizer</h2>
-              <p className="text-gray-400 mb-8 text-lg">
-                Ask me anything about manufacturing optimization. I can help you optimize production lines, 
-                supply chains, quality control, and resource allocation using AI-powered analysis.
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {exampleQueries.map((query, index) => (
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
+        {/* Top Header */}
+        <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm px-6 py-4">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isMobile && (
                   <button
-                    key={index}
-                    onClick={() => setInput(query)}
-                    className="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg text-left transition-colors border border-gray-700 hover:border-gray-600"
+                    onClick={() => setShowMobileSidebar(true)}
+                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+                    title="Open sidebar"
                   >
-                    <p className="text-sm">{query}</p>
+                    ☰
                   </button>
-                ))}
+                )}
+                {!isMobile && (
+                  <button
+                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+                    title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                  >
+                    {sidebarCollapsed ? '→' : '←'}
+                  </button>
+                )}
+                <h1 className="text-2xl font-bold text-white">DcisionAI</h1>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span className="text-sm text-gray-400">
+                    {isConnected ? 'Connected' : 'Disconnected'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white">
+                  🌐
+                </button>
+                <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white">
+                  🎤
+                </button>
+              </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col">
+          {messages.length === 0 ? (
+            /* Welcome Screen - Manufacturing Focused */
+            <div className="flex-1 overflow-y-auto p-8">
+              {!showValueProposition ? (
+                <ManufacturingHero onStartOptimization={startDecisionChallenge} />
+              ) : (
+                <ValueProposition />
+              )}
+              
+              {/* Toggle between Hero and Value Proposition */}
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => setShowValueProposition(!showValueProposition)}
+                  className="text-[#e07a4a] hover:text-[#d2691e] text-sm font-medium transition-colors"
+                >
+                  {showValueProposition ? '← Back to Optimization' : 'Why DcisionAI vs. ChatGPT? →'}
+                </button>
               </div>
             </div>
-          </div>
-        ) : (
-          /* Chat Messages */
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {message.type !== 'user' && (
+          ) : (
+            /* Chat Messages */
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex gap-4 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {message.type !== 'user' && (
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+                  
+                  <div
+                    className={`max-w-4xl rounded-2xl px-6 py-4 ${
+                      message.type === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : message.type === 'error'
+                        ? 'bg-red-900/50 text-red-200 border border-red-800'
+                        : 'bg-gray-800 text-gray-100'
+                    }`}
+                  >
+                    {message.type === 'user' ? (
+                      <p className="text-lg">{message.content}</p>
+                    ) : message.type === 'error' ? (
+                      <p>{message.content}</p>
+                    ) : (
+                      formatOptimizationResult(message.content)
+                    )}
+                  </div>
+
+                  {message.type === 'user' && (
+                    <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {isLoading && (
+                <div className="flex gap-4 justify-start">
                   <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Bot className="w-5 h-5 text-white" />
                   </div>
-                )}
-                
-                <div
-                  className={`max-w-3xl rounded-2xl px-4 py-3 ${
-                    message.type === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : message.type === 'error'
-                      ? 'bg-red-900/50 text-red-200 border border-red-800'
-                      : 'bg-gray-800 text-gray-100'
-                  }`}
-                >
-                  {message.type === 'user' ? (
-                    <p>{message.content}</p>
-                  ) : message.type === 'error' ? (
-                    <p>{message.content}</p>
-                  ) : (
-                    formatOptimizationResult(message.content)
-                  )}
-                </div>
-
-                {message.type === 'user' && (
-                  <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-white" />
+                  <div className="bg-gray-800 rounded-2xl px-6 py-4 flex items-center gap-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+                    <span className="text-gray-300">Analyzing your manufacturing optimization request...</span>
                   </div>
-                )}
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-5 h-5 text-white" />
                 </div>
-                <div className="bg-gray-800 rounded-2xl px-4 py-3 flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-gray-300">Analyzing your manufacturing optimization request...</span>
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+
+            {/* Bottom Input Area */}
+            {messages.length > 0 && (
+              <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm p-6">
+                <div className="max-w-4xl mx-auto">
+                  <div className="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-2xl px-4 py-4 hover:border-gray-600 transition-colors focus-within:border-[#e07a4a] focus-within:ring-1 focus-within:ring-[#e07a4a]">
+                    <input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Define your decision challenge..."
+                      className="flex-1 bg-transparent text-white placeholder-gray-400 focus:outline-none"
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={!input.trim() || isLoading}
+                      className="bg-[#e07a4a] hover:bg-[#d2691e] disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      {isLoading ? 'Analyzing...' : 'Decide'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
-            
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-
-        {/* Input Area */}
-        <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm p-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex gap-3">
-              <div className="flex-1 relative">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Describe your manufacturing optimization problem..."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 pr-12 text-white placeholder-gray-400 resize-none focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  rows="1"
-                  style={{ minHeight: '48px', maxHeight: '120px' }}
-                />
-              </div>
-              <button
-                onClick={sendMessage}
-                disabled={!input.trim() || isLoading}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors flex items-center justify-center"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
+        </main>
+      </div>
 
       {/* Model Details Modal */}
       {showModelModal && currentModel && (

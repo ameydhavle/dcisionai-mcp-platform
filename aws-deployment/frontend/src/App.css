@@ -1,7 +1,62 @@
-/* Additional custom styles for the React app */
+/* Import IBM Plex Sans font */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
+
+/* Apply IBM Plex Sans as the default font */
+html, body {
+  font-family: 'IBM Plex Sans', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 300;
+}
+
+* {
+  font-family: 'IBM Plex Sans', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 300;
+}
+
+/* Preserve bold weights for emphasis and highlights */
+.font-bold, .font-semibold, strong, b {
+  font-weight: 600 !important;
+}
+
+/* Extra bold for special emphasis */
+.font-extrabold {
+  font-weight: 700 !important;
+}
+
+/* Perplexity-inspired styles for DcisionAI */
 
 .App {
-  text-align: center;
+  text-align: left;
+}
+
+/* Sidebar animations */
+.sidebar-transition {
+  transition: width 0.3s ease-in-out;
+}
+
+/* Input focus effects */
+.input-focus {
+  transition: all 0.2s ease-in-out;
+}
+
+.input-focus:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+/* Perplexity-style input */
+.perplexity-input {
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  transition: all 0.2s ease-in-out;
+}
+
+.perplexity-input:hover {
+  border-color: rgba(75, 85, 99, 0.8);
+}
+
+.perplexity-input:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
 }
 
 /* Custom animations */
@@ -90,6 +145,44 @@
   
   .mobile-full {
     width: 100%;
+  }
+  
+  /* Mobile sidebar */
+  .sidebar-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+  
+  /* Mobile overlay */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+  
+  /* Mobile input adjustments */
+  .mobile-input {
+    padding: 12px 16px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Mobile message spacing */
+  .mobile-message {
+    padding: 16px;
+    margin-bottom: 16px;
   }
 }
 

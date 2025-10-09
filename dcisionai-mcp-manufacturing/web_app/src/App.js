@@ -27,7 +27,9 @@ function App() {
 
   const checkServerStatus = async () => {
     try {
-      const response = await axios.get('https://rozgwo0jxi.execute-api.us-east-1.amazonaws.com/prod/health');
+      const response = await axios.post('https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod/health', {}, {
+        headers: { 'Content-Type': 'application/json' }
+      });
       setIsConnected(response.data.status === 'healthy');
     } catch (error) {
       setIsConnected(false);
@@ -76,7 +78,8 @@ function App() {
 
       // Step 2: Data Analysis
       const dataResponse = await axios.post(`${baseUrl}/data`, {
-        problem_description: problemDescription
+        problem_description: problemDescription,
+        intent_data: intentResponse.data.result
       }, { 
         timeout: 30000,
         headers: {
@@ -98,7 +101,9 @@ function App() {
 
       // Step 3: Model Building
       const modelResponse = await axios.post(`${baseUrl}/model`, {
-        problem_description: problemDescription
+        problem_description: problemDescription,
+        intent_data: intentResponse.data.result,
+        data_analysis: dataResponse.data.result
       }, { 
         timeout: 30000,
         headers: {
@@ -119,14 +124,19 @@ function App() {
       setMessages(prev => [...prev, modelMessage]);
 
       // Step 4: Optimization Solving
+      console.log('Starting solve step...');
       const solveResponse = await axios.post(`${baseUrl}/solve`, {
-        problem_description: problemDescription
+        problem_description: problemDescription,
+        intent_data: intentResponse.data.result,
+        model_building: modelResponse.data.result
       }, { 
         timeout: 30000,
         headers: {
           'Content-Type': 'application/json'
         }
       });
+      
+      console.log('Solve response received:', solveResponse.data);
       
       const solveMessage = {
         id: Date.now() + 4,
@@ -197,36 +207,93 @@ function App() {
             <div className="bg-gray-900/50 rounded-lg p-3 text-sm">
               {content.step === 'intent_classification' && (
                 <div>
-                  <p><strong>Intent:</strong> {content.result.intent}</p>
-                  <p><strong>Confidence:</strong> {(content.result.confidence * 100).toFixed(1)}%</p>
-                  <p><strong>Entities:</strong> {content.result.entities?.join(', ')}</p>
+                  <p><strong>Intent:</strong> {String(content.result.intent || 'Unknown')}</p>
+                  <p><strong>Confidence:</strong> {content.result.confidence ? (content.result.confidence * 100).toFixed(1) : 'N/A'}%</p>
+                  <p><strong>Problem Scale:</strong> {String(content.result.problem_scale || 'Unknown')}</p>
+                  <p><strong>Entities:</strong> {Array.isArray(content.result.entities) ? content.result.entities.join(', ') : 'N/A'}</p>
+                  {content.result.extracted_quantities && Array.isArray(content.result.extracted_quantities) && (
+                    <p><strong>Quantities:</strong> {content.result.extracted_quantities.join(', ')}</p>
+                  )}
                 </div>
               )}
               {content.step === 'data_analysis' && (
                 <div>
-                  <p><strong>Data Readiness:</strong> {(content.result.readiness_score * 100).toFixed(1)}%</p>
-                  <p><strong>Data Entities:</strong> {content.result.data_entities?.join(', ')}</p>
+                  <p><strong>Data Readiness:</strong> {content.result.readiness_score ? (content.result.readiness_score * 100).toFixed(1) : 'N/A'}%</p>
+                  <p><strong>Data Complexity:</strong> {String(content.result.data_complexity || 'Unknown')}</p>
+                  <p><strong>Data Entities:</strong> {Array.isArray(content.result.data_entities) ? 
+                    content.result.data_entities.map(entity => 
+                      typeof entity === 'object' ? entity.name : entity
+                    ).join(', ') : 'N/A'}</p>
+                  {content.result.estimated_data_points && (
+                    <p><strong>Estimated Data Points:</strong> {content.result.estimated_data_points}</p>
+                  )}
                 </div>
               )}
               {content.step === 'model_building' && (
                 <div>
-                  <p><strong>Model Type:</strong> {content.result.model_type}</p>
-                  <p><strong>Variables:</strong> {content.result.variables?.length || 0}</p>
-                  <p><strong>Constraints:</strong> {content.result.constraints?.length || 0}</p>
+                  <p><strong>Model Type:</strong> {String(content.result.model_type || 'Unknown')}</p>
+                  <p><strong>Variables:</strong> {Array.isArray(content.result.variables) ? content.result.variables.length : 0}</p>
+                  <p><strong>Constraints:</strong> {Array.isArray(content.result.constraints) ? content.result.constraints.length : 0}</p>
+                  <p><strong>Complexity:</strong> {String(content.result.complexity || 'Unknown')}</p>
+                  {content.result.estimated_solve_time && (
+                    <p><strong>Estimated Solve Time:</strong> {String(content.result.estimated_solve_time)}s</p>
+                  )}
                 </div>
               )}
               {content.step === 'optimization_solution' && (
                 <div>
-                  <p><strong>Status:</strong> {content.result.status}</p>
-                  <p><strong>Objective Value:</strong> {content.result.objective_value}</p>
-                  <p><strong>Solve Time:</strong> {content.result.solve_time}s</p>
-                  {content.result.recommendations && (
+                  <p><strong>Status:</strong> {String(content.result.status || 'Unknown')}</p>
+                  <p><strong>Objective Value:</strong> {String(content.result.objective_value || 'N/A')}</p>
+                  {content.result.objective_interpretation && (
+                    <p><strong>Objective Meaning:</strong> {String(content.result.objective_interpretation)}</p>
+                  )}
+                  <p><strong>Solve Time:</strong> {String(content.result.solve_time || 'N/A')}s</p>
+                  {content.result.business_impact && (
+                    <div className="mt-2">
+                      <p><strong>Business Impact:</strong></p>
+                      <ul className="list-disc list-inside ml-2">
+                        {typeof content.result.business_impact === 'object' && content.result.business_impact !== null ? 
+                          Object.entries(content.result.business_impact).map(([key, value], idx) => (
+                            <li key={idx}><strong>{key.replace(/_/g, ' ')}:</strong> {String(value)}</li>
+                          )) :
+                          <li>{String(content.result.business_impact)}</li>
+                        }
+                      </ul>
+                    </div>
+                  )}
+                  {content.result.expected_impact && (
+                    <div className="mt-2">
+                      <p><strong>Expected Impact:</strong></p>
+                      <ul className="list-disc list-inside ml-2">
+                        {typeof content.result.expected_impact === 'object' && content.result.expected_impact !== null ? 
+                          Object.entries(content.result.expected_impact).map(([key, value], idx) => (
+                            <li key={idx}><strong>{key.replace(/_/g, ' ')}:</strong> {String(value)}</li>
+                          )) :
+                          <li>{String(content.result.expected_impact)}</li>
+                        }
+                      </ul>
+                    </div>
+                  )}
+                  {content.result.recommendations && Array.isArray(content.result.recommendations) && (
                     <div className="mt-2">
                       <p><strong>Recommendations:</strong></p>
                       <ul className="list-disc list-inside ml-2">
                         {content.result.recommendations.map((rec, idx) => (
-                          <li key={idx}>{rec}</li>
+                          <li key={idx}>{String(rec)}</li>
                         ))}
+                      </ul>
+                    </div>
+                  )}
+                  {content.result.implementation_notes && (
+                    <div className="mt-2">
+                      <p><strong>Implementation Notes:</strong></p>
+                      <ul className="list-disc list-inside ml-2">
+                        {Array.isArray(content.result.implementation_notes) ? 
+                          content.result.implementation_notes.map((note, idx) => (
+                            <li key={idx}>{note}</li>
+                          )) :
+                          <li>{content.result.implementation_notes}</li>
+                        }
                       </ul>
                     </div>
                   )}
