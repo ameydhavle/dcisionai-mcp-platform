@@ -23,10 +23,12 @@ def build_react_app(backend_url):
     env = os.environ.copy()
     env['REACT_APP_BACKEND_URL'] = backend_url
     
-    # Build the React app
+    # Build the React app from the aws-deployment/frontend directory
+    frontend_dir = '/Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/aws-deployment/frontend'
+    
     result = subprocess.run(
         ['npm', 'run', 'build'],
-        cwd='/Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/dcisionai-mcp-manufacturing/web_app',
+        cwd=frontend_dir,
         env=env,
         capture_output=True,
         text=True
@@ -37,7 +39,7 @@ def build_react_app(backend_url):
         return None
     
     print("✅ React app built successfully")
-    return '/Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/dcisionai-mcp-manufacturing/web_app/build'
+    return f'{frontend_dir}/build'
 
 def create_s3_bucket(bucket_name, region='us-east-1'):
     """Create S3 bucket for hosting the frontend."""
@@ -248,7 +250,7 @@ def update_frontend_config(backend_url):
     print("⚙️  Updating frontend configuration...")
     
     # Update the App.js file to use the AWS backend
-    app_js_path = '/Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/dcisionai-mcp-manufacturing/web_app/src/App.js'
+    app_js_path = '/Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/aws-deployment/frontend/src/App.js'
     
     with open(app_js_path, 'r') as f:
         content = f.read()

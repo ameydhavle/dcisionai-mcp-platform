@@ -318,10 +318,10 @@ def build_model(problem_description: str, intent_data: Dict[str, Any], data_anal
 def solve_optimization(problem_description: str, intent_data: Dict[str, Any], model_building: Dict[str, Any]) -> Dict[str, Any]:
     """Step 4: Enhanced optimization solving using inference profile."""
     try:
-        logger.info(f"⚡ Enhanced optimization solving...")
+        logger.info(f"⚡ Enhanced decision analysis solving...")
         
         solve_prompt = f"""
-        You are an expert optimization consultant. Provide a detailed solution for this problem:
+        You are an expert decision support consultant. Provide a detailed analysis and recommendations for this problem:
         
         Problem: "{problem_description}"
         Intent: {intent_data.get('intent', 'unknown')}
@@ -339,7 +339,7 @@ def solve_optimization(problem_description: str, intent_data: Dict[str, Any], mo
             }},
             "solve_time": 320,
             "recommendations": [
-                "Optimize warehouse locations and capacities",
+                "Improve warehouse locations and capacities",
                 "Renegotiate supplier contracts",
                 "Implement demand forecasting system"
             ],
@@ -355,7 +355,7 @@ def solve_optimization(problem_description: str, intent_data: Dict[str, Any], mo
         }}
         """
         
-        solve_result = invoke_bedrock_with_profile(solve_prompt, "optimization_solution")
+        solve_result = invoke_bedrock_with_profile(solve_prompt, "decision_analysis_solution")
         
         fallback = {
             "status": "optimal",
