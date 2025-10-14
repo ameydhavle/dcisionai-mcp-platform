@@ -279,7 +279,7 @@ function App() {
     setMessages([]);
     setInput('');
     setShowValueProposition(false);
-    setActiveSection('home');
+    setActiveSection('chat'); // Switch to chat section instead of home
   };
 
   const exampleQueries = [
@@ -512,7 +512,7 @@ function App() {
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col">
-          {messages.length === 0 ? (
+          {messages.length === 0 && activeSection !== 'chat' ? (
             /* Welcome Screen - Manufacturing Focused */
             <div className="flex-1 overflow-y-auto p-8">
               {!showValueProposition ? (
@@ -534,7 +534,46 @@ function App() {
           ) : (
             /* Chat Messages */
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {messages.map((message) => (
+              {messages.length === 0 && activeSection === 'chat' ? (
+                /* Empty Chat State */
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center max-w-md mx-auto">
+                    <div className="w-16 h-16 bg-gradient-to-r from-[#e07a4a] to-[#d2691e] rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Bot className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-semibold text-white mb-3">Start Your Analysis</h2>
+                    <p className="text-gray-400 mb-6">
+                      Describe your manufacturing decision challenge and I'll help you find the optimal solution.
+                    </p>
+                    <button
+                      onClick={() => setActiveSection('home')}
+                      className="text-[#e07a4a] hover:text-[#d2691e] text-sm font-medium transition-colors mb-6"
+                    >
+                      ← Back to Home
+                    </button>
+                    <div className="space-y-3">
+                      <div className="text-sm text-gray-500">
+                        <strong>Try asking:</strong>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-sm text-gray-400 bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition-colors" 
+                             onClick={() => setInput("Improve production line efficiency with 50 workers across 3 manufacturing lines")}>
+                          "Improve production line efficiency with 50 workers across 3 manufacturing lines"
+                        </div>
+                        <div className="text-sm text-gray-400 bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition-colors"
+                             onClick={() => setInput("Reduce supply chain costs for 5 warehouses across different regions")}>
+                          "Reduce supply chain costs for 5 warehouses across different regions"
+                        </div>
+                        <div className="text-sm text-gray-400 bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition-colors"
+                             onClick={() => setInput("Enhance quality control efficiency while reducing inspection costs")}>
+                          "Enhance quality control efficiency while reducing inspection costs"
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                messages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex gap-4 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -569,7 +608,8 @@ function App() {
                     </div>
                   )}
                 </div>
-              ))}
+              ))
+              )}
               
               {isLoading && (
                 <div className="flex gap-4 justify-start">
@@ -588,7 +628,7 @@ function App() {
           )}
 
             {/* Bottom Input Area */}
-            {messages.length > 0 && (
+            {(messages.length > 0 || activeSection === 'chat') && (
               <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm p-6">
                 <div className="max-w-4xl mx-auto">
                   <div className="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-2xl px-4 py-4 hover:border-gray-600 transition-colors focus-within:border-[#e07a4a] focus-within:ring-1 focus-within:ring-[#e07a4a]">
