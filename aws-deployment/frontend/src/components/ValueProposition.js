@@ -50,7 +50,7 @@ const ValueProposition = () => {
 
       <div className="mt-8 text-center">
         <div className="inline-block bg-[#e07a4a]/20 text-[#e07a4a] px-4 py-2 rounded-lg border border-[#e07a4a]/30">
-          <span className="font-medium">Real AWS Bedrock Integration</span>
+          <span className="font-medium">Real AI Platform Integration</span>
         </div>
         <p className="text-gray-400 text-sm mt-2">
           Powered by enterprise-grade AI with decision intelligence expertise

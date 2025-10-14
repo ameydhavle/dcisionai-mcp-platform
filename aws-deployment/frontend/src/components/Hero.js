@@ -1,26 +1,26 @@
 import React from 'react';
 
-const ManufacturingHero = ({ onStartOptimization }) => {
+const Hero = ({ onStartOptimization }) => {
   const quickActions = [
     {
-      title: "Production Line",
-      description: "Optimize worker allocation and throughput",
-      query: "Optimize production line efficiency with 50 workers across 3 manufacturing lines"
+      title: "Operations",
+      description: "Optimize resource allocation and throughput",
+      query: "Optimize resource allocation and improve operational efficiency"
     },
     {
       title: "Supply Chain",
-      description: "Minimize costs across multiple warehouses",
-      query: "Minimize supply chain costs for 5 warehouses across different regions"
+      description: "Minimize costs across multiple locations",
+      query: "Minimize supply chain costs for 5 locations across different regions"
     },
     {
       title: "Quality Control",
-      description: "Maximize efficiency while reducing inspection costs",
-      query: "Maximize quality control efficiency while reducing inspection costs"
+      description: "Maximize efficiency while reducing operational costs",
+      query: "Maximize quality control efficiency while reducing operational costs"
     },
     {
       title: "Resource Allocation",
-      description: "Optimize for sustainable manufacturing",
-      query: "Optimize resource allocation for sustainable manufacturing processes"
+      description: "Optimize for sustainable operations",
+      query: "Optimize resource allocation for sustainable business processes"
     }
   ];
 
@@ -93,4 +93,4 @@ const ManufacturingHero = ({ onStartOptimization }) => {
   );
 };
 
-export default ManufacturingHero;
+export default Hero;

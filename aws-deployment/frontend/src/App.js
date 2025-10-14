@@ -2,8 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, CheckCircle, AlertCircle, BarChart3, Settings, Zap, Eye, X } from 'lucide-react';
 import axios from 'axios';
 import Sidebar from './components/Sidebar';
-import ManufacturingHero from './components/ManufacturingHero';
+import Hero from './components/Hero';
 import ValueProposition from './components/ValueProposition';
+import ModelsPage from './components/ModelsPage';
+import KnowledgeBasePage from './components/KnowledgeBasePage';
+import AgentsPage from './components/AgentsPage';
 import './App.css';
 
 function App() {
@@ -45,7 +48,7 @@ function App() {
 
   const checkServerStatus = async () => {
     try {
-      // Try local backend first, then Bedrock AgentCore
+      // Try local backend first, then cloud backend
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       
       if (isLocal) {
@@ -58,7 +61,7 @@ function App() {
             return;
           }
         } catch (localError) {
-          console.log('Local backend not available, trying Bedrock AgentCore...');
+          console.log('Local backend not available, trying cloud backend...');
         }
       }
       
@@ -80,7 +83,7 @@ function App() {
         console.log('Backend not healthy');
       }
     } catch (error) {
-      console.log('Bedrock AgentCore connection error:', error);
+      console.log('Cloud backend connection error:', error);
       // If it's a network error, backend is not connected
       // If it's an API error, backend is connected but endpoint might not exist
       if (error.response && error.response.status >= 400) {
@@ -283,10 +286,10 @@ function App() {
   };
 
   const exampleQueries = [
-    "Improve production line efficiency with 50 workers across 3 manufacturing lines",
+    "Optimize resource allocation and improve operational efficiency",
     "Reduce supply chain costs for 5 warehouses across different regions",
     "Enhance quality control efficiency while reducing inspection costs",
-    "Optimize resource allocation for sustainable manufacturing processes"
+    "Optimize resource allocation for sustainable business processes"
   ];
 
   const formatOptimizationResult = (result) => {
@@ -501,10 +504,10 @@ function App() {
               </div>
               <div className="flex items-center gap-2">
                 <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white">
-                  🌐
+                  WEB
                 </button>
                 <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white">
-                  🎤
+                  VOICE
                 </button>
               </div>
           </div>
@@ -512,11 +515,20 @@ function App() {
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col">
-          {messages.length === 0 && activeSection !== 'chat' ? (
-            /* Welcome Screen - Manufacturing Focused */
+          {activeSection === 'models' ? (
+            /* Models Page */
+            <ModelsPage onBack={() => setActiveSection('home')} />
+          ) : activeSection === 'knowledgebase' ? (
+            /* Knowledge Base Page */
+            <KnowledgeBasePage onBack={() => setActiveSection('home')} />
+          ) : activeSection === 'agents' ? (
+            /* Agents Page */
+            <AgentsPage onBack={() => setActiveSection('home')} />
+          ) : messages.length === 0 && activeSection !== 'chat' ? (
+            /* Welcome Screen */
             <div className="flex-1 overflow-y-auto p-8">
               {!showValueProposition ? (
-                <ManufacturingHero onStartOptimization={startDecisionChallenge} />
+                <Hero onStartOptimization={startDecisionChallenge} />
               ) : (
                 <ValueProposition />
               )}
@@ -543,7 +555,7 @@ function App() {
                     </div>
                     <h2 className="text-2xl font-semibold text-white mb-3">Start Your Analysis</h2>
                     <p className="text-gray-400 mb-6">
-                      Describe your manufacturing decision challenge and I'll help you find the optimal solution.
+                      Describe your decision challenge and I'll help you find the optimal solution.
                     </p>
                     <button
                       onClick={() => setActiveSection('home')}
@@ -556,15 +568,15 @@ function App() {
                         <strong>Try asking:</strong>
                       </div>
                       <div className="space-y-2">
-                        <div className="text-sm text-gray-400 bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition-colors" 
-                             onClick={() => setInput("Improve production line efficiency with 50 workers across 3 manufacturing lines")}>
-                          "Improve production line efficiency with 50 workers across 3 manufacturing lines"
+                        <div className="text-sm text-gray-400 bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition-colors break-words" 
+                             onClick={() => setInput("Optimize resource allocation and improve operational efficiency")}>
+                          "Optimize resource allocation and improve operational efficiency"
                         </div>
-                        <div className="text-sm text-gray-400 bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition-colors"
+                        <div className="text-sm text-gray-400 bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition-colors break-words"
                              onClick={() => setInput("Reduce supply chain costs for 5 warehouses across different regions")}>
                           "Reduce supply chain costs for 5 warehouses across different regions"
                         </div>
-                        <div className="text-sm text-gray-400 bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition-colors"
+                        <div className="text-sm text-gray-400 bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition-colors break-words"
                              onClick={() => setInput("Enhance quality control efficiency while reducing inspection costs")}>
                           "Enhance quality control efficiency while reducing inspection costs"
                         </div>
@@ -585,7 +597,7 @@ function App() {
                   )}
                   
                   <div
-                    className={`max-w-4xl rounded-2xl px-6 py-4 ${
+                    className={`max-w-4xl rounded-2xl px-6 py-4 break-words ${
                       message.type === 'user'
                         ? 'bg-blue-600 text-white'
                         : message.type === 'error'
@@ -594,9 +606,9 @@ function App() {
                     }`}
                   >
                     {message.type === 'user' ? (
-                      <p className="text-lg">{message.content}</p>
+                      <p className="text-lg break-words">{message.content}</p>
                     ) : message.type === 'error' ? (
-                      <p>{message.content}</p>
+                      <p className="break-words">{message.content}</p>
                     ) : (
                       formatOptimizationResult(message.content)
                     )}
@@ -618,7 +630,7 @@ function App() {
                   </div>
                   <div className="bg-gray-800 rounded-2xl px-6 py-4 flex items-center gap-3">
                     <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
-                    <span className="text-gray-300">Analyzing your manufacturing decision challenge...</span>
+                    <span className="text-gray-300">Analyzing your decision challenge...</span>
                   </div>
                 </div>
               )}
@@ -636,7 +648,7 @@ function App() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Describe your manufacturing decision challenge..."
+                      placeholder="Describe your decision challenge..."
                       className="flex-1 bg-transparent text-white placeholder-gray-400 focus:outline-none"
                     />
                     <button
