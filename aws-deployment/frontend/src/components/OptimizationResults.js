@@ -178,19 +178,19 @@ const OptimizationResults = ({ result, onClose }) => {
               <div className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-green-400" />
                 <span className="text-green-400 font-semibold">
-                  Estimated Savings: ${businessImpact.estimatedSavings.toLocaleString()}
+                  Estimated Savings: ${businessImpact?.financial_impact?.annual_savings?.toLocaleString() || '0'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-blue-400" />
                 <span className="text-blue-400 font-semibold">
-                  ROI Timeline: {businessImpact.timeToROI} months
+                  ROI Timeline: {businessImpact?.financial_impact?.payback_period_months || '0'} months
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-purple-400" />
                 <span className="text-purple-400 font-semibold">
-                  Confidence: {businessImpact.confidence}%
+                  Confidence: {Math.round((businessImpact?.risk_metrics?.confidence_level || 0) * 100)}%
                 </span>
               </div>
             </div>
@@ -479,19 +479,19 @@ const OptimizationResults = ({ result, onClose }) => {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Estimated Annual Savings</span>
                       <span className="text-green-400 text-xl font-bold">
-                        ${businessImpact.estimatedSavings.toLocaleString()}
+                        ${businessImpact?.financial_impact?.annual_savings?.toLocaleString() || '0'}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Time to ROI</span>
                       <span className="text-blue-400 text-lg font-semibold">
-                        {businessImpact.timeToROI} months
+                        {businessImpact?.financial_impact?.payback_period_months || '0'} months
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Confidence Level</span>
                       <span className="text-purple-400 text-lg font-semibold">
-                        {businessImpact.confidence}%
+                        {Math.round((businessImpact?.risk_metrics?.confidence_level || 0) * 100)}%
                       </span>
                     </div>
                   </div>
@@ -509,7 +509,7 @@ const OptimizationResults = ({ result, onClose }) => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Implementation Risk</span>
-                      <span className="text-yellow-400 font-semibold">{businessImpact.riskLevel}</span>
+                      <span className="text-yellow-400 font-semibold">{businessImpact?.risk_metrics?.risk_level || 'Low'}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Data Quality</span>
