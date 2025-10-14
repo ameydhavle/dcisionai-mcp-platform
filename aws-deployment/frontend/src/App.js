@@ -8,6 +8,9 @@ import ModelsPage from './components/ModelsPage';
 import KnowledgeBasePage from './components/KnowledgeBasePage';
 import AgentsPage from './components/AgentsPage';
 import DataConnectorsPage from './components/DataConnectorsPage';
+import OptimizationResults from './components/OptimizationResults';
+import DecisionLandscape3D from './components/DecisionLandscape3D';
+import SensitivityAnalysis from './components/SensitivityAnalysis';
 import './App.css';
 
 function App() {
@@ -22,6 +25,10 @@ function App() {
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [showValueProposition, setShowValueProposition] = useState(false);
+  const [showOptimizationResults, setShowOptimizationResults] = useState(false);
+  const [showDecisionLandscape, setShowDecisionLandscape] = useState(false);
+  const [showSensitivityAnalysis, setShowSensitivityAnalysis] = useState(false);
+  const [currentOptimizationResult, setCurrentOptimizationResult] = useState(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -313,16 +320,38 @@ function App() {
                 {isOptimizationSuccessful ? 'Decision Analysis Successful' : 'Decision Analysis Complete'}
               </span>
             </div>
-            <button
-              onClick={() => {
-                setCurrentModel(result.model_building);
-                setShowModelModal(true);
-              }}
-              className="flex items-center gap-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
-            >
-              <Eye className="w-4 h-4" />
-              View Model
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setCurrentOptimizationResult(result);
+                  setShowOptimizationResults(true);
+                }}
+                className="flex items-center gap-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                View Details
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentOptimizationResult(result);
+                  setShowDecisionLandscape(true);
+                }}
+                className="flex items-center gap-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+              >
+                <BarChart3 className="w-4 h-4" />
+                3D View
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentOptimizationResult(result);
+                  setShowSensitivityAnalysis(true);
+                }}
+                className="flex items-center gap-2 px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded-lg transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Sensitivity
+              </button>
+            </div>
           </div>
           
           {!isOptimizationSuccessful && result.optimization_solution && (
@@ -774,6 +803,39 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Enhanced Optimization Results Modal */}
+      {showOptimizationResults && currentOptimizationResult && (
+        <OptimizationResults 
+          result={currentOptimizationResult} 
+          onClose={() => {
+            setShowOptimizationResults(false);
+            setCurrentOptimizationResult(null);
+          }} 
+        />
+      )}
+
+      {/* 3D Decision Landscape Modal */}
+      {showDecisionLandscape && currentOptimizationResult && (
+        <DecisionLandscape3D 
+          result={currentOptimizationResult} 
+          onClose={() => {
+            setShowDecisionLandscape(false);
+            setCurrentOptimizationResult(null);
+          }} 
+        />
+      )}
+
+      {/* Sensitivity Analysis Modal */}
+      {showSensitivityAnalysis && currentOptimizationResult && (
+        <SensitivityAnalysis 
+          result={currentOptimizationResult} 
+          onClose={() => {
+            setShowSensitivityAnalysis(false);
+            setCurrentOptimizationResult(null);
+          }} 
+        />
       )}
     </div>
   );

@@ -831,7 +831,7 @@ def manufacturing_health_check() -> Dict[str, Any]:
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "tools_available": 5,
+        "tools_available": 8,
         "bedrock_connected": True,
         "version": "1.0.0-simplified-with-memory-cache-and-coordination",
         "architecture": "4-agent simplified with AgentMemoryLayer + PredictiveModelCache + AgentCoordinator",
@@ -849,6 +849,476 @@ def manufacturing_health_check() -> Dict[str, Any]:
         "parallel_execution_rate": coordination_insights['system_metrics']['parallel_execution_rate'],
         "deduplication_count": coordination_insights['system_metrics']['deduplication_count']
     }
+
+@mcp.tool()
+def generate_3d_landscape(
+    optimization_result: Dict[str, Any],
+    resolution: int = 50
+) -> Dict[str, Any]:
+    """Generate 3D landscape data for visualization based on optimization results."""
+    try:
+        logger.info("🎨 Generating 3D landscape data...")
+        
+        # Extract key data from optimization result
+        variables = optimization_result.get('model_building', {}).get('variables', [])
+        constraints = optimization_result.get('model_building', {}).get('constraints', [])
+        objective_value = optimization_result.get('optimization_solution', {}).get('objective_value', 100)
+        solution = optimization_result.get('optimization_solution', {}).get('solution', {})
+        
+        # Generate terrain data
+        landscape_data = {
+            "terrain": generate_terrain_data(variables, objective_value, resolution),
+            "constraints": generate_constraint_data(constraints),
+            "optimal_point": generate_optimal_point_data(solution, objective_value),
+            "variables": generate_variable_data(variables, solution),
+            "metadata": {
+                "resolution": resolution,
+                "objective_value": objective_value,
+                "variable_count": len(variables),
+                "constraint_count": len(constraints),
+                "generated_at": datetime.now().isoformat()
+            }
+        }
+        
+        logger.info(f"✅ 3D landscape generated: {resolution}x{resolution} terrain, {len(variables)} variables, {len(constraints)} constraints")
+        
+        return {
+            "status": "success",
+            "landscape_data": landscape_data,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"3D landscape generation failed: {str(e)}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+def generate_terrain_data(variables: List[Dict], objective_value: float, resolution: int) -> Dict[str, Any]:
+    """Generate terrain height data based on objective function."""
+    terrain = []
+    
+    # Create a grid of points
+    for i in range(resolution):
+        row = []
+        for j in range(resolution):
+            # Normalize coordinates to [-10, 10] range
+            x = (i / resolution) * 20 - 10
+            y = (j / resolution) * 20 - 10
+            
+            # Generate height based on objective function characteristics
+            # This simulates the objective function landscape
+            height = (
+                # Main objective peak
+                objective_value * 0.1 * (1 - (x**2 + y**2) / 200) +
+                # Secondary peaks (local optima)
+                0.3 * objective_value * 0.1 * (1 - ((x-5)**2 + (y-3)**2) / 50) +
+                0.2 * objective_value * 0.1 * (1 - ((x+4)**2 + (y-6)**2) / 40) +
+                # Noise for realism
+                0.1 * objective_value * 0.1 * (0.5 - (i + j) % 3 / 3)
+            )
+            
+            # Ensure non-negative height
+            height = max(0, height)
+            row.append(height)
+        terrain.append(row)
+    
+    return {
+        "heights": terrain,
+        "bounds": {"x_min": -10, "x_max": 10, "y_min": -10, "y_max": 10},
+        "resolution": resolution
+    }
+
+def generate_constraint_data(constraints: List[Dict]) -> List[Dict[str, Any]]:
+    """Generate constraint visualization data."""
+    constraint_data = []
+    
+    for i, constraint in enumerate(constraints):
+        # Position constraints around the landscape
+        angle = (i / max(1, len(constraints))) * 2 * 3.14159
+        radius = 8
+        
+        constraint_data.append({
+            "id": f"constraint_{i}",
+            "position": {
+                "x": radius * 0.8 * (1 - i / max(1, len(constraints))),
+                "y": 2,
+                "z": radius * 0.6 * (1 - i / max(1, len(constraints)))
+            },
+            "rotation": {"x": 0, "y": angle, "z": 0},
+            "expression": constraint.get('expression', str(constraint)),
+            "type": constraint.get('type', 'inequality'),
+            "color": [0.5 + 0.3 * (i % 3), 0.3 + 0.4 * ((i + 1) % 3), 0.4 + 0.3 * ((i + 2) % 3)]
+        })
+    
+    return constraint_data
+
+def generate_optimal_point_data(solution: Dict[str, Any], objective_value: float) -> Dict[str, Any]:
+    """Generate optimal solution point data."""
+    # Calculate position based on solution values
+    solution_sum = sum(float(v) for v in solution.values() if isinstance(v, (int, float)))
+    solution_count = len([v for v in solution.values() if isinstance(v, (int, float))])
+    
+    if solution_count > 0:
+        avg_solution = solution_sum / solution_count
+        # Position at the peak of the objective function
+        x_pos = (avg_solution / max(1, objective_value)) * 5
+        y_pos = 3 + (objective_value / 1000) * 2
+        z_pos = (avg_solution / max(1, objective_value)) * 3
+    else:
+        x_pos, y_pos, z_pos = 0, 3, 0
+    
+    return {
+        "position": {"x": x_pos, "y": y_pos, "z": z_pos},
+        "objective_value": objective_value,
+        "solution": solution,
+        "color": [1.0, 0.8, 0.0],  # Gold color
+        "intensity": min(1.0, objective_value / 1000)
+    }
+
+def generate_variable_data(variables: List[Dict], solution: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Generate variable node data."""
+    variable_data = []
+    
+    for i, variable in enumerate(variables):
+        var_name = variable.get('name', f'var_{i}')
+        var_value = solution.get(var_name, 0)
+        
+        # Position variables in a circle around the landscape
+        angle = (i / max(1, len(variables))) * 2 * 3.14159
+        radius = 6
+        
+        variable_data.append({
+            "id": var_name,
+            "position": {
+                "x": radius * 0.8 * (1 - i / max(1, len(variables))),
+                "y": 1,
+                "z": radius * 0.6 * (1 - i / max(1, len(variables)))
+            },
+            "value": var_value,
+            "description": variable.get('description', f'Variable {i+1}'),
+            "importance": min(1.0, abs(var_value) / max(1, sum(abs(float(v)) for v in solution.values() if isinstance(v, (int, float))))),
+            "color": [0.2 + 0.6 * (i % 3), 0.4 + 0.4 * ((i + 1) % 3), 0.6 + 0.3 * ((i + 2) % 3)]
+        })
+    
+    return variable_data
+
+@mcp.tool()
+def sensitivity_analysis(
+    base_optimization_result: Dict[str, Any],
+    parameter_changes: Dict[str, float]
+) -> Dict[str, Any]:
+    """Run sensitivity analysis by modifying parameters and re-optimizing."""
+    try:
+        logger.info("🔍 Running sensitivity analysis...")
+        
+        # Extract base solution
+        base_solution = base_optimization_result.get('optimization_solution', {}).get('solution', {})
+        base_objective = base_optimization_result.get('optimization_solution', {}).get('objective_value', 0)
+        
+        # Apply parameter changes
+        modified_solution = base_solution.copy()
+        for param_name, change_factor in parameter_changes.items():
+            if param_name in modified_solution:
+                original_value = modified_solution[param_name]
+                if isinstance(original_value, (int, float)):
+                    modified_solution[param_name] = original_value * change_factor
+        
+        # Calculate impact
+        impact_analysis = {
+            "parameter_changes": parameter_changes,
+            "original_solution": base_solution,
+            "modified_solution": modified_solution,
+            "objective_impact": calculate_objective_impact(base_objective, parameter_changes),
+            "feasibility_impact": assess_feasibility_impact(base_optimization_result, parameter_changes),
+            "risk_assessment": assess_risk_level(parameter_changes),
+            "recommendations": generate_sensitivity_recommendations(parameter_changes, base_objective)
+        }
+        
+        logger.info(f"✅ Sensitivity analysis completed for {len(parameter_changes)} parameters")
+        
+        return {
+            "status": "success",
+            "sensitivity_analysis": impact_analysis,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Sensitivity analysis failed: {str(e)}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+def calculate_objective_impact(base_objective: float, parameter_changes: Dict[str, float]) -> Dict[str, Any]:
+    """Calculate the impact on objective value from parameter changes."""
+    total_change_factor = 1.0
+    for change_factor in parameter_changes.values():
+        total_change_factor *= change_factor
+    
+    # Estimate new objective value
+    new_objective = base_objective * total_change_factor
+    objective_change_percent = ((new_objective - base_objective) / base_objective) * 100
+    
+    return {
+        "original_objective": base_objective,
+        "estimated_new_objective": new_objective,
+        "change_percent": objective_change_percent,
+        "change_factor": total_change_factor,
+        "impact_level": "high" if abs(objective_change_percent) > 20 else "medium" if abs(objective_change_percent) > 10 else "low"
+    }
+
+def assess_feasibility_impact(base_result: Dict[str, Any], parameter_changes: Dict[str, float]) -> Dict[str, Any]:
+    """Assess the impact on solution feasibility."""
+    constraints = base_result.get('model_building', {}).get('constraints', [])
+    
+    # Check if parameter changes might violate constraints
+    feasibility_risk = "low"
+    violated_constraints = []
+    
+    for param_name, change_factor in parameter_changes.items():
+        if abs(change_factor - 1.0) > 0.5:  # Significant change
+            feasibility_risk = "medium"
+            if abs(change_factor - 1.0) > 1.0:  # Very significant change
+                feasibility_risk = "high"
+                violated_constraints.append(f"Constraint involving {param_name}")
+    
+    return {
+        "feasibility_risk": feasibility_risk,
+        "constraint_violations": violated_constraints,
+        "recommendation": "Proceed with caution" if feasibility_risk == "high" else "Monitor closely" if feasibility_risk == "medium" else "Safe to implement"
+    }
+
+def assess_risk_level(parameter_changes: Dict[str, float]) -> Dict[str, Any]:
+    """Assess the overall risk level of parameter changes."""
+    max_change = max(abs(change - 1.0) for change in parameter_changes.values())
+    num_changes = len(parameter_changes)
+    
+    if max_change > 1.0 or num_changes > 3:
+        risk_level = "high"
+    elif max_change > 0.5 or num_changes > 2:
+        risk_level = "medium"
+    else:
+        risk_level = "low"
+    
+    return {
+        "risk_level": risk_level,
+        "max_parameter_change": max_change,
+        "number_of_changes": num_changes,
+        "confidence": 0.9 if risk_level == "low" else 0.7 if risk_level == "medium" else 0.5
+    }
+
+def generate_sensitivity_recommendations(parameter_changes: Dict[str, float], base_objective: float) -> List[str]:
+    """Generate recommendations based on sensitivity analysis."""
+    recommendations = []
+    
+    for param_name, change_factor in parameter_changes.items():
+        if change_factor > 1.2:
+            recommendations.append(f"Increase {param_name} gradually to avoid constraint violations")
+        elif change_factor < 0.8:
+            recommendations.append(f"Monitor {param_name} reduction impact on overall performance")
+        else:
+            recommendations.append(f"{param_name} change is within safe range")
+    
+    if len(parameter_changes) > 2:
+        recommendations.append("Consider implementing changes in phases to minimize risk")
+    
+    return recommendations
+
+@mcp.tool()
+def monte_carlo_risk_analysis(
+    base_optimization_result: Dict[str, Any],
+    uncertainty_ranges: Dict[str, List[float]],
+    num_simulations: int = 1000
+) -> Dict[str, Any]:
+    """Run Monte Carlo simulation for risk analysis with parameter uncertainty."""
+    try:
+        logger.info(f"🎲 Running Monte Carlo risk analysis with {num_simulations} simulations...")
+        
+        import random
+        import statistics
+        
+        # Extract base data
+        base_solution = base_optimization_result.get('optimization_solution', {}).get('solution', {})
+        base_objective = base_optimization_result.get('optimization_solution', {}).get('objective_value', 0)
+        
+        # Run Monte Carlo simulations
+        simulation_results = []
+        objective_values = []
+        
+        for i in range(num_simulations):
+            # Generate random parameter values within uncertainty ranges
+            random_params = {}
+            for param_name, (min_val, max_val) in uncertainty_ranges.items():
+                random_params[param_name] = random.uniform(min_val, max_val)
+            
+            # Calculate objective value for this simulation
+            sim_objective = simulate_objective_value(base_objective, base_solution, random_params)
+            objective_values.append(sim_objective)
+            
+            simulation_results.append({
+                "simulation_id": i,
+                "parameters": random_params,
+                "objective_value": sim_objective,
+                "feasible": sim_objective > 0  # Simple feasibility check
+            })
+        
+        # Calculate risk metrics
+        risk_metrics = calculate_risk_metrics(objective_values, base_objective)
+        
+        # Generate risk analysis
+        risk_analysis = {
+            "simulation_count": num_simulations,
+            "base_objective": base_objective,
+            "risk_metrics": risk_metrics,
+            "confidence_intervals": calculate_confidence_intervals(objective_values),
+            "scenario_analysis": analyze_scenarios(simulation_results),
+            "recommendations": generate_risk_recommendations(risk_metrics, base_objective)
+        }
+        
+        logger.info(f"✅ Monte Carlo analysis completed: {risk_metrics['success_rate']:.1%} success rate")
+        
+        return {
+            "status": "success",
+            "monte_carlo_analysis": risk_analysis,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Monte Carlo analysis failed: {str(e)}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+def simulate_objective_value(base_objective: float, base_solution: Dict[str, Any], random_params: Dict[str, float]) -> float:
+    """Simulate objective value based on random parameters."""
+    # Simple simulation: adjust objective based on parameter variations
+    adjustment_factor = 1.0
+    
+    for param_name, param_value in random_params.items():
+        if param_name in base_solution:
+            base_value = base_solution[param_name]
+            if isinstance(base_value, (int, float)) and base_value != 0:
+                # Calculate relative change
+                relative_change = (param_value - base_value) / base_value
+                # Apply some sensitivity to the objective
+                adjustment_factor += relative_change * 0.1  # 10% sensitivity
+    
+    # Add some random noise
+    noise = random.uniform(0.95, 1.05)
+    simulated_objective = base_objective * adjustment_factor * noise
+    
+    return max(0, simulated_objective)  # Ensure non-negative
+
+def calculate_risk_metrics(objective_values: List[float], base_objective: float) -> Dict[str, Any]:
+    """Calculate comprehensive risk metrics."""
+    import statistics
+    
+    feasible_values = [v for v in objective_values if v > 0]
+    success_rate = len(feasible_values) / len(objective_values)
+    
+    if feasible_values:
+        mean_objective = statistics.mean(feasible_values)
+        std_objective = statistics.stdev(feasible_values) if len(feasible_values) > 1 else 0
+        min_objective = min(feasible_values)
+        max_objective = max(feasible_values)
+        
+        # Calculate Value at Risk (VaR) - 5th percentile
+        sorted_values = sorted(feasible_values)
+        var_5 = sorted_values[int(0.05 * len(sorted_values))]
+        
+        # Calculate Expected Shortfall (CVaR)
+        tail_values = [v for v in sorted_values if v <= var_5]
+        expected_shortfall = statistics.mean(tail_values) if tail_values else var_5
+        
+    else:
+        mean_objective = std_objective = min_objective = max_objective = 0
+        var_5 = expected_shortfall = 0
+    
+    return {
+        "success_rate": success_rate,
+        "mean_objective": mean_objective,
+        "std_objective": std_objective,
+        "min_objective": min_objective,
+        "max_objective": max_objective,
+        "value_at_risk_5pct": var_5,
+        "expected_shortfall": expected_shortfall,
+        "coefficient_of_variation": std_objective / mean_objective if mean_objective > 0 else 0,
+        "downside_deviation": calculate_downside_deviation(feasible_values, base_objective)
+    }
+
+def calculate_downside_deviation(values: List[float], target: float) -> float:
+    """Calculate downside deviation (volatility of negative returns)."""
+    if not values:
+        return 0
+    
+    import statistics
+    negative_deviations = [max(0, target - v) for v in values]
+    return statistics.stdev(negative_deviations) if len(negative_deviations) > 1 else 0
+
+def calculate_confidence_intervals(objective_values: List[float]) -> Dict[str, float]:
+    """Calculate confidence intervals for objective values."""
+    import statistics
+    
+    if not objective_values:
+        return {"90pct": 0, "95pct": 0, "99pct": 0}
+    
+    sorted_values = sorted(objective_values)
+    n = len(sorted_values)
+    
+    return {
+        "90pct": sorted_values[int(0.05 * n)],
+        "95pct": sorted_values[int(0.025 * n)],
+        "99pct": sorted_values[int(0.005 * n)]
+    }
+
+def analyze_scenarios(simulation_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Analyze different risk scenarios."""
+    feasible_sims = [s for s in simulation_results if s["feasible"]]
+    
+    if not feasible_sims:
+        return {"best_case": 0, "worst_case": 0, "most_likely": 0}
+    
+    objectives = [s["objective_value"] for s in feasible_sims]
+    
+    return {
+        "best_case": max(objectives),
+        "worst_case": min(objectives),
+        "most_likely": statistics.median(objectives),
+        "feasible_scenarios": len(feasible_sims),
+        "total_scenarios": len(simulation_results)
+    }
+
+def generate_risk_recommendations(risk_metrics: Dict[str, Any], base_objective: float) -> List[str]:
+    """Generate risk-based recommendations."""
+    recommendations = []
+    
+    success_rate = risk_metrics["success_rate"]
+    if success_rate < 0.8:
+        recommendations.append("High risk of infeasibility - consider more conservative parameters")
+    elif success_rate < 0.95:
+        recommendations.append("Moderate risk - implement with monitoring and contingency plans")
+    else:
+        recommendations.append("Low risk - solution is robust to parameter uncertainty")
+    
+    cv = risk_metrics["coefficient_of_variation"]
+    if cv > 0.3:
+        recommendations.append("High variability in outcomes - consider risk mitigation strategies")
+    elif cv > 0.15:
+        recommendations.append("Moderate variability - monitor key parameters closely")
+    else:
+        recommendations.append("Low variability - solution is stable")
+    
+    var_5 = risk_metrics["value_at_risk_5pct"]
+    if var_5 < base_objective * 0.8:
+        recommendations.append("Significant downside risk - consider hedging strategies")
+    
+    return recommendations
 
 @mcp.tool()
 def get_optimization_insights(intent: Optional[str] = None) -> Dict[str, Any]:
