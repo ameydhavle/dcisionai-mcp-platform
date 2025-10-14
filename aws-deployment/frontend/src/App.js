@@ -7,6 +7,7 @@ import ValueProposition from './components/ValueProposition';
 import ModelsPage from './components/ModelsPage';
 import KnowledgeBasePage from './components/KnowledgeBasePage';
 import AgentsPage from './components/AgentsPage';
+import DataConnectorsPage from './components/DataConnectorsPage';
 import './App.css';
 
 function App() {
@@ -485,15 +486,6 @@ function App() {
                     ☰
                   </button>
                 )}
-                {!isMobile && (
-                  <button
-                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
-                    title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                  >
-                    {sidebarCollapsed ? '→' : '←'}
-                  </button>
-                )}
                 <h1 className="text-2xl font-bold text-white">DcisionAI</h1>
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -524,9 +516,12 @@ function App() {
           ) : activeSection === 'agents' ? (
             /* Agents Page */
             <AgentsPage onBack={() => setActiveSection('home')} />
+          ) : activeSection === 'connectors' ? (
+            /* Data Connectors Page */
+            <DataConnectorsPage onBack={() => setActiveSection('home')} />
           ) : messages.length === 0 && activeSection !== 'chat' ? (
             /* Welcome Screen */
-            <div className="flex-1 overflow-y-auto p-8">
+            <div className="flex-1 overflow-y-auto p-6">
               {!showValueProposition ? (
                 <Hero onStartOptimization={startDecisionChallenge} />
               ) : (

@@ -27,8 +27,8 @@ const Hero = ({ onStartOptimization }) => {
   return (
     <div className="text-center max-w-6xl mx-auto">
       {/* Hero Section */}
-      <div className="mb-12">
-        <div className="mb-6">
+      <div className="mb-8">
+        <div className="mb-4">
           <h1 className="text-6xl sm:text-5xl font-bold text-white mb-2 leading-tight" style={{fontSize: '4rem', lineHeight: '1.05', letterSpacing: '-0.04em'}}>
             The Intelligent{' '}
             <span className="bg-gradient-to-r from-white via-[#e07a4a] to-white bg-clip-text text-transparent">
@@ -39,7 +39,7 @@ const Hero = ({ onStartOptimization }) => {
           </h1>
         </div>
         
-        <p className="text-gray-300 text-lg max-w-4xl mx-auto mb-8 leading-relaxed" style={{fontSize: '1.125rem', lineHeight: '1.5', letterSpacing: '-0.01em'}}>
+        <p className="text-gray-300 text-lg max-w-4xl mx-auto mb-6 leading-relaxed" style={{fontSize: '1.125rem', lineHeight: '1.5', letterSpacing: '-0.01em'}}>
           Between AI chatbots and spreadsheets, there's a missing layer —{' '}
           <span className="bg-gradient-to-r from-white via-[#e07a4a] to-white bg-clip-text text-transparent">
             the Intelligent Decision Layer
@@ -51,9 +51,9 @@ const Hero = ({ onStartOptimization }) => {
       </div>
 
       {/* Demo Section */}
-      <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-xl p-6 border border-gray-600 mb-12">
-        <h3 className="text-xl font-semibold text-white mb-4 text-center">See DcisionAI in Action</h3>
-        <p className="text-gray-300 mb-4 text-center">
+      <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-xl p-4 border border-gray-600 mb-8">
+        <h3 className="text-lg font-semibold text-white mb-3 text-center">See DcisionAI in Action</h3>
+        <p className="text-gray-300 mb-3 text-center">
           Watch how we transform business complexity into optimized, explainable decisions you can trust.
         </p>
         <div className="flex items-center justify-center gap-4 text-sm">
@@ -68,18 +68,18 @@ const Hero = ({ onStartOptimization }) => {
       </div>
 
       {/* Quick Action Cards */}
-      <div className="mb-12">
+      <div className="mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
           {quickActions.map((action, index) => (
             <button
               key={index}
               onClick={() => onStartOptimization(action.query)}
-                className="group p-6 bg-gray-800 hover:bg-gray-700 rounded-xl text-left transition-all duration-200 border border-gray-700 hover:border-[#e07a4a] hover:shadow-lg hover:shadow-[#e07a4a]/20"
+                className="group p-4 bg-gray-800 hover:bg-gray-700 rounded-xl text-left transition-all duration-200 border border-gray-700 hover:border-[#e07a4a] hover:shadow-lg hover:shadow-[#e07a4a]/20"
             >
-              <h4 className="text-lg font-semibold text-white mb-2 group-hover:text-[#e07a4a] transition-colors">
+              <h4 className="text-base font-semibold text-white mb-2 group-hover:text-[#e07a4a] transition-colors">
                 {action.title}
               </h4>
-              <p className="text-gray-400 text-sm mb-3">
+              <p className="text-gray-400 text-sm mb-2">
                 {action.description}
               </p>
               <div className="text-[#e07a4a] text-sm font-medium">
