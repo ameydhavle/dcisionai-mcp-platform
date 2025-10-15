@@ -6,6 +6,18 @@ Welcome to DcisionAI! This guide will help you get up and running with the platf
 
 ## Access the Platform
 
+### MCP Server (For Developers)
+```bash
+# Install the MCP server
+pip install dcisionai-mcp-server
+
+# Start the server
+dcisionai-mcp-server start
+
+# List available workflows
+dcisionai-mcp-server list-workflows
+```
+
 ### Web Interface (Recommended)
 1. **Visit**: https://platform.dcisionai.com
 2. **No Registration Required**: Start optimizing immediately

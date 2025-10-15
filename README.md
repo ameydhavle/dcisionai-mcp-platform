@@ -8,13 +8,14 @@ DcisionAI is the Intelligent Enterprise Decision Layer - a revolutionary platfor
 
 ## Architecture
 
-### Current Architecture (AgentCore Gateway + Qwen 30B)
+### Current Architecture (AgentCore Gateway + Qwen 30B + MCP Server)
 
 - **AgentCore Gateway**: Amazon Bedrock AgentCore Gateway for advanced agent orchestration
 - **Qwen 30B Model**: Qwen 3B Coder 30B for superior mathematical model generation
 - **Enhanced Lambda Functions**: 2GB memory, optimized for Qwen 30B integration
 - **Real-time Processing**: Live optimization with progress tracking
 - **MCP Protocol**: Model Context Protocol for seamless agent communication
+- **MCP Server Distribution**: Production-ready Python package for global distribution
 
 ### Key Features
 
@@ -23,6 +24,35 @@ DcisionAI is the Intelligent Enterprise Decision Layer - a revolutionary platfor
 - ✅ **AgentCore Gateway**: Next-generation agent platform with extended execution
 - ✅ **21 Industry Workflows**: Predefined optimization templates across 7 industries
 - ✅ **Production Ready**: AWS-hosted with global CDN distribution
+- ✅ **MCP Server Distribution**: `pip install dcisionai-mcp-server` for global access
+
+## MCP Server Distribution
+
+### Quick Installation
+```bash
+pip install dcisionai-mcp-server
+```
+
+### Start Server
+```bash
+dcisionai-mcp-server start --host 0.0.0.0 --port 8000
+```
+
+### Available Tools
+- `classify_intent` - Intent classification for optimization requests
+- `analyze_data` - Data analysis and preprocessing
+- `build_model` - Mathematical model building with Qwen 30B
+- `solve_optimization` - Optimization solving and results
+- `get_workflow_templates` - Industry workflow templates
+- `execute_workflow` - End-to-end workflow execution
+
+### IDE Integration
+Works with Cursor, Kiro, Claude Code, VS Code, and other MCP-compatible IDEs.
+
+### Documentation
+- **Package Documentation**: [dcisionai-mcp-server README](dcisionai-mcp-server/README.md)
+- **API Reference**: [docs/API_REFERENCE.md](docs/API_REFERENCE.md)
+- **Quick Start**: [docs/QUICK_START.md](docs/QUICK_START.md)
 
 ## 📁 Repository Structure
 
@@ -31,6 +61,19 @@ dcisionai-mcp-platform/
 ├── main.py                          # Main platform entry point
 ├── runtime_config.json              # Runtime configuration
 ├── requirements.txt                 # Main requirements
+├── dcisionai-mcp-server/            # MCP Server Distribution Package
+│   ├── setup.py                     # PyPI package configuration
+│   ├── pyproject.toml               # Modern Python packaging
+│   ├── requirements.txt             # Package dependencies
+│   ├── README.md                    # Package documentation
+│   ├── dcisionai_mcp_server/        # Main package
+│   │   ├── __init__.py             # Package initialization
+│   │   ├── server.py               # Main MCP server
+│   │   ├── tools.py                # 6 core optimization tools
+│   │   ├── config.py               # Configuration management
+│   │   ├── workflows.py            # Workflow manager
+│   │   └── cli.py                  # Command-line interface
+│   └── tests/                       # Test suite
 ├── domains/                         # Core domains
 │   ├── manufacturing/               # Manufacturing domain
 │   │   ├── agents/                  # AgentCore agents

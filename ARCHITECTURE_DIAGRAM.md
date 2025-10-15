@@ -1,6 +1,6 @@
 # DcisionAI Platform Architecture
 
-## Current Architecture (AgentCore Gateway + Qwen 30B)
+## Current Architecture (AgentCore Gateway + Qwen 30B + MCP Server Distribution)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -21,6 +21,33 @@
 │  │  • callGatewayTool() - MCP protocol communication                     │   │
 │  │  • JWT Authentication with Cognito                                    │   │
 │  │  • Response parsing and error handling                                │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ HTTPS/MCP Protocol
+                                    │
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        MCP SERVER DISTRIBUTION LAYER                           │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  Package: pip install dcisionai-mcp-server                                     │
+│                                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                    DcisionAI MCP Server Package                        │   │
+│  │  • 6 Core Optimization Tools                                          │   │
+│  │  • 21 Industry Workflows                                              │   │
+│  │  • CLI Interface (dcisionai-mcp-server)                               │   │
+│  │  • Multi-IDE Support (Cursor, Kiro, Claude Code, VS Code)            │   │
+│  │  • Docker Support                                                     │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                   │                                            │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                    Available Tools                                     │   │
+│  │  • classify_intent - Intent classification                            │   │
+│  │  • analyze_data - Data analysis and preprocessing                     │   │
+│  │  • build_model - Mathematical model building (Qwen 30B)              │   │
+│  │  • solve_optimization - Optimization solving                         │   │
+│  │  • get_workflow_templates - Industry workflow templates              │   │
+│  │  • execute_workflow - End-to-end workflow execution                  │   │
 │  └─────────────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────────┘
                                     │

@@ -1,5 +1,36 @@
 # DcisionAI Platform - API Reference
 
+## MCP Server Distribution
+
+### Installation
+```bash
+pip install dcisionai-mcp-server
+```
+
+### Quick Start
+```python
+from dcisionai_mcp_server import DcisionAIMCPServer
+import asyncio
+
+async def main():
+    server = DcisionAIMCPServer()
+    await server.run(host="localhost", port=8000)
+
+asyncio.run(main())
+```
+
+### CLI Commands
+```bash
+# Start server
+dcisionai-mcp-server start --host 0.0.0.0 --port 8000
+
+# List workflows
+dcisionai-mcp-server list-workflows
+
+# Test connection
+dcisionai-mcp-server test-connection
+```
+
 ## Base URLs
 
 ### AgentCore Gateway (Primary)

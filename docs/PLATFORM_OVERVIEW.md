@@ -33,15 +33,25 @@
 - **Comprehensive Results**: Multiple views and analysis options
 - **Production Ready**: AWS-hosted with global CDN distribution
 
+### MCP Server Distribution
+- **Python Package**: `pip install dcisionai-mcp-server` for easy installation
+- **Multi-IDE Support**: Works with Cursor, Kiro, Claude Code, VS Code
+- **6 Core Tools**: Complete optimization pipeline as MCP tools
+- **21 Industry Workflows**: Pre-built workflows across 7 industries
+- **CLI Interface**: Command-line tools for server management
+- **Docker Support**: Containerized deployment options
+- **Comprehensive Documentation**: Full API reference and examples
+
 ## Architecture Highlights
 
-### Current Architecture (AgentCore Gateway + Qwen 30B)
+### Current Architecture (AgentCore Gateway + Qwen 30B + MCP Server)
 - **AgentCore Gateway**: Amazon Bedrock AgentCore Gateway for advanced agent orchestration
 - **Qwen 30B Model**: Qwen 3B Coder 30B for superior mathematical model generation
 - **Enhanced Lambda Functions**: 2GB memory, optimized for Qwen 30B integration
 - **Real-time Processing**: Live optimization with progress tracking
 - **MCP Protocol**: Model Context Protocol for seamless agent communication
 - **Extended Execution**: No timeout limitations with AgentCore Gateway
+- **MCP Server Distribution**: Production-ready Python package for global distribution
 
 ### AI Model Integration
 - **Qwen 30B Coder**: Primary model for mathematical optimization model generation
