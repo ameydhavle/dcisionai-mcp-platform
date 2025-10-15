@@ -17,6 +17,14 @@ html, body {
   font-weight: 600 !important;
 }
 
+/* Line clamp utility for text truncation */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Extra bold for special emphasis */
 .font-extrabold {
   font-weight: 700 !important;

@@ -3,27 +3,27 @@
 # DcisionAI Manufacturing Optimizer - Demo Startup Script
 # =====================================================
 
-echo "🚀 Starting DcisionAI Manufacturing Optimizer Demo"
+echo "Starting DcisionAI Manufacturing Optimizer Demo"
 echo "=================================================="
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
-    echo "❌ Node.js not found. Please install Node.js 16+ and try again."
+    echo "Error: Node.js not found. Please install Node.js 16+ and try again."
     exit 1
 fi
 
 # Check if Python is installed
 if ! command -v python3 &> /dev/null; then
-    echo "❌ Python 3 not found. Please install Python 3.11+ and try again."
+    echo "Error: Python 3 not found. Please install Python 3.11+ and try again."
     exit 1
 fi
 
 # Check if MCP server is running
-echo "🔍 Checking MCP server status..."
+echo "Checking MCP server status..."
 if curl -s http://localhost:8000/health > /dev/null; then
-    echo "✅ MCP server is running on localhost:8000"
+    echo "MCP server is running on localhost:8000"
 else
-    echo "⚠️  MCP server not running. Please start it first:"
+    echo "Warning: MCP server not running. Please start it first:"
     echo "   cd .. && source venv/bin/activate && python mcp_server.py"
     echo ""
     echo "   Or run this script from the main dcisionai-mcp-manufacturing directory"
@@ -47,7 +47,7 @@ if [ ! -d "backend/venv" ]; then
 fi
 
 # Start backend server
-echo "🔧 Starting backend server..."
+echo "Starting backend server..."
 cd backend
 source venv/bin/activate
 python app.py &
@@ -60,17 +60,17 @@ sleep 3
 
 # Check if backend is running
 if curl -s http://localhost:5000/health > /dev/null; then
-    echo "✅ Backend server started on localhost:5000"
+    echo "Backend server started on localhost:5000"
 else
-    echo "❌ Failed to start backend server"
+    echo "Error: Failed to start backend server"
     kill $BACKEND_PID 2>/dev/null
     exit 1
 fi
 
 # Start React frontend
-echo "🌐 Starting React frontend..."
+echo "Starting React frontend..."
 echo ""
-echo "🎉 Demo is starting up!"
+echo "Demo is starting up!"
 echo "   Web App: http://localhost:3000"
 echo "   Backend: http://localhost:5000"
 echo "   MCP Server: http://localhost:8000"
@@ -84,9 +84,9 @@ npm start
 # Cleanup function
 cleanup() {
     echo ""
-    echo "🛑 Stopping services..."
+    echo "Stopping services..."
     kill $BACKEND_PID 2>/dev/null
-    echo "✅ All services stopped"
+    echo "All services stopped"
     exit 0
 }
 

@@ -1,6 +1,6 @@
 # DcisionAI Platform - Perplexity-Inspired UI Update
 
-## 🎨 New UI Features
+## New UI Features
 
 ### Modern Perplexity-Style Interface
 - **Clean, minimalist design** with dark theme
@@ -33,7 +33,7 @@
 - **Responsive layout** that adapts to screen size
 - **Overlay navigation** for better mobile UX
 
-## 🚀 Getting Started
+## Getting Started
 
 1. **Start the development server**:
    ```bash
@@ -49,7 +49,7 @@
    - Use the main input field to ask optimization questions
    - Navigate between different sections using the sidebar
 
-## 🎯 Design Philosophy
+## Design Philosophy
 
 The new UI follows Perplexity's design principles:
 - **Simplicity**: Clean, uncluttered interface
@@ -57,7 +57,7 @@ The new UI follows Perplexity's design principles:
 - **Context**: Sidebar provides relevant navigation options
 - **Responsiveness**: Works seamlessly across all devices
 
-## 🔧 Technical Implementation
+## Technical Implementation
 
 - **React Components**: Modular sidebar and main content areas
 - **Tailwind CSS**: Utility-first styling with custom animations

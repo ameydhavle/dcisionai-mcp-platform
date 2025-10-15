@@ -1,0 +1,20 @@
+{
+  "timestamp": "2025-10-14T23:14:31.368207",
+  "components": {
+    "status_table": {
+      "status": "success",
+      "table": "dcisionai-optimization-status"
+    },
+    "async_lambda": {
+      "status": "success",
+      "function": "dcisionai-async-optimization-processor"
+    },
+    "api_endpoints": {
+      "status": "success"
+    },
+    "frontend_update": {
+      "status": "success"
+    }
+  },
+  "status": "success"
+}

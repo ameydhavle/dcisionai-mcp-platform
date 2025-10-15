@@ -286,6 +286,77 @@ function App() {
     }, 100);
   };
 
+  const executeWorkflow = async (workflow) => {
+    try {
+      setIsLoading(true);
+      setShowValueProposition(false);
+      setActiveSection('chat');
+      
+      // Add workflow execution message
+      const workflowMessage = {
+        id: Date.now(),
+        type: 'user',
+        content: `Executing ${workflow.title} workflow...`,
+        timestamp: new Date().toISOString()
+      };
+      
+      setMessages([workflowMessage]);
+      
+      // Execute the workflow via API
+      const response = await axios.post(
+        `https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod/workflows/${workflow.industry}/${workflow.id}/execute`,
+        {
+          custom_parameters: {}
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (response.data.status === 'success') {
+        // Add success message
+        const optimizationResults = response.data.optimization_pipeline;
+        const finalResult = optimizationResults.optimization_solution?.result;
+        
+        const successMessage = {
+          id: Date.now() + 1,
+          type: 'assistant',
+          content: `**${workflow.title}** workflow executed successfully!\n\n**Optimization Results:**\n• Status: ${finalResult?.status || 'completed'}\n• Objective Value: ${finalResult?.objective_value || 'N/A'}\n• Solution: ${JSON.stringify(finalResult?.solution || {}, null, 2)}\n• Solve Time: ${finalResult?.solve_time || 'N/A'} seconds\n\n**Pipeline Summary:**\n• Intent Classification: ${optimizationResults.intent_classification?.result?.intent || 'N/A'}\n• Data Analysis: ${optimizationResults.data_analysis?.result?.readiness_score ? Math.round(optimizationResults.data_analysis.result.readiness_score * 100) + '%' : 'N/A'} readiness\n• Model Type: ${optimizationResults.model_building?.result?.model_type || 'N/A'}\n• Variables: ${optimizationResults.model_building?.result?.variables?.length || 0}`,
+          timestamp: new Date().toISOString()
+        };
+        
+        setMessages(prev => [...prev, successMessage]);
+        
+        // Show optimization results if available
+        if (optimizationResults) {
+          setCurrentOptimizationResult(optimizationResults);
+          setShowOptimizationResults(true);
+        }
+      } else {
+        throw new Error(response.data.error || 'Workflow execution failed');
+      }
+    } catch (error) {
+      console.error('Workflow execution error:', error);
+      
+      // Add error message
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: 'assistant',
+        content: `**${workflow.title}** workflow execution failed.\n\n**Error:** ${error.response?.data?.error || error.message}\n\nLet me help you with a custom optimization instead.`,
+        timestamp: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      
+      // Fallback to custom optimization
+      setInput(workflow.problem_description || `Optimize ${workflow.title.toLowerCase()}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const startNewAnalysis = () => {
     setMessages([]);
     setInput('');
@@ -552,7 +623,7 @@ function App() {
             /* Welcome Screen */
             <div className="flex-1 overflow-y-auto p-6">
               {!showValueProposition ? (
-                <Hero onStartOptimization={startDecisionChallenge} />
+                <Hero onStartOptimization={startDecisionChallenge} onExecuteWorkflow={executeWorkflow} />
               ) : (
                 <ValueProposition />
               )}

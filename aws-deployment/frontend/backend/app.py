@@ -135,9 +135,9 @@ def get_examples():
     return jsonify(examples)
 
 if __name__ == '__main__':
-    print("🚀 Starting DcisionAI Manufacturing Web App Backend...")
-    print("📡 Proxying requests to MCP server at:", MCP_SERVER_URL)
-    print("🌐 Web app will be available at: http://localhost:3000")
-    print("🔧 Backend API available at: http://localhost:5000")
+    print("Starting DcisionAI Manufacturing Web App Backend...")
+    print("Proxying requests to MCP server at:", MCP_SERVER_URL)
+    print("Web app will be available at: http://localhost:3000")
+    print("Backend API available at: http://localhost:5000")
     
     app.run(host='0.0.0.0', port=5001, debug=True)

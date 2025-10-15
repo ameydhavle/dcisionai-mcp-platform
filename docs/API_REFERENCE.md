@@ -1,16 +1,277 @@
-# 🔌 DcisionAI Platform - API Reference
+# DcisionAI Platform - API Reference
 
-## 🌐 **Base URL**
+## **Base URLs**
+
+### **Primary API Gateway**
 ```
 https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod
 ```
 
-## 🔧 **Authentication**
-All API endpoints require no authentication for public access. Enterprise customers can request API keys for rate limiting and usage tracking.
+### **AgentCore Gateway (Future)**
+```
+https://dcisionai-optimization-gateway.execute-api.us-east-1.amazonaws.com/prod
+```
 
-## 📋 **Available Endpoints**
+### **Async Optimization API**
+```
+https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod/async
+```
 
-### **1. Health Check**
+## **Authentication**
+
+### **Current System**
+- **Public Access**: No authentication required for optimization endpoints
+- **Rate Limiting**: Built-in AWS API Gateway throttling
+- **Usage Tracking**: CloudWatch monitoring and logging
+
+### **AgentCore Gateway (Future)**
+- **JWT Authentication**: Amazon Cognito-based authentication
+- **OAuth 2.0**: Standard OAuth flow for enterprise integration
+- **API Keys**: Optional API key authentication for programmatic access
+
+## **Available Endpoints**
+
+### **Async Optimization Endpoints**
+
+#### **1. Start Async Optimization**
+**POST** `/async-optimization`
+
+Start an asynchronous optimization process for long-running workflows.
+
+**Request Body:**
+```json
+{
+  "optimization_id": "opt_1704067200_abc123",
+  "workflow_data": {
+    "optimization_id": "opt_1704067200_abc123",
+    "workflow_type": "production_planning",
+    "problem_description": "Optimize production for 5 products across 3 production lines...",
+    "custom_parameters": {},
+    "industry": "manufacturing",
+    "title": "Advanced Production Planning"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "statusCode": 200,
+  "body": {
+    "status": "success",
+    "optimization_id": "opt_1704067200_abc123",
+    "message": "Optimization started successfully",
+    "estimated_completion_time": "5-10 minutes"
+  }
+}
+```
+
+#### **2. Check Optimization Status**
+**GET** `/optimization-status/{optimization_id}`
+
+Check the current status of an async optimization.
+
+**Response:**
+```json
+{
+  "optimization_id": "opt_1704067200_abc123",
+  "status": "running",
+  "message": "Step 3/4: Model Building",
+  "progress": 75,
+  "started_at": "2025-10-14T19:13:25.507123",
+  "updated_at": "2025-10-14T19:15:30.123456"
+}
+```
+
+**Status Values:**
+- `started`: Optimization has been initiated
+- `running`: Optimization is in progress
+- `completed`: Optimization completed successfully
+- `failed`: Optimization failed with error
+- `timeout`: Optimization exceeded maximum time limit
+
+#### **3. Get Optimization Results**
+**GET** `/optimization-results/{optimization_id}`
+
+Retrieve the complete results of a completed optimization.
+
+**Response:**
+```json
+{
+  "optimization_id": "opt_1704067200_abc123",
+  "status": "completed",
+  "result": {
+    "status": "success",
+    "timestamp": "2025-10-14T19:18:45.123456",
+    "workflow": {
+      "workflow_type": "production_planning",
+      "industry": "manufacturing",
+      "title": "Advanced Production Planning"
+    },
+    "optimization_pipeline": {
+      "intent_classification": {
+        "result": {
+          "intent": "production_optimization",
+          "confidence": 0.95,
+          "entities": ["products", "production_lines", "capacity"]
+        }
+      },
+      "data_analysis": {
+        "result": {
+          "readiness_score": 0.92,
+          "data_quality": "high",
+          "recommendations": ["Consider demand variability", "Include setup costs"]
+        }
+      },
+      "model_building": {
+        "result": {
+          "model_type": "linear_programming",
+          "variables": 15,
+          "constraints": 8,
+          "objective": "maximize_profit"
+        }
+      },
+      "optimization_solution": {
+        "result": {
+          "status": "optimal",
+          "objective_value": 125000,
+          "solve_time": 2.3,
+          "solution": {
+            "Product_A": 1200,
+            "Product_B": 800,
+            "Product_C": 600,
+            "Product_D": 400,
+            "Product_E": 300
+          }
+        }
+      }
+    },
+    "execution_summary": {
+      "total_steps": 4,
+      "completed_steps": 4,
+      "success": true,
+      "workflow_type": "async_optimization",
+      "real_optimization": true
+    }
+  }
+}
+```
+
+### **🏭 Workflow Endpoints**
+
+#### **4. List All Industries**
+**GET** `/workflows`
+
+Get a list of all available industries and their workflow counts.
+
+**Response:**
+```json
+{
+  "status": "success",
+  "industries": [
+    "manufacturing",
+    "marketing", 
+    "healthcare",
+    "retail",
+    "financial",
+    "logistics",
+    "energy"
+  ],
+  "summary": {
+    "total_industries": 7,
+    "total_workflows": 21,
+    "workflows_by_industry": {
+      "manufacturing": 3,
+      "marketing": 3,
+      "healthcare": 3,
+      "retail": 3,
+      "financial": 3,
+      "logistics": 3,
+      "energy": 3
+    }
+  }
+}
+```
+
+#### **5. Get Industry Workflows**
+**GET** `/workflows/{industry}`
+
+Get all workflows for a specific industry.
+
+**Response:**
+```json
+{
+  "status": "success",
+  "industry": "manufacturing",
+  "workflows": [
+    {
+      "id": "production_planning",
+      "title": "Advanced Production Planning",
+      "description": "Optimize multi-product production with capacity, labor, and material constraints",
+      "category": "production_planning",
+      "difficulty": "advanced",
+      "estimated_time": "4-5 minutes"
+    },
+    {
+      "id": "supply_chain_optimization",
+      "title": "Supply Chain Optimization",
+      "description": "Optimize supply chain network design and inventory management",
+      "category": "supply_chain",
+      "difficulty": "intermediate",
+      "estimated_time": "3-4 minutes"
+    },
+    {
+      "id": "quality_control_optimization",
+      "title": "Quality Control Optimization",
+      "description": "Optimize quality control processes and defect detection",
+      "category": "quality_control",
+      "difficulty": "intermediate",
+      "estimated_time": "3-4 minutes"
+    }
+  ]
+}
+```
+
+#### **6. Execute Workflow (Synchronous)**
+**POST** `/workflows/{industry}/{workflow_id}/execute`
+
+Execute a workflow synchronously (may timeout for complex optimizations).
+
+**Request Body:**
+```json
+{
+  "custom_parameters": {}
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "timestamp": "2025-10-14T19:13:25.507123",
+  "workflow": {
+    "id": "production_planning",
+    "title": "Advanced Production Planning",
+    "industry": "manufacturing"
+  },
+  "optimization_pipeline": {
+    "intent_classification": { /* ... */ },
+    "data_analysis": { /* ... */ },
+    "model_building": { /* ... */ },
+    "optimization_solution": { /* ... */ }
+  },
+  "execution_summary": {
+    "total_steps": 4,
+    "completed_steps": 4,
+    "success": true,
+    "workflow_type": "synchronous_optimization"
+  }
+}
+```
+
+### **🔧 Core Optimization Endpoints**
+
+### **7. Health Check**
 **GET** `/health`
 
 Check the status of the DcisionAI platform and available tools.
@@ -536,6 +797,81 @@ client = DcisionAI(api_key='your-api-key')
 result = client.optimize(problem='Optimize production for 3 products')
 ```
 
+## 🚀 **AgentCore Gateway Integration (Future)**
+
+### **Overview**
+DcisionAI is preparing for integration with Amazon Bedrock AgentCore Gateway, which will provide enhanced capabilities for agent-based optimization workflows.
+
+### **AgentCore Gateway Features**
+- **Semantic Tool Discovery**: Intelligent discovery of optimization tools based on natural language queries
+- **Extended Execution Time**: No 29-second timeout limitations for complex optimizations
+- **Persistent Memory**: Context retention across optimization sessions
+- **Enhanced Observability**: Detailed monitoring and debugging capabilities
+- **MCP Protocol Support**: Model Context Protocol for seamless agent-tool communication
+
+### **MCP Tools Available**
+All DcisionAI workflows are converted to MCP-compatible tools:
+
+```json
+{
+  "name": "optimize_production_planning",
+  "description": "Advanced Production Planning - Optimize multi-product production with capacity, labor, and material constraints",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "problem_description": {
+        "type": "string",
+        "description": "Detailed description of the production planning problem"
+      },
+      "custom_parameters": {
+        "type": "object",
+        "description": "Custom parameters for the optimization"
+      }
+    },
+    "required": ["problem_description"]
+  },
+  "metadata": {
+    "industry": "manufacturing",
+    "category": "production_planning",
+    "difficulty": "advanced",
+    "estimated_time": "4-5 minutes"
+  }
+}
+```
+
+### **Semantic Search Examples**
+With AgentCore Gateway, users can discover optimization tools using natural language:
+
+- **"Help me optimize my manufacturing production"** → Discovers production planning tools
+- **"I need to optimize my marketing budget"** → Finds marketing spend optimization tools
+- **"How can I improve my supply chain?"** → Locates supply chain optimization workflows
+
+### **Authentication (AgentCore Gateway)**
+```bash
+# JWT Token Authentication
+curl -H "Authorization: Bearer <jwt-token>" \
+     -H "Content-Type: application/json" \
+     -X POST https://dcisionai-optimization-gateway.execute-api.us-east-1.amazonaws.com/prod/tools/call \
+     -d '{
+       "name": "optimize_production_planning",
+       "arguments": {
+         "problem_description": "Optimize production for 5 products..."
+       }
+     }'
+```
+
+### **Migration Path**
+1. **Current System**: Enhanced Lambda + API Gateway with async processing
+2. **Transition**: AgentCore Gateway for new features while maintaining backward compatibility
+3. **Future**: Full AgentCore Gateway integration with semantic search and extended capabilities
+
+### **Benefits of AgentCore Gateway**
+- **No Timeout Issues**: Extended execution time for complex optimizations
+- **Intelligent Discovery**: Semantic search for finding relevant optimization tools
+- **Better User Experience**: Natural language interaction with optimization workflows
+- **Enhanced Monitoring**: Detailed observability and debugging capabilities
+- **Scalable Architecture**: Better handling of concurrent optimization requests
+
 ## 📞 **Support**
 
 - **Documentation**: https://docs.dcisionai.com
@@ -545,4 +881,4 @@ result = client.optimize(problem='Optimize production for 3 products')
 
 ---
 
-*DcisionAI Platform API - Version 5.0.0-enhanced-with-new-tools*
+*DcisionAI Platform API - Version 6.0.0-with-agentcore-gateway*

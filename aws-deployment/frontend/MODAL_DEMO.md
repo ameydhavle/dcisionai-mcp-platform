@@ -1,10 +1,10 @@
 # Mathematical Model Modal - Demo Guide
 
-## 🎯 **New Feature: Model Transparency Modal**
+## **New Feature: Model Transparency Modal**
 
 The web application now includes a **"View Model"** button that opens a detailed modal window showing the complete mathematical optimization model built by AWS Bedrock.
 
-## 🚀 **How to Use the Modal**
+## **How to Use the Modal**
 
 ### **Step 1: Run an Optimization**
 1. Open http://localhost:3000
@@ -20,7 +20,7 @@ The web application now includes a **"View Model"** button that opens a detailed
    - **Constraints**: All constraint equations
    - **Mathematical Formulation**: Technical details
 
-## 📊 **What the Modal Shows**
+## **What the Modal Shows**
 
 ### **Model Overview**
 - **Type**: mixed_integer_programming, linear_programming, etc.
@@ -47,7 +47,7 @@ The web application now includes a **"View Model"** button that opens a detailed
 - **Solver Information**: PuLP CBC details
 - **Status**: Confirms real mathematical optimization
 
-## 🎨 **Modal Features**
+## **Modal Features**
 
 - **Responsive Design**: Works on desktop and mobile
 - **Syntax Highlighting**: Code is properly formatted
@@ -64,7 +64,7 @@ This modal provides **complete transparency** into the optimization process:
 3. **Verification**: Users can verify the model matches their problem
 4. **Trust**: Demonstrates this is real optimization, not canned responses
 
-## 🎯 **Example Modal Content**
+## **Example Modal Content**
 
 ```
 Model Overview:
@@ -88,7 +88,7 @@ Constraints:
 3. labor_hours >= 8000
 ```
 
-## 🚀 **Ready for Customer Demos**
+## **Ready for Customer Demos**
 
 This modal feature makes the web application perfect for:
 - **Technical Demos**: Show the mathematical rigor
@@ -96,4 +96,4 @@ This modal feature makes the web application perfect for:
 - **Trust Building**: Demonstrate real optimization
 - **Academic Presentations**: Show optimization theory in practice
 
-**The modal provides complete transparency into the AI-powered optimization process!** 🎉
+**The modal provides complete transparency into the AI-powered optimization process!**

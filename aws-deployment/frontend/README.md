@@ -2,7 +2,7 @@
 
 A modern, Perplexity-style web application to showcase the DcisionAI Manufacturing MCP Server with real-time AI-powered optimization.
 
-## 🚀 Features
+## Features
 
 - **Modern UI**: Clean, dark-themed interface inspired by Perplexity
 - **Real-time Optimization**: Live manufacturing optimization using AI agents
@@ -10,7 +10,7 @@ A modern, Perplexity-style web application to showcase the DcisionAI Manufacturi
 - **Example Queries**: Pre-built examples for different manufacturing scenarios
 - **Responsive Design**: Works on desktop and mobile devices
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -20,13 +20,13 @@ A modern, Perplexity-style web application to showcase the DcisionAI Manufacturi
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Node.js 16+ and npm
 - Python 3.11+
 - MCP Server running on localhost:8000
 
-## 🛠️ Setup Instructions
+## Setup Instructions
 
 ### 1. Install Dependencies
 
@@ -64,27 +64,27 @@ python app.py
 npm start
 ```
 
-## 🌐 Access the Application
+## Access the Application
 
 - **Web App**: http://localhost:3000
 - **Backend API**: http://localhost:5000
 - **MCP Server**: http://localhost:8000
 
-## 🎯 Usage
+## Usage
 
 1. **Open the web app** in your browser
 2. **Check connection status** - should show "Connected" if MCP server is running
 3. **Try example queries** or type your own manufacturing optimization problem
 4. **View results** - see detailed breakdown of intent classification, data analysis, model building, and optimization solution
 
-## 📊 Example Queries
+## Example Queries
 
 - "Optimize production line efficiency with 50 workers across 3 manufacturing lines"
 - "Minimize supply chain costs for 5 warehouses across different regions"
 - "Maximize quality control efficiency while reducing inspection costs"
 - "Optimize resource allocation for sustainable manufacturing processes"
 
-## 🔧 Development
+## Development
 
 ### Project Structure
 
@@ -112,7 +112,7 @@ web_app/
 - **Styling**: Tailwind CSS with custom dark theme
 - **Icons**: Lucide React icons for modern UI
 
-## 🎨 UI Features
+## UI Features
 
 - **Dark Theme**: Modern dark interface
 - **Real-time Chat**: Perplexity-style conversation interface
@@ -121,7 +121,7 @@ web_app/
 - **Smooth Animations**: Fade-in and typing animations
 - **Mobile Friendly**: Responsive design for all devices
 
-## 🚀 Deployment
+## Deployment
 
 ### Production Build
 
@@ -149,7 +149,7 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -176,21 +176,21 @@ FLASK_DEBUG=1 python app.py
 npm start
 ```
 
-## 📈 Performance
+## Performance
 
 - **Response Time**: 10-30 seconds for typical optimization problems
 - **Real-time Updates**: Live status indicators and progress
 - **Error Handling**: Graceful error messages and fallbacks
 - **Caching**: Browser caching for static assets
 
-## 🎉 Success Metrics
+## Success Metrics
 
-- ✅ **Modern UI**: Perplexity-style interface
-- ✅ **Real Optimization**: Live AI-powered results
-- ✅ **Interactive Results**: Detailed breakdown display
-- ✅ **Responsive Design**: Works on all devices
-- ✅ **Error Handling**: Graceful error management
+- **Modern UI**: Perplexity-style interface
+- **Real Optimization**: Live AI-powered results
+- **Interactive Results**: Detailed breakdown display
+- **Responsive Design**: Works on all devices
+- **Error Handling**: Graceful error management
 
 ---
 
-**Ready to showcase DcisionAI Manufacturing Optimization! 🚀**
+**Ready to showcase DcisionAI Manufacturing Optimization!**

@@ -496,7 +496,7 @@ const DecisionLandscape3D = ({ result, onClose }) => {
           {/* Controls Info */}
           <div className="absolute bottom-4 left-4 bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-600">
             <div className="text-xs text-gray-400">
-              <div>🖱️ Left: Rotate | 🖱️ Right: Pan | 🖱️ Scroll: Zoom</div>
+              <div>Left: Rotate | Right: Pan | Scroll: Zoom</div>
             </div>
           </div>
 

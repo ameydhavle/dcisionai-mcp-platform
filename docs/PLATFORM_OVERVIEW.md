@@ -34,20 +34,35 @@
 
 ## 🏗️ **Architecture Highlights**
 
+### **Current Architecture (Enhanced Lambda + API Gateway)**
+- **Enhanced Lambda Functions**: 2GB memory, 5-minute timeout for complex optimizations
+- **Async Processing**: Background optimization with DynamoDB status tracking
+- **Real-time Progress**: Live updates and status monitoring
+- **No Timeout Issues**: Async processing handles long-running workflows
+
+### **Future Architecture (AgentCore Gateway)**
+- **Amazon Bedrock AgentCore Gateway**: Next-generation agent platform
+- **Semantic Tool Discovery**: Natural language tool discovery
+- **Extended Execution Time**: No timeout limitations
+- **Persistent Memory**: Context retention across sessions
+- **Enhanced Observability**: Detailed monitoring and debugging
+
 ### **Frontend (React)**
-- **Modern UI**: Clean, professional interface
+- **Modern UI**: Clean, professional interface with industry-specific workflows
 - **Interactive Components**: 3D visualizations, sensitivity sliders, risk charts
 - **Responsive Design**: Works on desktop, tablet, and mobile
 - **Real-time Updates**: Live optimization progress and results
+- **Async Integration**: Progress tracking for long-running optimizations
 
-### **Backend (AWS Lambda)**
-- **8 Specialized Tools**: Complete optimization pipeline
-- **AI-Powered**: AWS Bedrock with Claude models
+### **Backend (AWS Lambda + AgentCore Gateway)**
+- **21 Industry Workflows**: Predefined optimization templates across 7 industries
+- **MCP-Compatible Tools**: Model Context Protocol for agent communication
+- **AI-Powered**: AWS Bedrock with Claude models (Haiku for speed, Sonnet for complexity)
 - **Serverless**: Auto-scaling and cost-effective
-- **High Performance**: Sub-second response times
+- **High Performance**: Optimized for both speed and accuracy
 
 ### **AI Platform (AWS Bedrock)**
-- **Inference Profiles**: Optimized model selection
+- **Inference Profiles**: Optimized model selection for each optimization step
 - **Multi-Model Support**: Claude 3 Haiku and Sonnet
 - **Enterprise Grade**: Secure, reliable, and scalable
 
@@ -96,6 +111,59 @@
 - **Intuitive Navigation**: Easy access to all features
 - **Responsive Layout**: Works on any device
 - **Real-time Feedback**: Live progress and results
+
+## 🏭 **Industry-Specific Workflows**
+
+### **Predefined Optimization Templates**
+DcisionAI now includes 21 predefined workflows across 7 major industries, each with realistic problem descriptions and expected outcomes:
+
+#### **Manufacturing (3 Workflows)**
+- **Advanced Production Planning**: Multi-product production optimization with capacity, labor, and material constraints
+- **Supply Chain Optimization**: Network design and inventory management optimization
+- **Quality Control Optimization**: Process optimization and defect detection
+
+#### **Marketing (3 Workflows)**
+- **Comprehensive Marketing Spend Optimization**: Budget allocation across channels, campaigns, and customer segments
+- **Multi-Campaign Performance Optimization**: Cross-channel campaign coordination and budget allocation
+- **Customer Acquisition Cost Optimization**: CAC optimization across acquisition channels
+
+#### **Healthcare (3 Workflows)**
+- **Resource Allocation Optimization**: Staff scheduling and resource allocation for healthcare facilities
+- **Patient Flow Optimization**: Emergency department and patient flow optimization
+- **Pharmaceutical Supply Chain**: Drug distribution and inventory optimization
+
+#### **Retail (3 Workflows)**
+- **Inventory Optimization**: Multi-location inventory management and demand forecasting
+- **Pricing Strategy Optimization**: Dynamic pricing across product categories and locations
+- **Store Layout Optimization**: Space allocation and product placement optimization
+
+#### **Financial (3 Workflows)**
+- **Portfolio Optimization**: Investment portfolio allocation and risk management
+- **Credit Risk Assessment**: Loan approval and risk scoring optimization
+- **Fraud Detection Optimization**: Transaction monitoring and fraud prevention
+
+#### **Logistics (3 Workflows)**
+- **Route Optimization**: Delivery route planning and vehicle scheduling
+- **Warehouse Operations**: Storage allocation and picking optimization
+- **Fleet Management**: Vehicle utilization and maintenance scheduling
+
+#### **Energy (3 Workflows)**
+- **Grid Optimization**: Power grid load balancing and distribution
+- **Renewable Energy Integration**: Solar and wind energy optimization
+- **Energy Storage Management**: Battery storage and demand response optimization
+
+### **Workflow Features**
+- **Realistic Problem Descriptions**: Detailed, industry-specific optimization problems
+- **Expected Outcomes**: Clear success metrics and optimization objectives
+- **Difficulty Levels**: Beginner, intermediate, and advanced workflows
+- **Time Estimates**: Realistic completion time expectations
+- **Custom Parameters**: Ability to modify constraints and objectives
+
+### **Async Processing**
+- **Background Execution**: Long-running optimizations processed asynchronously
+- **Progress Tracking**: Real-time status updates and progress monitoring
+- **Status Management**: DynamoDB-based status tracking and result storage
+- **No Timeout Issues**: Eliminates API Gateway timeout limitations
 
 ## 🔧 **Technical Specifications**
 
