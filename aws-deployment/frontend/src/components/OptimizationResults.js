@@ -52,9 +52,9 @@ const OptimizationResults = ({ result, onClose }) => {
         setBusinessImpact(data.business_impact);
       } else {
         // Fallback to simulated data
-        const objectiveValue = result.optimization_solution?.objective_value || 0;
-        const solveTime = result.optimization_solution?.solve_time || 0;
-        const confidence = result.intent_classification?.confidence || 0;
+        const objectiveValue = result.optimization_solution?.result?.objective_value || 0;
+        const solveTime = result.optimization_solution?.result?.solve_time || 0;
+        const confidence = result.intent_classification?.result?.confidence || 0;
         
         const estimatedSavings = objectiveValue * 0.15;
         const timeToROI = Math.max(1, Math.ceil(estimatedSavings / 10000));
@@ -79,9 +79,9 @@ const OptimizationResults = ({ result, onClose }) => {
     } catch (error) {
       console.error('Failed to load business impact:', error);
       // Fallback to simulated data
-      const objectiveValue = result.optimization_solution?.objective_value || 0;
-      const solveTime = result.optimization_solution?.solve_time || 0;
-      const confidence = result.intent_classification?.confidence || 0;
+      const objectiveValue = result.optimization_solution?.result?.objective_value || 0;
+      const solveTime = result.optimization_solution?.result?.solve_time || 0;
+      const confidence = result.intent_classification?.result?.confidence || 0;
       
       const estimatedSavings = objectiveValue * 0.15;
       const timeToROI = Math.max(1, Math.ceil(estimatedSavings / 10000));
@@ -130,7 +130,7 @@ const OptimizationResults = ({ result, onClose }) => {
     }));
   };
 
-  const constraints = formatConstraints(result.model_building?.constraints);
+  const constraints = formatConstraints(result.model_building?.result?.constraints);
 
   const tabs = [
     { id: 'overview', label: 'Decision Overview', icon: Target },
@@ -245,23 +245,23 @@ const OptimizationResults = ({ result, onClose }) => {
                       status: 'completed',
                       icon: Target,
                       description: 'Identified optimization problem',
-                      details: result.intent_classification?.intent || 'Unknown',
-                      confidence: result.intent_classification?.confidence || 0
+                      details: result.intent_classification?.result?.intent || 'Unknown',
+                      confidence: result.intent_classification?.result?.confidence || 0
                     },
                     {
                       agent: 'Data Agent',
                       status: 'completed',
                       icon: Database,
                       description: 'Analyzed data readiness',
-                      details: `${result.data_analysis?.data_entities?.length || 0} entities`,
-                      confidence: result.data_analysis?.readiness_score || 0
+                      details: `${result.data_analysis?.result?.data_entities?.length || 0} entities`,
+                      confidence: result.data_analysis?.result?.readiness_score || 0
                     },
                     {
                       agent: 'Model Agent',
                       status: 'completed',
                       icon: Settings,
                       description: 'Built mathematical model',
-                      details: result.model_building?.model_type || 'Unknown',
+                      details: result.model_building?.result?.model_type || 'Unknown',
                       confidence: 0.95
                     },
                     {
@@ -269,7 +269,7 @@ const OptimizationResults = ({ result, onClose }) => {
                       status: 'completed',
                       icon: Zap,
                       description: 'Found optimal solution',
-                      details: result.optimization_solution?.status || 'Unknown',
+                      details: result.optimization_solution?.result?.status || 'Unknown',
                       confidence: 0.98
                     }
                   ].map((agent, index) => {
@@ -319,27 +319,27 @@ const OptimizationResults = ({ result, onClose }) => {
                     <div className="flex justify-between">
                       <span className="text-gray-400">Status:</span>
                       <span className="text-green-400 font-semibold">
-                        {result.optimization_solution?.status || 'Unknown'}
+                        {result.optimization_solution?.result?.status || 'Unknown'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Objective Value:</span>
                       <span className="text-white font-mono">
-                        {result.optimization_solution?.objective_value || 'N/A'}
+                        {result.optimization_solution?.result?.objective_value || 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Solve Time:</span>
                       <span className="text-blue-400 font-mono">
-                        {typeof result.optimization_solution?.solve_time === 'number' 
-                          ? result.optimization_solution.solve_time.toFixed(3) 
+                        {typeof result.optimization_solution?.result?.solve_time === 'number' 
+                          ? result.optimization_solution.result.solve_time.toFixed(3) 
                           : '0.000'}s
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Solver Used:</span>
                       <span className="text-purple-400">
-                        {result.optimization_solution?.solver_used || 'Advanced Solver'}
+                        {result.optimization_solution?.result?.solver_info || 'Advanced Solver'}
                       </span>
                     </div>
                   </div>
@@ -380,14 +380,14 @@ const OptimizationResults = ({ result, onClose }) => {
                   <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
                     <h4 className="text-lg font-semibold text-white mb-2">Objective Function</h4>
                     <div className="bg-black rounded p-3 font-mono text-green-400 text-lg">
-                      {formatObjectiveFunction(result.model_building?.objective)}
+                      {formatObjectiveFunction(result.model_building?.result?.objective)}
                     </div>
                   </div>
 
                   <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
                     <h4 className="text-lg font-semibold text-white mb-2">Variables</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {(result.model_building?.variables || []).map((variable, index) => (
+                      {(result.model_building?.result?.variables || []).map((variable, index) => (
                         <div key={index} className="bg-gray-700 rounded p-2">
                           <div className="text-blue-400 font-mono text-sm">{variable.name}</div>
                           <div className="text-gray-400 text-xs">{variable.description}</div>
@@ -514,7 +514,7 @@ const OptimizationResults = ({ result, onClose }) => {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Data Quality</span>
                       <span className="text-blue-400 font-semibold">
-                        {Math.round((result.data_analysis?.readiness_score || 0) * 100)}%
+                        {Math.round((result.data_analysis?.result?.readiness_score || 0) * 100)}%
                       </span>
                     </div>
                   </div>

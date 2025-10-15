@@ -11,6 +11,7 @@ import DataConnectorsPage from './components/DataConnectorsPage';
 import OptimizationResults from './components/OptimizationResults';
 import DecisionLandscape3D from './components/DecisionLandscape3D';
 import SensitivityAnalysis from './components/SensitivityAnalysis';
+import { AGENTCORE_CONFIG, callGatewayTool, listGatewayTools } from './agentcore-config';
 import './App.css';
 
 function App() {
@@ -56,49 +57,22 @@ function App() {
 
   const checkServerStatus = async () => {
     try {
-      // Try local backend first, then cloud backend
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // Test AgentCore Gateway connection
+      console.log('Testing AgentCore Gateway connection...');
       
-      if (isLocal) {
-        // Try local backend first
-        try {
-          const localResponse = await axios.post('https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod/health', {});
-          if (localResponse.data.status === 'healthy') {
-            setIsConnected(true);
-            console.log('Connected to local backend');
-            return;
-          }
-        } catch (localError) {
-          console.log('Local backend not available, trying cloud backend...');
-        }
-      }
+      // Try to list available tools to test Gateway connectivity
+      const tools = await listGatewayTools();
       
-      // Test streaming MCP API endpoint
-      const apiUrl = 'https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod';
-      
-      const response = await axios.post(`${apiUrl}/health`, {}, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      // If we get a response with healthy status, the backend is connected
-      if (response.data.status === 'healthy') {
+      if (tools && tools.tools && tools.tools.length > 0) {
         setIsConnected(true);
-        console.log('Connected to streaming MCP API');
+        console.log(`Connected to AgentCore Gateway with ${tools.tools.length} tools available`);
       } else {
         setIsConnected(false);
-        console.log('Backend not healthy');
+        console.log('AgentCore Gateway connected but no tools available');
       }
     } catch (error) {
-      console.log('Cloud backend connection error:', error);
-      // If it's a network error, backend is not connected
-      // If it's an API error, backend is connected but endpoint might not exist
-      if (error.response && error.response.status >= 400) {
-        setIsConnected(true); // Backend is responding, just endpoint issue
-      } else {
-        setIsConnected(false);
-      }
+      console.log('AgentCore Gateway connection error:', error);
+      setIsConnected(false);
     }
   };
 
@@ -117,115 +91,96 @@ function App() {
     setIsLoading(true);
 
     try {
-      // Use the multi-step optimization API
-      const apiUrl = 'https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod';
+      // Use AgentCore Gateway for optimization
+      console.log('Starting optimization via AgentCore Gateway...');
       
       // Step 1: Intent Classification
-      const intentResponse = await axios.post(`${apiUrl}/intent`, {
-        query: input
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      console.log('Step 1: Intent Classification');
+      const intentResult = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___classify_intent', {
+        problem_description: input
       });
 
-      console.log('Intent response:', intentResponse.data);
+      console.log('Intent result:', intentResult);
       
-      if (intentResponse.data.status !== 'success') {
+      if (intentResult.status !== 'success') {
         throw new Error('Intent classification failed');
       }
 
-      const intentResult = intentResponse.data.result;
-
       // Step 2: Data Analysis
-      const dataResponse = await axios.post(`${apiUrl}/data`, {
-        intent_result: intentResult,
-        query: input
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      console.log('Step 2: Data Analysis');
+      const dataResult = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___analyze_data', {
+        problem_description: input,
+        intent_data: intentResult.result
       });
 
-      console.log('Data response:', dataResponse.data);
+      console.log('Data result:', dataResult);
       
-      if (dataResponse.data.status !== 'success') {
+      if (dataResult.status !== 'success') {
         throw new Error('Data analysis failed');
       }
 
-      const dataResult = dataResponse.data.result;
-
       // Step 3: Model Building
-      const modelResponse = await axios.post(`${apiUrl}/model`, {
-        intent_result: intentResult,
-        data_result: dataResult
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      console.log('Step 3: Model Building');
+      const modelResult = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___build_model', {
+        problem_description: input,
+        intent_data: intentResult.result,
+        data_analysis: dataResult.result
       });
 
-      console.log('Model response:', modelResponse.data);
+      console.log('Model result:', modelResult);
       
-      if (modelResponse.data.status !== 'success') {
+      if (modelResult.status !== 'success') {
         throw new Error('Model building failed');
       }
 
-      const modelResult = modelResponse.data.result;
-
-      // Step 4: Decision Analysis Solving
-      const solveResponse = await axios.post(`${apiUrl}/solve`, {
-        intent_result: intentResult,
-        data_result: dataResult,
-        model_result: modelResult
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      // Step 4: Optimization Solution
+      console.log('Step 4: Optimization Solution');
+      const solveResult = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___solve_optimization', {
+        problem_description: input,
+        intent_data: intentResult.result,
+        model_building: modelResult.result
       });
 
-      console.log('Solve response:', solveResponse.data);
+      console.log('Solve result:', solveResult);
       
-      if (solveResponse.data.status !== 'success') {
-        throw new Error('Decision analysis solving failed');
+      if (solveResult.status !== 'success') {
+        throw new Error('Optimization solving failed');
       }
 
-      const solveResult = solveResponse.data.result;
-
-      // Combine all results into a comprehensive decision analysis result
+      // Combine all results into a comprehensive optimization result
       const optimizationResult = {
         status: 'success',
         timestamp: new Date().toISOString(),
         intent_classification: {
-          intent: intentResult.intent,
-          confidence: intentResult.confidence,
-          entities: intentResult.entities,
-          objectives: intentResult.objectives,
-          reasoning: intentResult.reasoning
+          intent: intentResult.result.intent,
+          confidence: intentResult.result.confidence,
+          entities: intentResult.result.entities,
+          objectives: intentResult.result.objectives,
+          reasoning: intentResult.result.reasoning
         },
         data_analysis: {
-          data_entities: dataResult.data_entities,
-          sample_data: dataResult.sample_data,
-          readiness_score: dataResult.readiness_score,
-          assumptions: dataResult.assumptions
+          data_entities: dataResult.result.data_entities,
+          sample_data: dataResult.result.sample_data,
+          readiness_score: dataResult.result.readiness_score,
+          assumptions: dataResult.result.assumptions
         },
         model_building: {
-          model_type: modelResult.model_type,
-          variables: modelResult.variables,
-          constraints: modelResult.constraints,
-          objective: modelResult.objective_function,
-          complexity: modelResult.complexity
+          model_type: modelResult.result.model_type,
+          variables: modelResult.result.variables,
+          constraints: modelResult.result.constraints,
+          objective: modelResult.result.objective,
+          complexity: modelResult.result.model_complexity
         },
         optimization_solution: {
-          status: solveResult.status,
-          objective_value: solveResult.objective_value,
-          solution: solveResult.solution,
-          solve_time: solveResult.solve_time,
-          solver_used: solveResult.solver_used
+          status: solveResult.result.status,
+          objective_value: solveResult.result.objective_value,
+          solution: solveResult.result.solution,
+          solve_time: solveResult.result.solve_time,
+          solver_used: solveResult.result.solver_info
         }
       };
       
-      console.log('Complete decision analysis result:', optimizationResult);
+      console.log('Complete optimization result:', optimizationResult);
       
       const botMessage = {
         id: Date.now() + 1,
@@ -237,25 +192,16 @@ function App() {
       setMessages(prev => [...prev, botMessage]);
       
     } catch (error) {
-      console.error('Decision analysis error:', error);
+      console.error('Optimization error:', error);
       
       let errorContent = 'Sorry, I encountered an error. Please try again or check your connection.';
       
-      if (error.response) {
-        // Server responded with error status
-        const status = error.response.status;
-        const data = error.response.data;
-        
-        if (status === 404) {
-          errorContent = 'The optimization service is currently unavailable. Please try again later.';
-        } else if (status === 500) {
-          errorContent = 'The optimization service encountered an internal error. Please try again.';
-        } else if (data && data.message) {
-          errorContent = `Service error: ${data.message}`;
-        }
-      } else if (error.request) {
-        // Network error
-        errorContent = 'Unable to connect to the optimization service. Please check your internet connection.';
+      if (error.message.includes('Gateway')) {
+        errorContent = 'Unable to connect to the AgentCore Gateway. Please check your connection.';
+      } else if (error.message.includes('CORS')) {
+        errorContent = 'CORS error: Please check the Gateway configuration.';
+      } else if (error.message) {
+        errorContent = `Error: ${error.message}`;
       }
       
       const errorMessage = {
@@ -302,22 +248,16 @@ function App() {
       
       setMessages([workflowMessage]);
       
-      // Execute the workflow via API
-      const response = await axios.post(
-        `https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod/workflows/${workflow.industry}/${workflow.id}/execute`,
-        {
-          custom_parameters: {}
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      // Execute the workflow via AgentCore Gateway
+      console.log(`Executing workflow: ${workflow.industry}/${workflow.id}`);
+      const result = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___execute_workflow', {
+        industry: workflow.industry,
+        workflow_id: workflow.id
+      });
       
-      if (response.data.status === 'success') {
+      if (result.status === 'success') {
         // Add success message
-        const optimizationResults = response.data.optimization_pipeline;
+        const optimizationResults = result.optimization_pipeline;
         const finalResult = optimizationResults.optimization_solution?.result;
         
         const successMessage = {
@@ -335,7 +275,7 @@ function App() {
           setShowOptimizationResults(true);
         }
       } else {
-        throw new Error(response.data.error || 'Workflow execution failed');
+        throw new Error(result.error || 'Workflow execution failed');
       }
     } catch (error) {
       console.error('Workflow execution error:', error);
@@ -344,7 +284,7 @@ function App() {
       const errorMessage = {
         id: Date.now() + 1,
         type: 'assistant',
-        content: `**${workflow.title}** workflow execution failed.\n\n**Error:** ${error.response?.data?.error || error.message}\n\nLet me help you with a custom optimization instead.`,
+        content: `**${workflow.title}** workflow execution failed.\n\n**Error:** ${error.message}\n\nLet me help you with a custom optimization instead.`,
         timestamp: new Date().toISOString()
       };
       

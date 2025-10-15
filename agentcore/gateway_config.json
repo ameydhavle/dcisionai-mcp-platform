@@ -1,0 +1,13 @@
+{
+  "gateway_url": "https://dcisionai-gateway-0de1a655-ja1rhlcqjx.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp",
+  "gateway_id": "dcisionai-gateway-0de1a655-ja1rhlcqjx",
+  "access_token": "eyJraWQiOiJLMWZEMFwvXC9qaGtJSHlZd2IyM2NsMkRSK0dEQ2tFaHVWZVd0djdFMERkOUk9IiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiI1cjdyaXJqdmI0OTZpam1rMDNtanNrNTNtOCIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiRGNpc2lvbkFJLUdhdGV3YXktMGRlMWE2NTVcL2ludm9rZSIsImF1dGhfdGltZSI6MTc2MDU0MTM0MCwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfdjlDSmJRMWVKIiwiZXhwIjoxNzYwNTQ0OTQwLCJpYXQiOjE3NjA1NDEzNDAsInZlcnNpb24iOjIsImp0aSI6ImIwZWUxNTcwLTNkM2MtNDUxZS04NDk5LWMwMTRhODBjMDU3ZCIsImNsaWVudF9pZCI6IjVyN3Jpcmp2YjQ5NmlqbWswM21qc2s1M204In0.VaSKykBkYIVHJ4uiePNbu84IVNFkjt3zb8z2ZNu-CYicNwNgxMG-B_ys19bEbZoZayqS0VfDndbY4YJWm4fsP7wxFNcdbYWzv1RSfL6Z3ri1id7L4W5IBwfhtTPj5o-anEMWSxfHxuEtAD3C-ukFVRGVYJfvTnTCT1IUiNWyOENeJO4XwbnDESKiWCN0mrH30_P3HaGYMiQa63sC5MkLDvVBZH7n9yUeLAPoPQfuTee4yfkC_yEhEFYdmvAzTsXkwIRnT7wijCsKeWpn5K5cT8-hFaXl34y8uEwLEMgt7sLsYE3H76yTvhbFbbCgruUmqfFWx4FEJRB7vPWXxdU1Bg",
+  "client_info": {
+    "client_id": "5r7rirjvb496ijmk03mjsk53m8",
+    "client_secret": "l1ejvaalpnj9u3q33cfg4mp9u62nt789njlk2otti1eukhq8s44",
+    "user_pool_id": "us-east-1_v9CJbQ1eJ",
+    "token_endpoint": "https://agentcore-22b5657e.auth.us-east-1.amazoncognito.com/oauth2/token",
+    "scope": "DcisionAI-Gateway-0de1a655/invoke",
+    "domain_prefix": "agentcore-22b5657e"
+  }
+}

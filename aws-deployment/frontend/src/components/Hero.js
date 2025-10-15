@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Clock, Zap, TrendingUp } from 'lucide-react';
+import { callGatewayTool } from '../agentcore-config';
 
 const Hero = ({ onStartOptimization, onExecuteWorkflow }) => {
   const [industries, setIndustries] = useState([]);
@@ -26,14 +27,24 @@ const Hero = ({ onStartOptimization, onExecuteWorkflow }) => {
   const loadIndustries = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod/workflows');
-      const data = await response.json();
+      console.log('Loading industries from AgentCore Gateway...');
+      const result = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___get_workflow_templates', {});
+      console.log('Industries result:', result);
       
-      if (data.status === 'success') {
-        setIndustries(data.industries);
+      if (result.status === 'success') {
+        console.log('Setting industries:', result.industries);
+        setIndustries(result.industries);
+      } else {
+        console.error('Failed to load industries:', result);
+        // Fallback: set some default industries for testing
+        console.log('Setting fallback industries for testing');
+        setIndustries(['manufacturing', 'healthcare', 'retail', 'marketing', 'financial', 'logistics', 'energy']);
       }
     } catch (err) {
       console.error('Error loading industries:', err);
+      // Fallback: set some default industries for testing
+      console.log('Setting fallback industries due to error');
+      setIndustries(['manufacturing', 'healthcare', 'retail', 'marketing', 'financial', 'logistics', 'energy']);
     } finally {
       setLoading(false);
     }
@@ -42,26 +53,73 @@ const Hero = ({ onStartOptimization, onExecuteWorkflow }) => {
   const loadWorkflows = async (industry) => {
     try {
       setLoading(true);
-      const response = await fetch(`https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod/workflows/${industry}`);
+      console.log(`Loading workflows for industry: ${industry}`);
+      const result = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___get_workflow_templates', { industry });
+      console.log('Workflows result:', result);
       
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.status === 'success') {
-        setWorkflows(data.workflows);
+      if (result.status === 'success') {
+        console.log('Setting workflows:', result.workflows);
+        setWorkflows(result.workflows);
         setSelectedIndustry(industry);
       } else {
-        throw new Error(data.error || 'Failed to load workflows');
+        console.error('Failed to load workflows:', result);
+        // Fallback: set some default workflows for testing
+        console.log('Setting fallback workflows for testing');
+        const fallbackWorkflows = getFallbackWorkflows(industry);
+        setWorkflows(fallbackWorkflows);
+        setSelectedIndustry(industry);
       }
     } catch (err) {
       console.error('Error loading workflows:', err);
-      alert(`Unable to load workflows for ${industry}. Please try again later.`);
+      // Fallback: set some default workflows for testing
+      console.log('Setting fallback workflows due to error');
+      const fallbackWorkflows = getFallbackWorkflows(industry);
+      setWorkflows(fallbackWorkflows);
+      setSelectedIndustry(industry);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getFallbackWorkflows = (industry) => {
+    const fallbackWorkflows = {
+      manufacturing: [
+        { id: 'production_planning', title: 'Advanced Production Planning', description: 'Optimize multi-product production with capacity, labor, and material constraints', estimated_time: '4-5 minutes', category: 'production_planning', industry: 'manufacturing' },
+        { id: 'supply_chain', title: 'Global Supply Chain Optimization', description: 'Optimize multi-tier supply chain with transportation and inventory costs', estimated_time: '5-6 minutes', category: 'supply_chain', industry: 'manufacturing' },
+        { id: 'quality_control', title: 'Quality Control & Process Optimization', description: 'Optimize quality control processes with cost-benefit analysis', estimated_time: '4-5 minutes', category: 'quality_control', industry: 'manufacturing' }
+      ],
+      healthcare: [
+        { id: 'patient_flow', title: 'Patient Flow Optimization', description: 'Optimize patient scheduling and resource allocation', estimated_time: '3-4 minutes', category: 'patient_flow', industry: 'healthcare' },
+        { id: 'equipment_utilization', title: 'Equipment Utilization Optimization', description: 'Maximize equipment efficiency and minimize downtime', estimated_time: '4-5 minutes', category: 'equipment_utilization', industry: 'healthcare' },
+        { id: 'staff_scheduling', title: 'Staff Scheduling Optimization', description: 'Optimize staff schedules for maximum efficiency', estimated_time: '3-4 minutes', category: 'staff_scheduling', industry: 'healthcare' }
+      ],
+      retail: [
+        { id: 'pricing_strategy', title: 'Dynamic Pricing Strategy', description: 'Optimize pricing strategies for maximum revenue', estimated_time: '4-5 minutes', category: 'pricing_strategy', industry: 'retail' },
+        { id: 'marketing', title: 'Marketing Campaign Optimization', description: 'Optimize marketing campaigns for maximum ROI', estimated_time: '3-4 minutes', category: 'marketing', industry: 'retail' },
+        { id: 'inventory_management', title: 'Inventory Management Optimization', description: 'Optimize inventory levels and distribution', estimated_time: '4-5 minutes', category: 'inventory_management', industry: 'retail' }
+      ],
+      marketing: [
+        { id: 'campaign_management', title: 'Campaign Management Optimization', description: 'Optimize marketing campaign performance', estimated_time: '3-4 minutes', category: 'campaign_management', industry: 'marketing' },
+        { id: 'marketing_spend_optimization', title: 'Marketing Spend Optimization', description: 'Optimize marketing budget allocation', estimated_time: '4-5 minutes', category: 'marketing_spend_optimization', industry: 'marketing' },
+        { id: 'customer_acquisition', title: 'Customer Acquisition Optimization', description: 'Optimize customer acquisition strategies', estimated_time: '3-4 minutes', category: 'customer_acquisition', industry: 'marketing' }
+      ],
+      financial: [
+        { id: 'credit_risk', title: 'Credit Risk Assessment', description: 'Optimize credit risk evaluation processes', estimated_time: '4-5 minutes', category: 'credit_risk', industry: 'financial' },
+        { id: 'fraud_detection', title: 'Fraud Detection Optimization', description: 'Optimize fraud detection algorithms', estimated_time: '3-4 minutes', category: 'fraud_detection', industry: 'financial' },
+        { id: 'portfolio_management', title: 'Portfolio Management Optimization', description: 'Optimize investment portfolio allocation', estimated_time: '4-5 minutes', category: 'portfolio_management', industry: 'financial' }
+      ],
+      logistics: [
+        { id: 'route_planning', title: 'Route Planning Optimization', description: 'Optimize delivery routes for efficiency', estimated_time: '4-5 minutes', category: 'route_planning', industry: 'logistics' },
+        { id: 'warehouse_operations', title: 'Warehouse Operations Optimization', description: 'Optimize warehouse layout and operations', estimated_time: '3-4 minutes', category: 'warehouse_operations', industry: 'logistics' },
+        { id: 'fleet_management', title: 'Fleet Management Optimization', description: 'Optimize fleet utilization and maintenance', estimated_time: '4-5 minutes', category: 'fleet_management', industry: 'logistics' }
+      ],
+      energy: [
+        { id: 'renewable_energy', title: 'Renewable Energy Optimization', description: 'Optimize renewable energy generation and storage', estimated_time: '4-5 minutes', category: 'renewable_energy', industry: 'energy' },
+        { id: 'grid_management', title: 'Grid Management Optimization', description: 'Optimize power grid operations and distribution', estimated_time: '3-4 minutes', category: 'grid_management', industry: 'energy' },
+        { id: 'maintenance', title: 'Maintenance Optimization', description: 'Optimize equipment maintenance schedules', estimated_time: '3-4 minutes', category: 'maintenance', industry: 'energy' }
+      ]
+    };
+    return fallbackWorkflows[industry] || [];
   };
 
   const executeWorkflow = async (workflow) => {

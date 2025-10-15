@@ -77,12 +77,79 @@ def invoke_bedrock_with_profile(prompt: str, agent_type: str) -> str:
         logger.error(f"Bedrock error: {str(e)}")
         return f"Error: {str(e)}"
 
+def invoke_bedrock_model(prompt: str, model_id: str) -> str:
+    """Invoke Bedrock model directly by model ID."""
+    try:
+        # For Qwen models, use the appropriate request format
+        if "qwen" in model_id.lower():
+            response = bedrock_client.invoke_model(
+                modelId=model_id,
+                body=json.dumps({
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    "max_tokens": 2000,
+                    "temperature": 0.1,
+                    "top_p": 0.9,
+                    "stop": ["```", "Human:", "Assistant:"]
+                }),
+                contentType="application/json"
+            )
+        else:
+            # For other models (Claude, etc.)
+            response = bedrock_client.invoke_model(
+                modelId=model_id,
+                body=json.dumps({
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "max_tokens": 2000,
+                    "temperature": 0.1,
+                    "messages": [{"role": "user", "content": prompt}]
+                }),
+                contentType="application/json"
+            )
+        
+        response_body = json.loads(response['body'].read())
+        
+        # Handle different response formats
+        if "qwen" in model_id.lower():
+            # Qwen models return content in choices format
+            if 'choices' in response_body and len(response_body['choices']) > 0:
+                result_text = response_body['choices'][0]['message']['content']
+                logger.info(f"Qwen response length: {len(result_text)}")
+                return result_text
+            else:
+                logger.error(f"Empty Qwen response: {response_body}")
+                return "Error: Empty response from Qwen"
+        else:
+            # Claude and other models
+            if 'content' in response_body and len(response_body['content']) > 0:
+                result_text = response_body['content'][0]['text']
+                logger.info(f"Bedrock response length: {len(result_text)}")
+                return result_text
+            else:
+                logger.error(f"Empty Bedrock response: {response_body}")
+                return "Error: Empty response from Bedrock"
+        
+    except Exception as e:
+        logger.error(f"Bedrock model error: {str(e)}")
+        return f"Error: {str(e)}"
+
 def safe_json_parse(text: str, fallback: Dict[str, Any]) -> Dict[str, Any]:
     """Safely parse JSON from Bedrock response."""
     try:
         # First try to parse the entire text as JSON
         parsed = json.loads(text)
         logger.info(f"Successfully parsed JSON: {list(parsed.keys())}")
+        
+        # Debug: Log the model_type value specifically
+        if 'model_type' in parsed:
+            logger.info(f"model_type value: '{parsed['model_type']}' (type: {type(parsed['model_type'])})")
+        else:
+            logger.warning("model_type not found in parsed JSON")
+        
         return parsed
         
     except json.JSONDecodeError:
@@ -100,30 +167,60 @@ def safe_json_parse(text: str, fallback: Dict[str, Any]) -> Dict[str, Any]:
         except json.JSONDecodeError:
             pass
         
+        # Try to find JSON within markdown code blocks
+        try:
+            import re
+            # Look for JSON in markdown code blocks
+            json_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
+            match = re.search(json_pattern, text, re.DOTALL)
+            if match:
+                json_text = match.group(1)
+                parsed = json.loads(json_text)
+                logger.info(f"Successfully parsed JSON from markdown: {list(parsed.keys())}")
+                return parsed
+        except json.JSONDecodeError:
+            pass
+        
         # Try to extract key-value pairs using regex
         try:
             result = fallback.copy()
             
-            # Extract common patterns
+            # Extract common patterns with more flexible matching
             patterns = {
                 'intent': r'"intent":\s*"([^"]+)"',
                 'confidence': r'"confidence":\s*([0-9.]+)',
                 'status': r'"status":\s*"([^"]+)"',
                 'objective_value': r'"objective_value":\s*([0-9.]+)',
-                'model_type': r'"model_type":\s*"([^"]+)"',
-                'readiness_score': r'"readiness_score":\s*([0-9.]+)'
+                'model_type': r'"model_type":\s*"([^"]+)"|"model_type":\s*([^,}\n]+)',
+                'readiness_score': r'"readiness_score":\s*([0-9.]+)',
+                'solve_time': r'"solve_time":\s*([0-9.]+)',
+                'solver_info': r'"solver_info":\s*"([^"]+)"',
+                # Additional patterns for Qwen's format
+                'model_complexity': r'"model_complexity":\s*"([^"]+)"',
+                'estimated_solve_time': r'"estimated_solve_time":\s*([0-9.]+)',
+                'scalability': r'"scalability":\s*"([^"]+)"'
             }
             
             for key, pattern in patterns.items():
                 match = re.search(pattern, text)
                 if match:
-                    if key in ['confidence', 'objective_value', 'readiness_score']:
+                    if key in ['confidence', 'objective_value', 'readiness_score', 'solve_time', 'estimated_solve_time']:
                         result[key] = float(match.group(1))
                     else:
-                        result[key] = match.group(1)
+                        # Handle model_type with multiple capture groups
+                        if key == 'model_type' and len(match.groups()) > 1:
+                            # Use the first non-empty group
+                            value = match.group(1) if match.group(1) else match.group(2)
+                            result[key] = value.strip('"')
+                        else:
+                            result[key] = match.group(1).strip('"')
             
             if any(key in result for key in patterns.keys()):
                 logger.info(f"Successfully extracted data using regex: {list(result.keys())}")
+                # Debug: Log the extracted values
+                for key, value in result.items():
+                    if key in patterns.keys():
+                        logger.info(f"Extracted {key}: {value}")
                 return result
                 
         except Exception as e:
@@ -236,30 +333,72 @@ Respond with valid JSON only.
         }
 
 def build_model(problem_description: str, intent_data: Dict[str, Any], data_analysis: Dict[str, Any]) -> Dict[str, Any]:
-    """Build optimization model using Claude 3.5 Sonnet v2."""
-    prompt = f"""
-You are an expert optimization modeler. Create a mathematical optimization model for this problem.
+    """Build optimization model using Qwen 3B via inference profile."""
+    
+    # Extract key information for better context
+    intent = intent_data.get('intent', 'unknown')
+    entities = intent_data.get('entities', [])
+    data_entities = data_analysis.get('data_entities', [])
+    scale = intent_data.get('problem_scale', 'unknown')
+    
+    prompt = f"""You are an expert optimization modeler. Create a mathematical optimization model for this problem.
 
-Problem: {problem_description}
-Intent: {intent_data.get('intent', 'unknown')}
-Entities: {intent_data.get('entities', [])}
-Data Entities: {data_analysis.get('data_entities', [])}
-Scale: {intent_data.get('problem_scale', 'unknown')}
+PROBLEM DESCRIPTION:
+{problem_description}
 
-Create a mathematical optimization model and provide JSON response with:
-- model_type: Type of optimization model (e.g., "linear_programming", "integer_programming", "mixed_integer_programming")
-- variables: List of decision variables with bounds and descriptions
-- objective: Objective function with type (maximize/minimize) and expression
-- constraints: List of constraints with expressions and descriptions
-- model_complexity: Model complexity ("low", "medium", "high")
-- estimated_solve_time: Estimated solve time in seconds
-- scalability: Scalability assessment ("good", "fair", "poor")
+CONTEXT:
+- Intent: {intent}
+- Key Entities: {', '.join(entities[:5]) if entities else 'None'}
+- Data Entities: {', '.join([de.get('name', 'Unknown') for de in data_entities[:3]]) if data_entities else 'None'}
+- Problem Scale: {scale}
 
-Use realistic mathematical expressions. Respond with valid JSON only.
-"""
+REQUIRED OUTPUT FORMAT:
+Respond with ONLY valid JSON in this exact structure:
+
+{{
+  "model_type": "mixed_integer_programming",
+  "variables": [
+    {{
+      "name": "x1",
+      "description": "Production quantity for Product A",
+      "type": "integer",
+      "lower_bound": 0,
+      "upper_bound": 1000
+    }}
+  ],
+  "objective": {{
+    "type": "maximize",
+    "expression": "25*x1 + 18*x2 + 32*x3",
+    "description": "Maximize total profit"
+  }},
+  "constraints": [
+    {{
+      "expression": "2.5*x1 + 1.8*x2 + 3.2*x3 <= 3000",
+      "description": "Labor hours constraint"
+    }}
+  ],
+  "model_complexity": "medium",
+  "estimated_solve_time": 2.5,
+  "scalability": "good"
+}}
+
+IMPORTANT RULES:
+1. Use realistic variable names based on the problem (e.g., x1, x2, x3 for products)
+2. Create meaningful mathematical expressions with actual coefficients
+3. Include relevant constraints based on the problem description
+4. Set appropriate bounds and variable types
+5. Respond with ONLY the JSON object, no other text
+6. Ensure all JSON is valid and properly formatted
+
+Generate the optimization model now:"""
 
     try:
-        response = invoke_bedrock_with_profile(prompt, "model_building")
+        # Use Qwen 3B Coder model directly for better mathematical JSON generation
+        response = invoke_bedrock_model(prompt, "qwen.qwen3-coder-30b-a3b-v1:0")
+        
+        # Debug: Log the first 500 characters of Qwen response to understand format
+        logger.info(f"Qwen response preview: {response[:500]}...")
+        
         result = safe_json_parse(response, {
             "model_type": "linear_programming",
             "variables": [{"name": "x1", "description": "Decision variable", "type": "continuous", "lower_bound": 0, "upper_bound": 100}],
@@ -269,6 +408,10 @@ Use realistic mathematical expressions. Respond with valid JSON only.
             "estimated_solve_time": 1.0,
             "scalability": "good"
         })
+        
+        # Debug: Log the final result
+        logger.info(f"Final model_building result: {result}")
+        logger.info(f"Model type in result: {result.get('model_type')}")
         
         return {
             "status": "success",
@@ -390,12 +533,399 @@ def lambda_handler(event, context):
             body = json.loads(body_str)
             logger.info(f"📥 API Gateway request: {method} {path}")
         else:
-            # Direct invocation
+            # Direct invocation - could be AgentCore Gateway
             method = 'POST'
             path = event.get('path', '/mcp')
             body = event
             logger.info(f"📥 Direct invocation: {method} {path}")
+            logger.info(f"📥 Event body: {json.dumps(body, indent=2)}")
+            
+            # Check if this is an AgentCore Gateway call by looking for context metadata
+            if hasattr(context, 'client_context') and hasattr(context.client_context, 'custom'):
+                custom_context = context.client_context.custom
+                if 'bedrockAgentCoreToolName' in custom_context:
+                    # This is an AgentCore Gateway call
+                    original_tool_name = custom_context['bedrockAgentCoreToolName']
+                    logger.info(f"🔧 AgentCore Gateway tool call: {original_tool_name}")
+                    
+                    # Strip the target name prefix (format: ${target_name}___${tool_name})
+                    delimiter = "___"
+                    if delimiter in original_tool_name:
+                        tool_name = original_tool_name[original_tool_name.index(delimiter) + len(delimiter):]
+                        logger.info(f"🔧 Stripped tool name: {tool_name}")
+                        
+                        # Handle the tool call based on the tool name
+                        if tool_name == 'get_workflow_templates':
+                            industry = body.get('industry')
+                            logger.info(f"🔧 Getting workflow templates for industry: {industry}")
+                            if WORKFLOWS_AVAILABLE:
+                                result = handle_workflows_endpoint('/workflows' + (f'/{industry}' if industry else ''), 'GET', {})
+                                return result
+                            else:
+                                return {
+                                    'statusCode': 501,
+                                    'headers': {
+                                        'Content-Type': 'application/json',
+                                        'Access-Control-Allow-Origin': '*',
+                                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                                    },
+                                    'body': json.dumps({
+                                        "status": "error",
+                                        "message": "Workflow functionality not available"
+                                    })
+                                }
+                        
+                        elif tool_name == 'execute_workflow':
+                            industry = body.get('industry')
+                            workflow_id = body.get('workflow_id')
+                            logger.info(f"🔧 Executing workflow: {industry}/{workflow_id}")
+                            if WORKFLOWS_AVAILABLE and industry and workflow_id:
+                                result = handle_workflows_endpoint(f'/workflows/{industry}/{workflow_id}/execute', 'POST', {})
+                                return result
+                            else:
+                                return {
+                                    'statusCode': 400,
+                                    'headers': {
+                                        'Content-Type': 'application/json',
+                                        'Access-Control-Allow-Origin': '*',
+                                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                                    },
+                                    'body': json.dumps({
+                                        "status": "error",
+                                        "message": "Missing industry or workflow_id parameter"
+                                    })
+                                }
+                        
+                        elif tool_name == 'classify_intent':
+                            problem_description = body.get('problem_description', '')
+                            logger.info(f"🔧 Classifying intent for: {problem_description[:100]}...")
+                            result = classify_intent(problem_description)
+                            return {
+                                'statusCode': 200,
+                                'headers': {
+                                    'Content-Type': 'application/json',
+                                    'Access-Control-Allow-Origin': '*',
+                                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                                    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                                },
+                                'body': json.dumps(result)
+                            }
+                        
+                        elif tool_name == 'analyze_data':
+                            problem_description = body.get('problem_description', '')
+                            intent_data = body.get('intent_data', {})
+                            logger.info(f"🔧 Analyzing data for: {problem_description[:100]}...")
+                            result = analyze_data(problem_description, intent_data)
+                            return {
+                                'statusCode': 200,
+                                'headers': {
+                                    'Content-Type': 'application/json',
+                                    'Access-Control-Allow-Origin': '*',
+                                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                                    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                                },
+                                'body': json.dumps(result)
+                            }
+                        
+                        elif tool_name == 'build_model':
+                            problem_description = body.get('problem_description', '')
+                            intent_data = body.get('intent_data', {})
+                            data_analysis = body.get('data_analysis', {})
+                            logger.info(f"🔧 Building model for: {problem_description[:100]}...")
+                            result = build_model(problem_description, intent_data, data_analysis)
+                            return {
+                                'statusCode': 200,
+                                'headers': {
+                                    'Content-Type': 'application/json',
+                                    'Access-Control-Allow-Origin': '*',
+                                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                                    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                                },
+                                'body': json.dumps(result)
+                            }
+                        
+                        elif tool_name == 'solve_optimization':
+                            problem_description = body.get('problem_description', '')
+                            intent_data = body.get('intent_data', {})
+                            model_building = body.get('model_building', {})
+                            logger.info(f"🔧 Solving optimization for: {problem_description[:100]}...")
+                            result = solve_optimization(problem_description, intent_data, model_building)
+                            return {
+                                'statusCode': 200,
+                                'headers': {
+                                    'Content-Type': 'application/json',
+                                    'Access-Control-Allow-Origin': '*',
+                                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                                    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                                },
+                                'body': json.dumps(result)
+                            }
+                        
+                        else:
+                            logger.warning(f"🔧 Unknown tool name: {tool_name}")
+                            return {
+                                'statusCode': 400,
+                                'headers': {
+                                    'Content-Type': 'application/json',
+                                    'Access-Control-Allow-Origin': '*',
+                                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                                    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                                },
+                                'body': json.dumps({
+                                    "status": "error",
+                                    "message": f"Unknown tool: {tool_name}"
+                                })
+                            }
+                    else:
+                        logger.warning(f"🔧 Tool name format unexpected: {original_tool_name}")
         
+        # Handle AgentCore Gateway tool calls (legacy detection)
+        # The Gateway calls Lambda functions directly with tool arguments
+        # Check if this is a Gateway tool call by looking for tool-specific parameters
+        
+        # Check for workflow templates call
+        if 'industry' in body and len(body) <= 2:  # Only industry parameter or empty
+            logger.info(f"🔧 AgentCore Gateway tool call: get_workflow_templates with industry={body.get('industry')}")
+            industry = body.get('industry')
+            if WORKFLOWS_AVAILABLE:
+                result = handle_workflows_endpoint('/workflows' + (f'/{industry}' if industry else ''), 'GET', {})
+                return result
+            else:
+                return {
+                    'statusCode': 501,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps({
+                        "status": "error",
+                        "message": "Workflow functionality not available"
+                    })
+                }
+        
+        # Check for workflow execution call
+        elif 'industry' in body and 'workflow_id' in body:
+            logger.info(f"🔧 AgentCore Gateway tool call: execute_workflow with industry={body.get('industry')}, workflow_id={body.get('workflow_id')}")
+            industry = body.get('industry')
+            workflow_id = body.get('workflow_id')
+            if WORKFLOWS_AVAILABLE and industry and workflow_id:
+                result = handle_workflows_endpoint(f'/workflows/{industry}/{workflow_id}/execute', 'POST', {})
+                return result
+            else:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps({
+                        "status": "error",
+                        "message": "Missing industry or workflow_id parameter"
+                    })
+                }
+        
+        # Check for optimization pipeline calls
+        elif 'problem_description' in body:
+            # Determine which optimization step this is based on other parameters
+            if 'intent_data' in body and 'data_analysis' in body and 'model_building' not in body:
+                # This is analyze_data call
+                logger.info(f"🔧 AgentCore Gateway tool call: analyze_data")
+                problem_description = body.get('problem_description', '')
+                intent_data = body.get('intent_data', {})
+                result = analyze_data(problem_description, intent_data)
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps(result)
+                }
+            
+            elif 'intent_data' in body and 'data_analysis' in body and 'model_building' in body:
+                # This is build_model call
+                logger.info(f"🔧 AgentCore Gateway tool call: build_model")
+                problem_description = body.get('problem_description', '')
+                intent_data = body.get('intent_data', {})
+                data_analysis = body.get('data_analysis', {})
+                result = build_model(problem_description, intent_data, data_analysis)
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps(result)
+                }
+            
+            elif 'intent_data' in body and 'model_building' in body and 'data_analysis' not in body:
+                # This is solve_optimization call
+                logger.info(f"🔧 AgentCore Gateway tool call: solve_optimization")
+                problem_description = body.get('problem_description', '')
+                intent_data = body.get('intent_data', {})
+                model_building = body.get('model_building', {})
+                result = solve_optimization(problem_description, intent_data, model_building)
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps(result)
+                }
+            
+            elif len(body) == 1:  # Only problem_description
+                # This is classify_intent call
+                logger.info(f"🔧 AgentCore Gateway tool call: classify_intent")
+                problem_description = body.get('problem_description', '')
+                result = classify_intent(problem_description)
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps(result)
+                }
+        
+        # Legacy support for action/parameters format
+        elif 'action' in body and 'parameters' in body:
+            # This is a direct tool call from AgentCore Gateway
+            action = body['action']
+            parameters = body['parameters']
+            logger.info(f"🔧 AgentCore Gateway tool call: {action}")
+            
+            if action == 'get_workflow_templates':
+                industry = parameters.get('industry')
+                if WORKFLOWS_AVAILABLE:
+                    result = handle_workflows_endpoint('/workflows' + (f'/{industry}' if industry else ''), 'GET', {})
+                    return result
+                else:
+                    return {
+                        'statusCode': 501,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*',
+                            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                        },
+                        'body': json.dumps({
+                            "status": "error",
+                            "message": "Workflow functionality not available"
+                        })
+                    }
+            
+            elif action == 'execute_workflow':
+                industry = parameters.get('industry')
+                workflow_id = parameters.get('workflow_id')
+                if WORKFLOWS_AVAILABLE and industry and workflow_id:
+                    result = handle_workflows_endpoint(f'/workflows/{industry}/{workflow_id}/execute', 'POST', {})
+                    return result
+                else:
+                    return {
+                        'statusCode': 400,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*',
+                            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                        },
+                        'body': json.dumps({
+                            "status": "error",
+                            "message": "Missing industry or workflow_id parameter"
+                        })
+                    }
+            
+            elif action == 'classify_intent':
+                problem_description = parameters.get('problem_description', '')
+                result = classify_intent(problem_description)
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps(result)
+                }
+            
+            elif action == 'analyze_data':
+                problem_description = parameters.get('problem_description', '')
+                intent_data = parameters.get('intent_data', {})
+                result = analyze_data(problem_description, intent_data)
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps(result)
+                }
+            
+            elif action == 'build_model':
+                problem_description = parameters.get('problem_description', '')
+                intent_data = parameters.get('intent_data', {})
+                data_analysis = parameters.get('data_analysis', {})
+                result = build_model(problem_description, intent_data, data_analysis)
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps(result)
+                }
+            
+            elif action == 'solve_optimization':
+                problem_description = parameters.get('problem_description', '')
+                intent_data = parameters.get('intent_data', {})
+                model_building = parameters.get('model_building', {})
+                result = solve_optimization(problem_description, intent_data, model_building)
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps(result)
+                }
+            
+            else:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
+                    },
+                    'body': json.dumps({
+                        "status": "error",
+                        "message": f"Unknown action: {action}"
+                    })
+                }
+
         # Handle OPTIONS requests for CORS
         if method == 'OPTIONS':
             return {
