@@ -1,37 +1,184 @@
 # DcisionAI Platform - API Reference
 
-## **Base URLs**
+## Base URLs
 
-### **Primary API Gateway**
+### AgentCore Gateway (Primary)
+```
+https://dcisionai-gateway-0de1a655-ja1rhlcqjx.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp
+```
+
+### Legacy API Gateway (Deprecated)
 ```
 https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod
 ```
 
-### **AgentCore Gateway (Future)**
-```
-https://dcisionai-optimization-gateway.execute-api.us-east-1.amazonaws.com/prod
-```
+### Frontend Applications
+- **Production**: https://platform.dcisionai.com
+- **Local Development**: http://localhost:3000
 
-### **Async Optimization API**
-```
-https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod/async
-```
+## Authentication
 
-## **Authentication**
+### AgentCore Gateway (Current)
+- **JWT Authentication**: Amazon Cognito-based authentication
+- **OAuth 2.0**: Standard OAuth flow for enterprise integration
+- **Bearer Token**: Required for all API calls
+- **Token Refresh**: Automatic token refresh mechanism
 
-### **Current System**
-- **Public Access**: No authentication required for optimization endpoints
+### Legacy API Gateway (Deprecated)
+- **Public Access**: No authentication required (deprecated)
 - **Rate Limiting**: Built-in AWS API Gateway throttling
 - **Usage Tracking**: CloudWatch monitoring and logging
 
-### **AgentCore Gateway (Future)**
-- **JWT Authentication**: Amazon Cognito-based authentication
-- **OAuth 2.0**: Standard OAuth flow for enterprise integration
-- **API Keys**: Optional API key authentication for programmatic access
+## Available Endpoints
 
-## **Available Endpoints**
+### AgentCore Gateway Endpoints (Primary)
 
-### **Async Optimization Endpoints**
+The AgentCore Gateway uses the Model Context Protocol (MCP) for communication. All requests follow the JSON-RPC 2.0 format.
+
+#### Base Request Format
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "DcisionAI-Optimization-Tools-Fixed___[tool_name]",
+    "arguments": {
+      // Tool-specific arguments
+    }
+  }
+}
+```
+
+#### Available Tools
+
+##### 1. Classify Intent
+**Tool Name**: `DcisionAI-Optimization-Tools-Fixed___classify_intent`
+
+Classify optimization problem intent and extract key information.
+
+**Arguments:**
+```json
+{
+  "problem_description": "string - Detailed description of the optimization problem"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "result": {
+    "intent": "production_optimization",
+    "confidence": 0.95,
+    "entities": ["products", "production_lines", "capacity"],
+    "problem_scale": "medium"
+  }
+}
+```
+
+##### 2. Analyze Data
+**Tool Name**: `DcisionAI-Optimization-Tools-Fixed___analyze_data`
+
+Analyze data requirements for optimization problem.
+
+**Arguments:**
+```json
+{
+  "problem_description": "string - Problem description",
+  "intent_data": "object - Intent classification results"
+}
+```
+
+##### 3. Build Model
+**Tool Name**: `DcisionAI-Optimization-Tools-Fixed___build_model`
+
+Build mathematical optimization model using Qwen 30B.
+
+**Arguments:**
+```json
+{
+  "problem_description": "string - Problem description",
+  "intent_data": "object - Intent classification results",
+  "data_analysis": "object - Data analysis results"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "result": {
+    "model_type": "mixed_integer_programming",
+    "variables": [
+      {
+        "name": "x1",
+        "description": "Production quantity for Product A",
+        "type": "integer",
+        "lower_bound": 0,
+        "upper_bound": 1000
+      }
+    ],
+    "objective": {
+      "type": "maximize",
+      "expression": "25*x1 + 18*x2 + 32*x3",
+      "description": "Maximize total profit"
+    },
+    "constraints": [
+      {
+        "expression": "2.5*x1 + 1.8*x2 + 3.2*x3 <= 3000",
+        "description": "Labor hours constraint"
+      }
+    ],
+    "model_complexity": "medium",
+    "estimated_solve_time": 2.5,
+    "scalability": "good"
+  }
+}
+```
+
+##### 4. Solve Optimization
+**Tool Name**: `DcisionAI-Optimization-Tools-Fixed___solve_optimization`
+
+Solve optimization problem and return solution.
+
+**Arguments:**
+```json
+{
+  "problem_description": "string - Problem description",
+  "intent_data": "object - Intent classification results",
+  "model_building": "object - Model building results"
+}
+```
+
+##### 5. Get Workflow Templates
+**Tool Name**: `DcisionAI-Optimization-Tools-Fixed___get_workflow_templates`
+
+Get available workflow templates by industry.
+
+**Arguments:**
+```json
+{
+  "industry": "string - Industry name (optional)"
+}
+```
+
+##### 6. Execute Workflow
+**Tool Name**: `DcisionAI-Optimization-Tools-Fixed___execute_workflow`
+
+Execute a specific workflow with predefined problem description.
+
+**Arguments:**
+```json
+{
+  "industry": "string - Industry name",
+  "workflow_id": "string - Workflow ID"
+}
+```
+
+### Legacy Endpoints (Deprecated)
+
+### Async Optimization Endpoints
 
 #### **1. Start Async Optimization**
 **POST** `/async-optimization`

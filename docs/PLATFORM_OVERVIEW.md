@@ -1,6 +1,6 @@
-# 🌟 DcisionAI Platform - Complete Overview
+# DcisionAI Platform - Complete Overview
 
-## 🎯 **What is DcisionAI?**
+## What is DcisionAI?
 
 **DcisionAI is the Intelligent Enterprise Decision Layer** - a revolutionary platform that bridges the gap between AI chatbots and spreadsheets, providing mathematically proven optimal decisions with full transparency and interactivity.
 
@@ -12,58 +12,62 @@
 ### **Our Solution**
 **DcisionAI delivers Decision Intelligence** - the missing layer that transforms business complexity into optimized, explainable decisions you can trust.
 
-## 🚀 **Platform Capabilities**
+## Platform Capabilities
 
-### **🎯 Core Decision Support**
+### Core Decision Support
 - **Mathematical Optimization**: Real optimization using PuLP CBC solver
 - **Multi-Agent AI**: Specialized agents for intent, data, model, and solving
+- **Qwen 30B Integration**: Advanced mathematical model generation with Qwen 3B Coder 30B
 - **Explainable Results**: Clear reasoning behind every decision
 - **Interactive Analysis**: Real-time parameter adjustment and impact assessment
 
-### **🎨 Advanced Visualizations**
+### Advanced Visualizations
 - **3D Decision Landscape**: Interactive 3D visualization of optimization space
 - **Sensitivity Analysis**: Parameter impact assessment with sliders
 - **Risk Analysis**: Monte Carlo simulations with confidence intervals
 - **Business Impact**: Sophisticated financial and operational metrics
 
-### **🔧 Enterprise Features**
+### Enterprise Features
 - **Professional UI**: Perplexity-style interface for enterprise users
 - **Real-time Processing**: Live optimization with progress tracking
 - **Comprehensive Results**: Multiple views and analysis options
 - **Production Ready**: AWS-hosted with global CDN distribution
 
-## 🏗️ **Architecture Highlights**
+## Architecture Highlights
 
-### **Current Architecture (Enhanced Lambda + API Gateway)**
-- **Enhanced Lambda Functions**: 2GB memory, 5-minute timeout for complex optimizations
-- **Async Processing**: Background optimization with DynamoDB status tracking
-- **Real-time Progress**: Live updates and status monitoring
-- **No Timeout Issues**: Async processing handles long-running workflows
+### Current Architecture (AgentCore Gateway + Qwen 30B)
+- **AgentCore Gateway**: Amazon Bedrock AgentCore Gateway for advanced agent orchestration
+- **Qwen 30B Model**: Qwen 3B Coder 30B for superior mathematical model generation
+- **Enhanced Lambda Functions**: 2GB memory, optimized for Qwen 30B integration
+- **Real-time Processing**: Live optimization with progress tracking
+- **MCP Protocol**: Model Context Protocol for seamless agent communication
+- **Extended Execution**: No timeout limitations with AgentCore Gateway
 
-### **Future Architecture (AgentCore Gateway)**
-- **Amazon Bedrock AgentCore Gateway**: Next-generation agent platform
-- **Semantic Tool Discovery**: Natural language tool discovery
-- **Extended Execution Time**: No timeout limitations
-- **Persistent Memory**: Context retention across sessions
-- **Enhanced Observability**: Detailed monitoring and debugging
+### AI Model Integration
+- **Qwen 30B Coder**: Primary model for mathematical optimization model generation
+- **Claude 3 Haiku**: Fast inference for intent classification and data analysis
+- **Claude 3 Sonnet**: Complex reasoning for optimization solving
+- **Model Selection**: Intelligent model selection based on task complexity
 
-### **Frontend (React)**
+### Frontend (React)
 - **Modern UI**: Clean, professional interface with industry-specific workflows
 - **Interactive Components**: 3D visualizations, sensitivity sliders, risk charts
 - **Responsive Design**: Works on desktop, tablet, and mobile
 - **Real-time Updates**: Live optimization progress and results
-- **Async Integration**: Progress tracking for long-running optimizations
+- **AgentCore Integration**: Direct connection to AgentCore Gateway
 
-### **Backend (AWS Lambda + AgentCore Gateway)**
+### Backend (AWS Lambda + AgentCore Gateway)
 - **21 Industry Workflows**: Predefined optimization templates across 7 industries
 - **MCP-Compatible Tools**: Model Context Protocol for agent communication
-- **AI-Powered**: AWS Bedrock with Claude models (Haiku for speed, Sonnet for complexity)
+- **Qwen 30B Integration**: Advanced mathematical model generation
+- **Multi-Model AI**: AWS Bedrock with Qwen 30B, Claude 3 Haiku and Sonnet
 - **Serverless**: Auto-scaling and cost-effective
 - **High Performance**: Optimized for both speed and accuracy
 
-### **AI Platform (AWS Bedrock)**
-- **Inference Profiles**: Optimized model selection for each optimization step
-- **Multi-Model Support**: Claude 3 Haiku and Sonnet
+### AI Platform (AWS Bedrock)
+- **Qwen 30B Coder**: Primary model for mathematical optimization model generation
+- **Claude 3 Haiku**: Fast inference for intent classification and data analysis
+- **Claude 3 Sonnet**: Complex reasoning for optimization solving
 - **Enterprise Grade**: Secure, reliable, and scalable
 
 ## 🎯 **Use Cases**

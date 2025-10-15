@@ -1,33 +1,42 @@
-# 🚀 DcisionAI Platform - Quick Start Guide
+# DcisionAI Platform - Quick Start Guide
 
-## 🎯 **Get Started in 5 Minutes**
+## Get Started in 5 Minutes
 
 Welcome to DcisionAI! This guide will help you get up and running with the platform in just a few minutes.
 
-## 🌐 **Access the Platform**
+## Access the Platform
 
-### **Web Interface (Recommended)**
+### Web Interface (Recommended)
 1. **Visit**: https://platform.dcisionai.com
 2. **No Registration Required**: Start optimizing immediately
 3. **Free to Use**: No credit card or signup needed
 
-### **API Access**
-- **Base URL**: `https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod`
+### API Access
+- **AgentCore Gateway**: `https://dcisionai-gateway-0de1a655-ja1rhlcqjx.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp`
 - **Documentation**: See [API Reference](./API_REFERENCE.md)
-- **SDK**: Available for JavaScript/TypeScript and Python
+- **Authentication**: JWT Bearer token required
 
-## 🎯 **Your First Optimization**
+## Your First Optimization
 
-### **Step 1: Describe Your Problem**
-In the chat interface, describe your optimization challenge in natural language:
+### Step 1: Choose a Workflow
+Select from 21 predefined workflows across 7 industries:
 
-**Examples:**
-- "Optimize production for 3 products with capacity constraints"
-- "Minimize supply chain costs for 5 locations"
-- "Maximize quality control efficiency while reducing costs"
-- "Optimize resource allocation for sustainable operations"
+**Manufacturing:**
+- Advanced Production Planning
+- Supply Chain Optimization
+- Quality Control Optimization
 
-### **Step 2: Watch the Magic Happen**
+**Healthcare:**
+- Resource Allocation Optimization
+- Patient Flow Optimization
+- Pharmaceutical Supply Chain
+
+**Retail:**
+- Inventory Optimization
+- Pricing Strategy Optimization
+- Store Layout Optimization
+
+### Step 2: Watch the Magic Happen
 DcisionAI will automatically:
 1. **Analyze** your problem and classify the intent
 2. **Assess** data requirements and readiness

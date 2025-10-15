@@ -1,26 +1,28 @@
-# DcisionAI Manufacturing MCP Platform
+# DcisionAI Platform
 
-## 🚀 Overview
+## Overview
 
-DcisionAI Manufacturing MCP Platform is a production-ready multi-agent system for manufacturing optimization using AWS Bedrock inference profiles and the Model Context Protocol (MCP).
+DcisionAI is the Intelligent Enterprise Decision Layer - a revolutionary platform that bridges the gap between AI chatbots and spreadsheets, providing mathematically proven optimal decisions with full transparency and interactivity.
 
-## 🏗️ Architecture
+**Live Platform**: https://platform.dcisionai.com
 
-### Core Components
+## Architecture
 
-- **Manufacturing Domain**: 18 specialized agents across 4 swarms
-- **Intent Classification**: 5-agent swarm for understanding manufacturing queries
-- **Data Analysis**: 3-agent swarm for manufacturing data processing
-- **Model Building**: 4-agent swarm for mathematical optimization models
-- **Solver Optimization**: 6-agent swarm for real optimization solving
+### Current Architecture (AgentCore Gateway + Qwen 30B)
+
+- **AgentCore Gateway**: Amazon Bedrock AgentCore Gateway for advanced agent orchestration
+- **Qwen 30B Model**: Qwen 3B Coder 30B for superior mathematical model generation
+- **Enhanced Lambda Functions**: 2GB memory, optimized for Qwen 30B integration
+- **Real-time Processing**: Live optimization with progress tracking
+- **MCP Protocol**: Model Context Protocol for seamless agent communication
 
 ### Key Features
 
-- ✅ **Real AWS Bedrock Integration**: No mock responses, all real inference profiles
-- ✅ **Cross-Region Execution**: Agents distributed across multiple AWS regions
-- ✅ **Consensus Mechanisms**: Confidence aggregation and agreement scoring
-- ✅ **Production Ready**: AgentCore deployment with swarm architecture
-- ✅ **Multi-Tenant Support**: Platform manager with tenant orchestration
+- ✅ **Qwen 30B Integration**: Advanced mathematical model generation with Qwen 3B Coder 30B
+- ✅ **Real AWS Bedrock Integration**: No mock responses, all real AI models
+- ✅ **AgentCore Gateway**: Next-generation agent platform with extended execution
+- ✅ **21 Industry Workflows**: Predefined optimization templates across 7 industries
+- ✅ **Production Ready**: AWS-hosted with global CDN distribution
 
 ## 📁 Repository Structure
 
