@@ -488,7 +488,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex">
+    <div className="min-h-screen bg-gray-950 flex">
       {/* Mobile Overlay */}
       {isMobile && showMobileSidebar && (
         <div 
@@ -514,31 +514,31 @@ function App() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
         {/* Top Header */}
-        <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm px-6 py-4">
+        <header className="border-b border-gray-800 bg-gray-950 shadow-sm px-4 py-3">
           <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {isMobile && (
                   <button
                     onClick={() => setShowMobileSidebar(true)}
-                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+                    className="p-2 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white"
                     title="Open sidebar"
                   >
                     ☰
                   </button>
                 )}
-                <h1 className="text-2xl font-bold text-white">DcisionAI</h1>
+                <h1 className="text-xl font-bold text-white">DcisionAI</h1>
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                  <span className="text-sm text-gray-400">
+                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-white' : 'bg-red-500'}`}></div>
+                  <span className="text-xs text-gray-400">
                     {isConnected ? 'Connected' : 'Disconnected'}
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white">
+                <button className="p-2 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white text-xs">
                   WEB
                 </button>
-                <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white">
+                <button className="p-2 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white text-xs">
                   VOICE
                 </button>
               </div>
@@ -676,7 +676,7 @@ function App() {
 
             {/* Bottom Input Area */}
             {(messages.length > 0 || activeSection === 'chat') && (
-              <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm p-6">
+              <div className="border-t border-gray-800 bg-gray-950 backdrop-blur-sm p-6">
                 <div className="max-w-4xl mx-auto">
                   <div className="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-2xl px-4 py-4 hover:border-gray-600 transition-colors focus-within:border-[#e07a4a] focus-within:ring-1 focus-within:ring-[#e07a4a]">
                     <input
@@ -703,7 +703,7 @@ function App() {
       {/* Model Details Modal */}
       {showModelModal && currentModel && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-scroll">
+          <div className="bg-gray-950 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-scroll">
             <div className="flex items-center justify-between p-6 border-b border-gray-700">
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                 <Settings className="w-6 h-6" />

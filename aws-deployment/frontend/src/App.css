@@ -1,20 +1,116 @@
-/* Import IBM Plex Sans font */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
+/* Import modern fonts - Inter for UI, JetBrains Mono for code */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* Apply IBM Plex Sans as the default font */
-html, body {
-  font-family: 'IBM Plex Sans', 'Inter', 'Helvetica Neue', Arial, sans-serif;
-  font-weight: 300;
-}
-
+/* Modern CSS Reset and Base Styles */
 * {
-  font-family: 'IBM Plex Sans', 'Inter', 'Helvetica Neue', Arial, sans-serif;
-  font-weight: 300;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* Preserve bold weights for emphasis and highlights */
-.font-bold, .font-semibold, strong, b {
-  font-weight: 600 !important;
+html, body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-gray-100);
+  background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Scale - Refined and Compact */
+.text-xs { font-size: 0.6875rem; line-height: 0.875rem; font-weight: 500; }
+.text-sm { font-size: 0.75rem; line-height: 1rem; font-weight: 500; }
+.text-base { font-size: 0.875rem; line-height: 1.25rem; font-weight: 400; }
+.text-lg { font-size: 1rem; line-height: 1.375rem; font-weight: 500; }
+.text-xl { font-size: 1.125rem; line-height: 1.5rem; font-weight: 600; }
+.text-2xl { font-size: 1.25rem; line-height: 1.625rem; font-weight: 600; }
+.text-3xl { font-size: 1.5rem; line-height: 1.875rem; font-weight: 700; }
+.text-4xl { font-size: 1.875rem; line-height: 2.25rem; font-weight: 700; }
+
+/* Font Weights - Subtle and Professional */
+.font-light { font-weight: 300; }
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+/* Code Font */
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+}
+
+/* Dark Monochrome Color Palette - Inspired by Linear/Vercel */
+:root {
+  /* Primary Colors - Monochrome with subtle accent */
+  --color-primary: #ffffff;
+  --color-primary-hover: #f8f9fa;
+  --color-primary-light: #6b7280;
+  
+  /* Monochrome Grays - Sophisticated Dark Theme */
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #737373;
+  --color-gray-600: #525252;
+  --color-gray-700: #404040;
+  --color-gray-800: #262626;
+  --color-gray-900: #171717;
+  --color-gray-950: #0a0a0a;
+  
+  /* Semantic Colors - Monochrome variants */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  
+  /* Background Colors - Dark Theme */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #171717;
+  --bg-tertiary: #262626;
+  --bg-elevated: #404040;
+  --bg-surface: #262626;
+  
+  /* Border Colors */
+  --border-light: #262626;
+  --border-medium: #404040;
+  --border-dark: #525252;
+  --border-accent: #737373;
+  
+  /* Shadow Colors - Dark Theme */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+  
+  /* Spacing Scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
 }
 
 /* Line clamp utility for text truncation */
@@ -25,46 +121,210 @@ html, body {
   overflow: hidden;
 }
 
-/* Extra bold for special emphasis */
-.font-extrabold {
-  font-weight: 700 !important;
+/* Dark Monochrome Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  letter-spacing: 0.025em;
 }
 
-/* Perplexity-inspired styles for DcisionAI */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--bg-primary);
+  border: 1px solid var(--border-accent);
+  box-shadow: var(--shadow-sm);
+}
 
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-gray-300);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: var(--bg-surface);
+  color: var(--color-gray-200);
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-elevated);
+  border-color: var(--border-dark);
+  color: var(--color-gray-100);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-gray-400);
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+  background-color: var(--bg-surface);
+  color: var(--color-gray-200);
+  border-color: var(--border-light);
+}
+
+/* Dark Monochrome App Layout */
 .App {
-  text-align: left;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--color-gray-100);
 }
 
-/* Sidebar animations */
-.sidebar-transition {
-  transition: width 0.3s ease-in-out;
+/* Dark Monochrome Input Styles */
+.input-modern {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface);
+  color: var(--color-gray-100);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
 
-/* Input focus effects */
-.input-focus {
-  transition: all 0.2s ease-in-out;
+.input-modern:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-elevated);
 }
 
-.input-focus:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 1px #3b82f6;
+.input-modern::placeholder {
+  color: var(--color-gray-500);
 }
 
-/* Perplexity-style input */
-.perplexity-input {
-  background: rgba(31, 41, 55, 0.8);
-  border: 1px solid rgba(75, 85, 99, 0.5);
-  transition: all 0.2s ease-in-out;
+/* Dark Monochrome Card Styles */
+.card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
 }
 
-.perplexity-input:hover {
-  border-color: rgba(75, 85, 99, 0.8);
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  border-color: var(--border-dark);
 }
 
-.perplexity-input:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 1px #3b82f6;
+.card-header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-medium);
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.card-body {
+  padding: var(--space-4);
+}
+
+.card-footer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--border-medium);
+  background-color: var(--bg-secondary);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+/* Dark Monochrome Sidebar */
+.sidebar-modern {
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+/* Dark Monochrome Navigation */
+.nav-modern {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-gray-400);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.nav-item:hover {
+  background-color: var(--bg-surface);
+  color: var(--color-gray-200);
+}
+
+.nav-item.active {
+  background-color: var(--bg-elevated);
+  color: var(--color-primary);
+  border: 1px solid var(--border-accent);
+}
+
+/* Dark Monochrome Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 0.875rem;
+  letter-spacing: 0.025em;
+}
+
+.badge-primary {
+  background-color: var(--bg-elevated);
+  color: var(--color-primary);
+  border: 1px solid var(--border-accent);
+}
+
+.badge-secondary {
+  background-color: var(--bg-surface);
+  color: var(--color-gray-400);
+  border: 1px solid var(--border-medium);
+}
+
+.badge-success {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--color-success);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.badge-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 /* Custom animations */

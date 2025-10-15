@@ -6,11 +6,11 @@ const Sidebar = ({ isCollapsed, onToggle, activeSection, onSectionChange, isMobi
   };
 
   return (
-    <div className={`bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 border-r border-gray-700/50 shadow-2xl transition-all duration-300 ease-in-out ${
+    <div className={`bg-gray-950 border-r border-gray-700/50 shadow-2xl transition-all duration-300 ease-in-out ${
       isCollapsed ? 'w-16' : 'w-72'
     } ${isMobile ? 'fixed top-0 left-0 h-full z-50' : ''} flex flex-col h-full backdrop-blur-sm`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-700/30 bg-gradient-to-r from-gray-900/50 to-gray-800/30">
+      <div className="p-4 border-b border-gray-700/30 bg-gray-950">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogoClick}>
