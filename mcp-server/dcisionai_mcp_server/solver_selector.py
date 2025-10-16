@@ -41,7 +41,7 @@ class SolverSelector:
     def _build_solver_database(self) -> Dict[str, SolverInfo]:
         """Build database of available solvers with their capabilities."""
         return {
-            # Linear Programming Solvers
+            # OR-Tools Linear Programming Solvers
             "GLOP": SolverInfo(
                 name="GLOP",
                 optimization_types=["linear_programming"],
@@ -71,6 +71,38 @@ class SolverSelector:
                 is_available="SCIP" in self.available_solvers
             ),
             
+            # COIN-OR Solvers
+            "GLPK": SolverInfo(
+                name="GLPK",
+                optimization_types=["linear_programming", "mixed_integer_linear_programming"],
+                capabilities=["linear_constraints", "continuous_variables", "integer_variables", "binary_variables"],
+                performance_rating=6,
+                is_available="GLPK" in self.available_solvers
+            ),
+            "CLP": SolverInfo(
+                name="CLP",
+                optimization_types=["linear_programming"],
+                capabilities=["linear_constraints", "continuous_variables"],
+                performance_rating=7,
+                is_available="CLP" in self.available_solvers
+            ),
+            "SYMPHONY": SolverInfo(
+                name="SYMPHONY",
+                optimization_types=["mixed_integer_linear_programming"],
+                capabilities=["linear_constraints", "continuous_variables", "integer_variables", "binary_variables", "parallel"],
+                performance_rating=8,
+                is_available="SYMPHONY" in self.available_solvers
+            ),
+            
+            # HiGHS Solver
+            "HIGHS": SolverInfo(
+                name="HIGHS",
+                optimization_types=["linear_programming", "mixed_integer_linear_programming"],
+                capabilities=["linear_constraints", "continuous_variables", "integer_variables", "binary_variables", "large_scale"],
+                performance_rating=9,
+                is_available="HIGHS" in self.available_solvers
+            ),
+            
             # Quadratic Programming Solvers
             "OSQP": SolverInfo(
                 name="OSQP",
@@ -85,6 +117,45 @@ class SolverSelector:
                 capabilities=["quadratic_constraints", "continuous_variables", "convex_optimization"],
                 performance_rating=7,
                 is_available="ECOS" in self.available_solvers
+            ),
+            "CVXOPT": SolverInfo(
+                name="CVXOPT",
+                optimization_types=["quadratic_programming", "second_order_cone_programming", "semidefinite_programming"],
+                capabilities=["quadratic_constraints", "continuous_variables", "convex_optimization", "socp", "sdp"],
+                performance_rating=7,
+                is_available="CVXOPT" in self.available_solvers
+            ),
+            "SCS": SolverInfo(
+                name="SCS",
+                optimization_types=["quadratic_programming", "second_order_cone_programming", "semidefinite_programming"],
+                capabilities=["quadratic_constraints", "continuous_variables", "convex_optimization", "socp", "sdp"],
+                performance_rating=8,
+                is_available="SCS" in self.available_solvers
+            ),
+            
+            # CVXPY Ecosystem
+            "CVXPY": SolverInfo(
+                name="CVXPY",
+                optimization_types=["linear_programming", "quadratic_programming", "second_order_cone_programming", "semidefinite_programming"],
+                capabilities=["linear_constraints", "quadratic_constraints", "continuous_variables", "convex_optimization", "socp", "sdp", "disciplined_convex_programming"],
+                performance_rating=9,
+                is_available="CVXPY" in self.available_solvers
+            ),
+            
+            # Specialized Solvers
+            "MOSEK": SolverInfo(
+                name="MOSEK",
+                optimization_types=["linear_programming", "quadratic_programming", "second_order_cone_programming", "semidefinite_programming", "mixed_integer_linear_programming"],
+                capabilities=["linear_constraints", "quadratic_constraints", "continuous_variables", "integer_variables", "binary_variables", "convex_optimization", "socp", "sdp"],
+                performance_rating=9,
+                is_available="MOSEK" in self.available_solvers
+            ),
+            "XPRESS": SolverInfo(
+                name="XPRESS",
+                optimization_types=["linear_programming", "quadratic_programming", "mixed_integer_linear_programming", "mixed_integer_quadratic_programming"],
+                capabilities=["linear_constraints", "quadratic_constraints", "continuous_variables", "integer_variables", "binary_variables"],
+                performance_rating=9,
+                is_available="XPRESS" in self.available_solvers
             ),
             
             # Commercial Solvers (if available)
@@ -116,7 +187,37 @@ class SolverSelector:
         except ImportError:
             logger.warning("OR-Tools not available")
         
-        # Check OSQP
+        # Check COIN-OR Solvers
+        try:
+            import glpk
+            available.append("GLPK")
+            logger.info("GLPK solver detected")
+        except ImportError:
+            logger.debug("GLPK not available")
+        
+        try:
+            import clp
+            available.append("CLP")
+            logger.info("CLP solver detected")
+        except ImportError:
+            logger.debug("CLP not available")
+        
+        try:
+            import symphony
+            available.append("SYMPHONY")
+            logger.info("SYMPHONY solver detected")
+        except ImportError:
+            logger.debug("SYMPHONY not available")
+        
+        # Check HiGHS
+        try:
+            import highspy
+            available.append("HIGHS")
+            logger.info("HiGHS solver detected")
+        except ImportError:
+            logger.debug("HiGHS not available")
+        
+        # Check Quadratic Programming Solvers
         try:
             import osqp
             available.append("OSQP")
@@ -124,7 +225,6 @@ class SolverSelector:
         except ImportError:
             logger.debug("OSQP not available")
         
-        # Check ECOS
         try:
             import ecos
             available.append("ECOS")
@@ -132,7 +232,44 @@ class SolverSelector:
         except ImportError:
             logger.debug("ECOS not available")
         
-        # Check commercial solvers
+        try:
+            import cvxopt
+            available.append("CVXOPT")
+            logger.info("CVXOPT solver detected")
+        except ImportError:
+            logger.debug("CVXOPT not available")
+        
+        try:
+            import scs
+            available.append("SCS")
+            logger.info("SCS solver detected")
+        except ImportError:
+            logger.debug("SCS not available")
+        
+        # Check CVXPY Ecosystem
+        try:
+            import cvxpy
+            available.append("CVXPY")
+            logger.info("CVXPY solver detected")
+        except ImportError:
+            logger.debug("CVXPY not available")
+        
+        # Check Specialized Solvers
+        try:
+            import mosek
+            available.append("MOSEK")
+            logger.info("MOSEK solver detected")
+        except ImportError:
+            logger.debug("MOSEK not available")
+        
+        try:
+            import xpress
+            available.append("XPRESS")
+            logger.info("XPRESS solver detected")
+        except ImportError:
+            logger.debug("XPRESS not available")
+        
+        # Check Commercial Solvers
         try:
             import gurobipy
             available.append("GUROBI")

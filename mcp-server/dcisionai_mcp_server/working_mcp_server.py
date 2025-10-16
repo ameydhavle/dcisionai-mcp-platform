@@ -207,7 +207,7 @@ class DcisionAIMCPServer:
                 },
                 "serverInfo": {
                     "name": "dcisionai-optimization",
-                    "version": "1.2.0"
+                    "version": "1.3.4"
                 }
             }
         }
@@ -233,6 +233,14 @@ class DcisionAIMCPServer:
             
             # Import the actual tools only when needed
             try:
+                import sys
+                import os
+                # Add the current directory to the path
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                parent_dir = os.path.dirname(current_dir)
+                if parent_dir not in sys.path:
+                    sys.path.insert(0, parent_dir)
+                
                 from dcisionai_mcp_server.tools import (
                     classify_intent,
                     analyze_data,
