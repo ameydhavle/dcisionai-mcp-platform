@@ -113,24 +113,7 @@ const OptimizationResults = ({ result, onClose }) => {
     }
   }, [result]);
 
-  // Format mathematical expressions
-  const formatObjectiveFunction = (objective) => {
-    if (!objective) return "f(x) = optimize";
-    return `f(x) = ${objective.description || 'optimize objective'}`;
-  };
-
-  // Format constraints
-  const formatConstraints = (constraints) => {
-    if (!constraints || constraints.length === 0) return [];
-    return constraints.map((constraint, index) => ({
-      id: index,
-      expression: constraint.expression || constraint,
-      type: constraint.type || 'inequality',
-      description: constraint.description || `Constraint ${index + 1}`
-    }));
-  };
-
-  const constraints = formatConstraints(result.model_building?.result?.constraints);
+  // Helper functions removed - now using real data directly from MCP server
 
   const tabs = [
     { id: 'overview', label: 'Decision Overview', icon: Target },
@@ -178,19 +161,21 @@ const OptimizationResults = ({ result, onClose }) => {
               <div className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-green-400" />
                 <span className="text-green-400 font-semibold">
-                  Estimated Savings: ${businessImpact?.financial_impact?.annual_savings?.toLocaleString() || '0'}
+                  Estimated Savings: ${result.business_impact?.estimated_savings?.toLocaleString() || result.business_impact?.cost_savings?.toLocaleString() || '0'}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-blue-400" />
-                <span className="text-blue-400 font-semibold">
-                  ROI Timeline: {businessImpact?.financial_impact?.payback_period_months || '0'} months
-                </span>
-              </div>
+              {result.business_impact?.roi_timeline && (
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-blue-400" />
+                  <span className="text-blue-400 font-semibold">
+                    ROI Timeline: {result.business_impact.roi_timeline} months
+                  </span>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-purple-400" />
                 <span className="text-purple-400 font-semibold">
-                  Confidence: {Math.round((businessImpact?.risk_metrics?.confidence_level || 0) * 100)}%
+                  Confidence: {result.business_impact?.confidence || '0'}%
                 </span>
               </div>
             </div>
@@ -245,23 +230,23 @@ const OptimizationResults = ({ result, onClose }) => {
                       status: 'completed',
                       icon: Target,
                       description: 'Identified optimization problem',
-                      details: result.intent_classification?.result?.intent || 'Unknown',
-                      confidence: result.intent_classification?.result?.confidence || 0
+                      details: result.pipeline?.intent_classification?.result?.intent || 'Unknown',
+                      confidence: result.pipeline?.intent_classification?.result?.confidence || 0
                     },
                     {
                       agent: 'Data Agent',
                       status: 'completed',
                       icon: Database,
                       description: 'Analyzed data readiness',
-                      details: `${result.data_analysis?.result?.data_entities?.length || 0} entities`,
-                      confidence: result.data_analysis?.result?.readiness_score || 0
+                      details: `${result.pipeline?.data_analysis?.result?.entities || 0} entities`,
+                      confidence: result.pipeline?.data_analysis?.result?.readiness_score || 0
                     },
                     {
                       agent: 'Model Agent',
                       status: 'completed',
                       icon: Settings,
                       description: 'Built mathematical model',
-                      details: result.model_building?.result?.model_type || 'Unknown',
+                      details: result.pipeline?.model_building?.result?.model_type || 'Unknown',
                       confidence: 0.95
                     },
                     {
@@ -269,7 +254,7 @@ const OptimizationResults = ({ result, onClose }) => {
                       status: 'completed',
                       icon: Zap,
                       description: 'Found optimal solution',
-                      details: result.optimization_solution?.result?.status || 'Unknown',
+                      details: result.pipeline?.optimization_solution?.result?.status || 'Unknown',
                       confidence: 0.98
                     }
                   ].map((agent, index) => {
@@ -380,35 +365,41 @@ const OptimizationResults = ({ result, onClose }) => {
                   <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
                     <h4 className="text-lg font-semibold text-white mb-2">Objective Function</h4>
                     <div className="bg-black rounded p-3 font-mono text-green-400 text-lg">
-                      {formatObjectiveFunction(result.model_building?.result?.objective)}
+                      {result.pipeline?.model_building?.result?.objective_function || 'f(x) = optimize'}
                     </div>
                   </div>
 
                   <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
-                    <h4 className="text-lg font-semibold text-white mb-2">Variables</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {(result.model_building?.result?.variables || []).map((variable, index) => (
-                        <div key={index} className="bg-gray-700 rounded p-2">
-                          <div className="text-blue-400 font-mono text-sm">{variable.name}</div>
-                          <div className="text-gray-400 text-xs">{variable.description}</div>
-                        </div>
-                      ))}
+                    <h4 className="text-lg font-semibold text-white mb-2">Decision Variables</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {result.pipeline?.model_building?.result?.decision_variables ? 
+                        Object.entries(result.pipeline.model_building.result.decision_variables).map(([name, description], index) => (
+                          <div key={index} className="bg-gray-700 rounded p-3">
+                            <div className="text-blue-400 font-mono text-sm font-bold">{name}</div>
+                            <div className="text-gray-400 text-xs">{description}</div>
+                          </div>
+                        )) : (
+                          <div className="text-gray-500 text-sm">No variables defined</div>
+                        )
+                      }
                     </div>
                   </div>
 
                   <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
                     <h4 className="text-lg font-semibold text-white mb-2">Constraints</h4>
                     <div className="space-y-2">
-                      {constraints.map((constraint, index) => (
-                        <div key={index} className="bg-gray-700 rounded p-3">
-                          <div className="text-purple-400 font-mono text-sm mb-1">
-                            {constraint.expression}
+                      {result.pipeline?.model_building?.result?.constraints ? 
+                        result.pipeline.model_building.result.constraints.map((constraint, index) => (
+                          <div key={index} className="bg-gray-700 rounded p-3">
+                            <div className="text-yellow-400 font-mono text-sm">{constraint}</div>
                           </div>
-                          <div className="text-gray-400 text-xs">{constraint.description}</div>
-                        </div>
-                      ))}
+                        )) : (
+                          <div className="text-gray-500 text-sm">No constraints defined</div>
+                        )
+                      }
                     </div>
                   </div>
+
                 </div>
               </div>
 

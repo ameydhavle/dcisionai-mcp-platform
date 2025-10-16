@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Clock, Zap, TrendingUp } from 'lucide-react';
-import { callGatewayTool } from '../agentcore-config';
+import { callMCPTool } from '../mcp-client';
 
 const Hero = ({ onStartOptimization, onExecuteWorkflow }) => {
   const [industries, setIndustries] = useState([]);
@@ -27,11 +27,11 @@ const Hero = ({ onStartOptimization, onExecuteWorkflow }) => {
   const loadIndustries = async () => {
     try {
       setLoading(true);
-      console.log('Loading industries from AgentCore Gateway...');
-      const result = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___get_workflow_templates', {});
+      console.log('Loading industries from MCP server...');
+      const result = await callMCPTool('get_workflow_templates', {});
       console.log('Industries result:', result);
       
-      if (result.status === 'success') {
+      if (result && result.industries) {
         console.log('Setting industries:', result.industries);
         setIndustries(result.industries);
       } else {
@@ -54,10 +54,10 @@ const Hero = ({ onStartOptimization, onExecuteWorkflow }) => {
     try {
       setLoading(true);
       console.log(`Loading workflows for industry: ${industry}`);
-      const result = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___get_workflow_templates', { industry });
+      const result = await callMCPTool('get_workflow_templates', { industry });
       console.log('Workflows result:', result);
       
-      if (result.status === 'success') {
+      if (result && result.workflows) {
         console.log('Setting workflows:', result.workflows);
         setWorkflows(result.workflows);
         setSelectedIndustry(industry);
@@ -221,25 +221,25 @@ const Hero = ({ onStartOptimization, onExecuteWorkflow }) => {
                   <div className="card-body">
                     <div className="flex items-start justify-between mb-3">
                       <h4 className="text-sm font-semibold text-white group-hover:text-gray-300 transition-colors">
-                        {workflow.title}
+                        {workflow.title || workflow.id ? workflow.id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Optimization Workflow'}
                       </h4>
-                      <span className={`badge ${workflow.difficulty === 'beginner' ? 'badge-success' : workflow.difficulty === 'intermediate' ? 'badge-warning' : 'badge-error'}`}>
-                        {workflow.difficulty}
+                      <span className={`badge ${(workflow.difficulty || 'intermediate') === 'beginner' ? 'badge-success' : (workflow.difficulty || 'intermediate') === 'intermediate' ? 'badge-warning' : 'badge-error'}`}>
+                        {workflow.difficulty || 'intermediate'}
                       </span>
                     </div>
                     
                     <p className="text-gray-400 text-xs mb-4 line-clamp-3">
-                      {workflow.description}
+                      {workflow.description || `Optimize ${workflow.id ? workflow.id.replace(/_/g, ' ') : 'business processes'} for maximum efficiency and performance.`}
                     </p>
                     
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center text-gray-500 text-xs">
                         <Clock className="w-3 h-3 mr-1" />
-                        {workflow.estimated_time}
+                        {workflow.estimated_time || '3-4 minutes'}
                       </div>
                       <div className="flex items-center text-gray-500 text-xs">
                         <Zap className="w-3 h-3 mr-1" />
-                        {workflow.category.replace(/_/g, ' ')}
+                        {workflow.category ? workflow.category.replace(/_/g, ' ') : workflow.id ? workflow.id.replace(/_/g, ' ') : 'optimization'}
                       </div>
                     </div>
                     

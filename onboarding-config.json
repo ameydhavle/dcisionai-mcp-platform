@@ -1,0 +1,11 @@
+{
+  "smtp_server": "smtp.gmail.com",
+  "smtp_port": 587,
+  "email": "ameydhavle@gmail.com",
+  "password": "YOUR_APP_PASSWORD_HERE",
+  "github_org": "ameydhavle",
+  "repo_name": "dcisionai-mcp-server",
+  "slack_webhook": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+  "slack_invite_url": "https://join.slack.com/t/dcisionai/shared_invite/your-invite-link",
+  "analytics_endpoint": "https://your-analytics.com/api/usage"
+}

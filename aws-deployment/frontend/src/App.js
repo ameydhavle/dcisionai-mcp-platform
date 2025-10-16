@@ -11,7 +11,7 @@ import DataConnectorsPage from './components/DataConnectorsPage';
 import OptimizationResults from './components/OptimizationResults';
 import DecisionLandscape3D from './components/DecisionLandscape3D';
 import SensitivityAnalysis from './components/SensitivityAnalysis';
-import { AGENTCORE_CONFIG, callGatewayTool, listGatewayTools } from './agentcore-config';
+import { MCP_CONFIG, callMCPTool, listMCPTools, testMCPConnection } from './mcp-client';
 import './App.css';
 
 function App() {
@@ -57,21 +57,20 @@ function App() {
 
   const checkServerStatus = async () => {
     try {
-      // Test AgentCore Gateway connection
-      console.log('Testing AgentCore Gateway connection...');
+      // Test MCP server connection
+      console.log('Testing MCP server connection...');
       
-      // Try to list available tools to test Gateway connectivity
-      const tools = await listGatewayTools();
+      const connectionResult = await testMCPConnection();
       
-      if (tools && tools.tools && tools.tools.length > 0) {
+      if (connectionResult.connected) {
         setIsConnected(true);
-        console.log(`Connected to AgentCore Gateway with ${tools.tools.length} tools available`);
+        console.log(`Connected to MCP server: ${connectionResult.message}`);
       } else {
         setIsConnected(false);
-        console.log('AgentCore Gateway connected but no tools available');
+        console.log(`MCP server connection failed: ${connectionResult.message}`);
       }
     } catch (error) {
-      console.log('AgentCore Gateway connection error:', error);
+      console.log('MCP server connection error:', error);
       setIsConnected(false);
     }
   };
@@ -248,22 +247,23 @@ function App() {
       
       setMessages([workflowMessage]);
       
-      // Execute the workflow via AgentCore Gateway
+      // Execute the workflow via MCP server
       console.log(`Executing workflow: ${workflow.industry}/${workflow.id}`);
-      const result = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___execute_workflow', {
+      const result = await callMCPTool('execute_workflow', {
         industry: workflow.industry,
         workflow_id: workflow.id
       });
       
-      if (result.status === 'success') {
+      if (result.success === true) {
         // Add success message
-        const optimizationResults = result.optimization_pipeline;
-        const finalResult = optimizationResults.optimization_solution?.result;
+        const optimizationResults = result.results;
+        const businessImpact = optimizationResults.business_impact;
+        const pipeline = result.optimization_pipeline;
         
         const successMessage = {
           id: Date.now() + 1,
           type: 'assistant',
-          content: `**${workflow.title}** workflow executed successfully!\n\n**Optimization Results:**\n• Status: ${finalResult?.status || 'completed'}\n• Objective Value: ${finalResult?.objective_value || 'N/A'}\n• Solution: ${JSON.stringify(finalResult?.solution || {}, null, 2)}\n• Solve Time: ${finalResult?.solve_time || 'N/A'} seconds\n\n**Pipeline Summary:**\n• Intent Classification: ${optimizationResults.intent_classification?.result?.intent || 'N/A'}\n• Data Analysis: ${optimizationResults.data_analysis?.result?.readiness_score ? Math.round(optimizationResults.data_analysis.result.readiness_score * 100) + '%' : 'N/A'} readiness\n• Model Type: ${optimizationResults.model_building?.result?.model_type || 'N/A'}\n• Variables: ${optimizationResults.model_building?.result?.variables?.length || 0}`,
+          content: `**${workflow.title}** workflow executed successfully!\n\n**Optimization Results:**\n• Objective Value: $${optimizationResults.objective_value?.toLocaleString() || 'N/A'}\n• Constraints Satisfied: ${optimizationResults.constraints_satisfied ? 'Yes' : 'No'}\n• Execution Time: ${result.execution_time || 'N/A'}\n\n**Business Impact:**\n• Total Profit: $${businessImpact?.total_profit?.toLocaleString() || 'N/A'}\n• Profit Increase: ${businessImpact?.profit_increase || 'N/A'}\n• Cost Savings: $${businessImpact?.cost_savings?.toLocaleString() || 'N/A'}\n• Capacity Utilization: ${businessImpact?.capacity_utilization || 'N/A'}\n\n**Pipeline Summary:**\n• Intent: ${pipeline?.intent_classification?.result?.intent || 'N/A'}\n• Data Readiness: ${pipeline?.data_analysis?.result?.readiness_score ? Math.round(pipeline.data_analysis.result.readiness_score * 100) + '%' : 'N/A'}\n• Model Type: ${pipeline?.model_building?.result?.model_type || 'N/A'}\n• Variables: ${pipeline?.model_building?.result?.variables || 'N/A'}\n• Solution Status: ${pipeline?.optimization_solution?.result?.status || 'N/A'}\n\n**Recommendations:**\n${optimizationResults.recommendations?.map(rec => `• ${rec}`).join('\n') || 'No recommendations available'}`,
           timestamp: new Date().toISOString()
         };
         
@@ -271,7 +271,7 @@ function App() {
         
         // Show optimization results if available
         if (optimizationResults) {
-          setCurrentOptimizationResult(optimizationResults);
+          setCurrentOptimizationResult({...optimizationResults, pipeline: pipeline});
           setShowOptimizationResults(true);
         }
       } else {
