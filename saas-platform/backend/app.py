@@ -14,6 +14,7 @@ import json
 import logging
 import sys
 import os
+import asyncio
 from datetime import datetime
 
 # Add the MCP server to the path
@@ -24,7 +25,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000'], 
+     allow_headers=['Content-Type', 'Authorization'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
 # MCP Server Configuration
 MCP_SERVER_URL = "http://localhost:8000"
@@ -77,7 +80,14 @@ def mcp_classify_intent():
         from dcisionai_mcp_server.tools import DcisionAITools
         
         tools = DcisionAITools()
-        result = tools.classify_intent(problem_description=problem_description)
+        
+        # Run the async function in a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(tools.classify_intent(problem_description=problem_description))
+        finally:
+            loop.close()
         
         return jsonify({
             "status": "success",
@@ -107,10 +117,17 @@ def mcp_analyze_data():
         from dcisionai_mcp_server.tools import DcisionAITools
         
         tools = DcisionAITools()
-        result = tools.analyze_data(
-            problem_description=problem_description,
-            intent_data=intent_data
-        )
+        
+        # Run the async function in a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(tools.analyze_data(
+                problem_description=problem_description,
+                intent_data=intent_data
+            ))
+        finally:
+            loop.close()
         
         return jsonify({
             "status": "success",
@@ -141,11 +158,18 @@ def mcp_build_model():
         from dcisionai_mcp_server.tools import DcisionAITools
         
         tools = DcisionAITools()
-        result = tools.build_model(
-            problem_description=problem_description,
-            intent_data=intent_data,
-            data_analysis=data_analysis
-        )
+        
+        # Run the async function in a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(tools.build_model(
+                problem_description=problem_description,
+                intent_data=intent_data,
+                data_analysis=data_analysis
+            ))
+        finally:
+            loop.close()
         
         return jsonify({
             "status": "success",
@@ -177,12 +201,19 @@ def mcp_solve_optimization():
         from dcisionai_mcp_server.tools import DcisionAITools
         
         tools = DcisionAITools()
-        result = tools.solve_optimization(
-            problem_description=problem_description,
-            intent_data=intent_data,
-            data_analysis=data_analysis,
-            model_building=model_building
-        )
+        
+        # Run the async function in a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(tools.solve_optimization(
+                problem_description=problem_description,
+                intent_data=intent_data,
+                data_analysis=data_analysis,
+                model_building=model_building
+            ))
+        finally:
+            loop.close()
         
         return jsonify({
             "status": "success",
@@ -213,29 +244,35 @@ def mcp_execute_workflow():
         # Execute the complete optimization pipeline
         problem_description = f"Optimize {industry} {workflow_id} workflow"
         
-        # Step 1: Intent Classification
-        intent_result = tools.classify_intent(problem_description=problem_description)
-        
-        # Step 2: Data Analysis
-        data_result = tools.analyze_data(
-            problem_description=problem_description,
-            intent_data=intent_result
-        )
-        
-        # Step 3: Model Building (Claude 3 Haiku)
-        model_result = tools.build_model(
-            problem_description=problem_description,
-            intent_data=intent_result,
-            data_analysis=data_result
-        )
-        
-        # Step 4: Optimization Solution (PDLP Solver)
-        solution_result = tools.solve_optimization(
-            problem_description=problem_description,
-            intent_data=intent_result,
-            data_analysis=data_result,
-            model_building=model_result
-        )
+        # Run all async functions in a single event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            # Step 1: Intent Classification
+            intent_result = loop.run_until_complete(tools.classify_intent(problem_description=problem_description))
+            
+            # Step 2: Data Analysis
+            data_result = loop.run_until_complete(tools.analyze_data(
+                problem_description=problem_description,
+                intent_data=intent_result
+            ))
+            
+            # Step 3: Model Building (Claude 3 Haiku)
+            model_result = loop.run_until_complete(tools.build_model(
+                problem_description=problem_description,
+                intent_data=intent_result,
+                data_analysis=data_result
+            ))
+            
+            # Step 4: Optimization Solution (PDLP Solver)
+            solution_result = loop.run_until_complete(tools.solve_optimization(
+                problem_description=problem_description,
+                intent_data=intent_result,
+                data_analysis=data_result,
+                model_building=model_result
+            ))
+        finally:
+            loop.close()
         
         # Format the results for the frontend
         result = {
