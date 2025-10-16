@@ -1,0 +1,166 @@
+{
+  "name": "dcisionai-optimization",
+  "displayName": "DcisionAI Optimization",
+  "description": "Real mathematical optimization powered by OR-Tools with AI-driven problem formulation",
+  "version": "1.0.0",
+  "publisher": "dcisionai",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning",
+    "Data Science"
+  ],
+  "keywords": [
+    "optimization",
+    "mathematical",
+    "or-tools",
+    "linear-programming",
+    "portfolio-optimization",
+    "business-intelligence",
+    "ai",
+    "mcp"
+  ],
+  "activationEvents": [
+    "onCommand:dcisionai.optimize",
+    "onCommand:dcisionai.portfolioOptimize",
+    "onCommand:dcisionai.productionPlan",
+    "onCommand:dcisionai.supplyChainOptimize"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "dcisionai.optimize",
+        "title": "Optimize Problem",
+        "category": "DcisionAI",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "dcisionai.portfolioOptimize",
+        "title": "Portfolio Optimization",
+        "category": "DcisionAI",
+        "icon": "$(chart-line)"
+      },
+      {
+        "command": "dcisionai.productionPlan",
+        "title": "Production Planning",
+        "category": "DcisionAI",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "dcisionai.supplyChainOptimize",
+        "title": "Supply Chain Optimization",
+        "category": "DcisionAI",
+        "icon": "$(package)"
+      },
+      {
+        "command": "dcisionai.showResults",
+        "title": "Show Optimization Results",
+        "category": "DcisionAI",
+        "icon": "$(eye)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "dcisionai.optimize",
+          "when": "true"
+        },
+        {
+          "command": "dcisionai.portfolioOptimize",
+          "when": "true"
+        },
+        {
+          "command": "dcisionai.productionPlan",
+          "when": "true"
+        },
+        {
+          "command": "dcisionai.supplyChainOptimize",
+          "when": "true"
+        },
+        {
+          "command": "dcisionai.showResults",
+          "when": "true"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "dcisionai.optimize",
+          "when": "editorHasSelection",
+          "group": "dcisionai"
+        }
+      ]
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "dcisionaiProvider",
+        "label": "DcisionAI Optimization MCP Server"
+      }
+    ],
+    "configuration": {
+      "title": "DcisionAI Optimization",
+      "properties": {
+        "dcisionai.awsAccessKeyId": {
+          "type": "string",
+          "default": "",
+          "description": "AWS Access Key ID for Bedrock integration"
+        },
+        "dcisionai.awsSecretAccessKey": {
+          "type": "string",
+          "default": "",
+          "description": "AWS Secret Access Key for Bedrock integration"
+        },
+        "dcisionai.awsRegion": {
+          "type": "string",
+          "default": "us-east-1",
+          "description": "AWS Region for Bedrock"
+        },
+        "dcisionai.mcpServerPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the DcisionAI MCP server executable"
+        },
+        "dcisionai.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start MCP server when extension activates"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/test-electron": "^2.3.0",
+    "eslint": "^8.28.0",
+    "glob": "^11.0.3",
+    "mocha": "^11.7.4",
+    "typescript": "^4.9.4",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcisionai/dcisionai-vscode-plugin"
+  },
+  "homepage": "https://github.com/dcisionai/dcisionai-vscode-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/dcisionai/dcisionai-vscode-plugin/issues"
+  },
+  "license": "MIT"
+}

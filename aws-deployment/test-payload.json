@@ -1,1 +1,0 @@
-{"path": "/3d-landscape", "body": "{\"optimization_result\": {\"model_building\": {\"variables\": [{\"name\": \"x1\", \"description\": \"Product A\"}], \"constraints\": [{\"expression\": \"x1 <= 100\"}]}, \"optimization_solution\": {\"objective_value\": 750, \"solution\": {\"x1\": 50}}}, \"resolution\": 25}"}

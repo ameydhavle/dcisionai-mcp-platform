@@ -8,6 +8,11 @@ DcisionAI is a revolutionary decision support platform that bridges the gap betw
 
 ## 📖 **Documentation Overview**
 
+### **🎯 Strategic Plans**
+- **[Dual-Front Strategy](./DUAL_FRONT_STRATEGY.md)** - Complete strategic overview of our dual-market approach
+- **[SaaS Platform Plan](./SAAS_PLATFORM_PLAN.md)** - Business market strategy and go-to-market plan
+- **[MCP Server Plan](./MCP_SERVER_PLAN.md)** - Developer market strategy and distribution plan
+
 ### **🚀 [Quick Start Guide](./QUICK_START.md)**
 Get up and running with DcisionAI in 5 minutes. Perfect for new users who want to start optimizing immediately.
 
@@ -26,7 +31,7 @@ Comprehensive overview of DcisionAI's capabilities, use cases, and business valu
 - Technical specifications
 - Business value and ROI
 
-### **🏗️ [Architecture Documentation](./ARCHITECTURE.md)**
+### **🏗️ [Architecture Documentation](./Architecture.md)**
 Detailed technical architecture of the DcisionAI platform.
 
 **What you'll learn:**
@@ -49,15 +54,19 @@ Complete API documentation with examples and endpoints.
 ### **For Business Users**
 - Start with [Quick Start Guide](./QUICK_START.md)
 - Explore [Platform Overview](./PLATFORM_OVERVIEW.md)
+- Review [SaaS Platform Plan](./SAAS_PLATFORM_PLAN.md) for business strategy
 - Try the web interface: https://platform.dcisionai.com
 
 ### **For Developers**
 - Check [API Reference](./API_REFERENCE.md)
-- Review [Architecture Documentation](./ARCHITECTURE.md)
+- Review [Architecture Documentation](./Architecture.md)
+- Read [MCP Server Plan](./MCP_SERVER_PLAN.md) for developer strategy
 - Use the API: `https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod`
 
 ### **For Enterprises**
 - Read [Platform Overview](./PLATFORM_OVERVIEW.md) for business value
+- Review [Dual-Front Strategy](./DUAL_FRONT_STRATEGY.md) for complete strategic overview
+- Explore both [SaaS Platform Plan](./SAAS_PLATFORM_PLAN.md) and [MCP Server Plan](./MCP_SERVER_PLAN.md)
 - Review [Architecture Documentation](./ARCHITECTURE.md) for technical details
 - Contact enterprise@dcisionai.com for custom solutions
 
