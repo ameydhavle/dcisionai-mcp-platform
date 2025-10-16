@@ -11,7 +11,7 @@ import DataConnectorsPage from './components/DataConnectorsPage';
 import OptimizationResults from './components/OptimizationResults';
 import DecisionLandscape3D from './components/DecisionLandscape3D';
 import SensitivityAnalysis from './components/SensitivityAnalysis';
-import { MCP_CONFIG, callMCPTool, listMCPTools, testMCPConnection } from './mcp-client';
+// Removed old MCP client imports - now using direct backend API calls
 import './App.css';
 
 function App() {
@@ -57,20 +57,21 @@ function App() {
 
   const checkServerStatus = async () => {
     try {
-      // Test MCP server connection
-      console.log('Testing MCP server connection...');
+      // Test our enhanced backend API connection
+      console.log('Testing enhanced backend API connection...');
       
-      const connectionResult = await testMCPConnection();
+      const response = await fetch('http://localhost:5001/api/mcp/health-check');
+      const result = await response.json();
       
-      if (connectionResult.connected) {
+      if (result.status === 'healthy') {
         setIsConnected(true);
-        console.log(`Connected to MCP server: ${connectionResult.message}`);
+        console.log(`Connected to enhanced backend: ${result.message}`);
       } else {
         setIsConnected(false);
-        console.log(`MCP server connection failed: ${connectionResult.message}`);
+        console.log(`Backend connection failed: ${result.message}`);
       }
     } catch (error) {
-      console.log('MCP server connection error:', error);
+      console.log('Backend connection error:', error);
       setIsConnected(false);
     }
   };
@@ -90,15 +91,22 @@ function App() {
     setIsLoading(true);
 
     try {
-      // Use AgentCore Gateway for optimization
-      console.log('Starting optimization via AgentCore Gateway...');
+      // Use our enhanced backend API for optimization
+      console.log('Starting optimization via enhanced backend API...');
       
       // Step 1: Intent Classification
       console.log('Step 1: Intent Classification');
-      const intentResult = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___classify_intent', {
-        problem_description: input
+      const intentResponse = await fetch('http://localhost:5001/api/mcp/classify-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          problem_description: input
+        })
       });
-
+      
+      const intentResult = await intentResponse.json();
       console.log('Intent result:', intentResult);
       
       if (intentResult.status !== 'success') {
@@ -107,11 +115,18 @@ function App() {
 
       // Step 2: Data Analysis
       console.log('Step 2: Data Analysis');
-      const dataResult = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___analyze_data', {
-        problem_description: input,
-        intent_data: intentResult.result
+      const dataResponse = await fetch('http://localhost:5001/api/mcp/analyze-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          problem_description: input,
+          intent_data: intentResult.result
+        })
       });
-
+      
+      const dataResult = await dataResponse.json();
       console.log('Data result:', dataResult);
       
       if (dataResult.status !== 'success') {
@@ -120,12 +135,19 @@ function App() {
 
       // Step 3: Model Building
       console.log('Step 3: Model Building');
-      const modelResult = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___build_model', {
-        problem_description: input,
-        intent_data: intentResult.result,
-        data_analysis: dataResult.result
+      const modelResponse = await fetch('http://localhost:5001/api/mcp/build-model', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          problem_description: input,
+          intent_data: intentResult.result,
+          data_analysis: dataResult.result
+        })
       });
-
+      
+      const modelResult = await modelResponse.json();
       console.log('Model result:', modelResult);
       
       if (modelResult.status !== 'success') {
@@ -134,12 +156,20 @@ function App() {
 
       // Step 4: Optimization Solution
       console.log('Step 4: Optimization Solution');
-      const solveResult = await callGatewayTool('DcisionAI-Optimization-Tools-Fixed___solve_optimization', {
-        problem_description: input,
-        intent_data: intentResult.result,
-        model_building: modelResult.result
+      const solveResponse = await fetch('http://localhost:5001/api/mcp/solve-optimization', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          problem_description: input,
+          intent_data: intentResult.result,
+          data_analysis: dataResult.result,
+          model_building: modelResult.result
+        })
       });
-
+      
+      const solveResult = await solveResponse.json();
       console.log('Solve result:', solveResult);
       
       if (solveResult.status !== 'success') {
@@ -151,31 +181,33 @@ function App() {
         status: 'success',
         timestamp: new Date().toISOString(),
         intent_classification: {
-          intent: intentResult.result.intent,
-          confidence: intentResult.result.confidence,
-          entities: intentResult.result.entities,
-          objectives: intentResult.result.objectives,
-          reasoning: intentResult.result.reasoning
+          intent: intentResult.result.result.intent,
+          confidence: intentResult.result.result.confidence,
+          entities: intentResult.result.result.entities,
+          industry: intentResult.result.result.industry,
+          complexity: intentResult.result.result.complexity
         },
         data_analysis: {
-          data_entities: dataResult.result.data_entities,
-          sample_data: dataResult.result.sample_data,
-          readiness_score: dataResult.result.readiness_score,
-          assumptions: dataResult.result.assumptions
+          readiness_score: dataResult.result.result.readiness_score,
+          entities: dataResult.result.result.entities,
+          data_quality: dataResult.result.result.data_quality,
+          variables_identified: dataResult.result.result.variables_identified,
+          constraints_identified: dataResult.result.result.constraints_identified
         },
         model_building: {
-          model_type: modelResult.result.model_type,
-          variables: modelResult.result.variables,
-          constraints: modelResult.result.constraints,
-          objective: modelResult.result.objective,
-          complexity: modelResult.result.model_complexity
+          model_type: modelResult.result.result.model_type,
+          variables: modelResult.result.result.variables,
+          constraints: modelResult.result.result.constraints,
+          objective: modelResult.result.result.objective,
+          complexity: modelResult.result.result.model_complexity
         },
         optimization_solution: {
-          status: solveResult.result.status,
-          objective_value: solveResult.result.objective_value,
-          solution: solveResult.result.solution,
-          solve_time: solveResult.result.solve_time,
-          solver_used: solveResult.result.solver_info
+          status: solveResult.result.result.status,
+          objective_value: solveResult.result.result.objective_value,
+          optimal_values: solveResult.result.result.optimal_values,
+          solve_time: solveResult.result.result.solve_time,
+          constraints_satisfied: solveResult.result.result.constraints_satisfied,
+          recommendations: solveResult.result.result.recommendations
         }
       };
       
@@ -247,12 +279,20 @@ function App() {
       
       setMessages([workflowMessage]);
       
-      // Execute the workflow via MCP server
+      // Execute the workflow via our enhanced backend API
       console.log(`Executing workflow: ${workflow.industry}/${workflow.id}`);
-      const result = await callMCPTool('execute_workflow', {
-        industry: workflow.industry,
-        workflow_id: workflow.id
+      const response = await fetch('http://localhost:5001/api/mcp/execute-workflow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          industry: workflow.industry,
+          workflow_id: workflow.id
+        })
       });
+      
+      const result = await response.json();
       
       if (result.success === true) {
         // Add success message
