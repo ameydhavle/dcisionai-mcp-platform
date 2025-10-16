@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DcisionAI Manufacturing Optimizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        body { background: #0a0a0a; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen bg-gray-900">
+        <!-- Header -->
+        <header class="bg-gray-800 border-b border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                            <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-white">DcisionAI Manufacturing Optimizer</h1>
+                            <p class="text-sm text-gray-400">AI-powered manufacturing optimization</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div id="connection-status" class="flex items-center space-x-2 px-3 py-1 bg-red-600 rounded-full text-sm">
+                            <div class="w-2 h-2 bg-white rounded-full"></div>
+                            <span>Disconnected</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Welcome Section -->
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-white mb-4">Optimize Your Manufacturing Operations</h2>
+                <p class="text-xl text-gray-300 mb-8">Get AI-powered insights and mathematical optimization for your production processes</p>
+                
+                <!-- Example Queries -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+                    <button onclick="runExample('Optimize production line efficiency with 50 workers across 3 manufacturing lines')" 
+                            class="p-4 bg-gray-800 rounded-lg border border-gray-700 card-hover text-left">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <i data-lucide="users" class="w-5 h-5 text-blue-400"></i>
+                            <span class="font-semibold text-white">Production Optimization</span>
+                        </div>
+                        <p class="text-sm text-gray-400">Optimize production line efficiency with 50 workers across 3 manufacturing lines</p>
+                    </button>
+                    
+                    <button onclick="runExample('Minimize supply chain costs for 5 warehouses across different regions')" 
+                            class="p-4 bg-gray-800 rounded-lg border border-gray-700 card-hover text-left">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <i data-lucide="truck" class="w-5 h-5 text-green-400"></i>
+                            <span class="font-semibold text-white">Supply Chain</span>
+                        </div>
+                        <p class="text-sm text-gray-400">Minimize supply chain costs for 5 warehouses across different regions</p>
+                    </button>
+                    
+                    <button onclick="runExample('Maximize quality control efficiency while reducing inspection costs')" 
+                            class="p-4 bg-gray-800 rounded-lg border border-gray-700 card-hover text-left">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-purple-400"></i>
+                            <span class="font-semibold text-white">Quality Control</span>
+                        </div>
+                        <p class="text-sm text-gray-400">Maximize quality control efficiency while reducing inspection costs</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Interface -->
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+                    <div id="messages" class="space-y-4 mb-6 max-h-96 overflow-y-auto">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="bot" class="w-4 h-4 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-white">Welcome! I'm your AI manufacturing optimization assistant. Ask me to optimize any aspect of your manufacturing operations.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <input type="text" id="query-input" placeholder="Ask me to optimize your manufacturing operations..." 
+                               class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button onclick="sendQuery()" id="send-button"
+                                class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors flex items-center justify-center">
+                            <i data-lucide="send" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Check server status
+        async function checkServerStatus() {
+            try {
+                const response = await axios.get('/api/health');
+                const statusEl = document.getElementById('connection-status');
+                if (response.data.status === 'healthy') {
+                    statusEl.className = 'flex items-center space-x-2 px-3 py-1 bg-green-600 rounded-full text-sm';
+                    statusEl.innerHTML = '<div class="w-2 h-2 bg-white rounded-full"></div><span>Connected</span>';
+                } else {
+                    statusEl.className = 'flex items-center space-x-2 px-3 py-1 bg-red-600 rounded-full text-sm';
+                    statusEl.innerHTML = '<div class="w-2 h-2 bg-white rounded-full"></div><span>Disconnected</span>';
+                }
+            } catch (error) {
+                const statusEl = document.getElementById('connection-status');
+                statusEl.className = 'flex items-center space-x-2 px-3 py-1 bg-red-600 rounded-full text-sm';
+                statusEl.innerHTML = '<div class="w-2 h-2 bg-white rounded-full"></div><span>Disconnected</span>';
+            }
+        }
+
+        // Send query
+        async function sendQuery() {
+            const input = document.getElementById('query-input');
+            const query = input.value.trim();
+            if (!query) return;
+
+            const messagesEl = document.getElementById('messages');
+            const sendButton = document.getElementById('send-button');
+
+            // Add user message
+            messagesEl.innerHTML += `
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                        <i data-lucide="user" class="w-4 h-4 text-white"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-white">${query}</p>
+                    </div>
+                </div>
+            `;
+
+            input.value = '';
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
+
+            try {
+                const response = await axios.post('/api/mcp', {
+                    jsonrpc: "2.0",
+                    id: Date.now(),
+                    method: "tools/call",
+                    params: {
+                        name: "manufacturing_optimize",
+                        arguments: {
+                            problem_description: query,
+                            constraints: {},
+                            optimization_goals: []
+                        }
+                    }
+                });
+
+                const result = JSON.parse(response.data.result.content[0].text);
+                
+                // Add AI response
+                messagesEl.innerHTML += `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <i data-lucide="bot" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-gray-700 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center gap-2 text-green-400">
+                                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                                        <span class="font-semibold">Optimization Successful</span>
+                                    </div>
+                                    <button onclick="showModel('${btoa(JSON.stringify(result.model_building))}')" 
+                                            class="flex items-center gap-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
+                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                        View Model
+                                    </button>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="bg-gray-800 p-4 rounded-lg">
+                                        <h3 class="text-lg font-semibold mb-2 flex items-center gap-2">
+                                            <i data-lucide="bot" class="w-5 h-5"></i>
+                                            Intent Classification
+                                        </h3>
+                                        <p><strong>Intent:</strong> <code>${result.intent_classification.intent}</code></p>
+                                        <p><strong>Confidence:</strong> ${(result.intent_classification.confidence * 100).toFixed(1)}%</p>
+                                        <p><strong>Reasoning:</strong> ${result.intent_classification.reasoning}</p>
+                                    </div>
+                                    
+                                    <div class="bg-gray-800 p-4 rounded-lg">
+                                        <h3 class="text-lg font-semibold mb-2 flex items-center gap-2">
+                                            <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                                            Data Analysis
+                                        </h3>
+                                        <p><strong>Entities:</strong> ${result.data_analysis.data_entities.length}</p>
+                                        <p><strong>Readiness:</strong> ${(result.data_analysis.readiness_score * 100).toFixed(1)}%</p>
+                                        <p><strong>Assumptions:</strong> ${result.data_analysis.assumptions.length}</p>
+                                    </div>
+                                    
+                                    <div class="bg-gray-800 p-4 rounded-lg">
+                                        <h3 class="text-lg font-semibold mb-2 flex items-center gap-2">
+                                            <i data-lucide="settings" class="w-5 h-5"></i>
+                                            Model Building
+                                        </h3>
+                                        <p><strong>Type:</strong> ${result.model_building.model_type}</p>
+                                        <p><strong>Variables:</strong> ${result.model_building.variables.length}</p>
+                                        <p><strong>Complexity:</strong> ${result.model_building.complexity}</p>
+                                    </div>
+                                    
+                                    <div class="bg-gray-800 p-4 rounded-lg">
+                                        <h3 class="text-lg font-semibold mb-2 flex items-center gap-2">
+                                            <i data-lucide="zap" class="w-5 h-5"></i>
+                                            Optimization Solution
+                                        </h3>
+                                        <p><strong>Status:</strong> <span class="text-green-400">${result.optimization_solution.status}</span></p>
+                                        <p><strong>Objective Value:</strong> ${result.optimization_solution.objective_value || 'N/A'}</p>
+                                        <p><strong>Solve Time:</strong> ${result.optimization_solution.solve_time.toFixed(3)}s</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 bg-gray-800 p-4 rounded-lg">
+                                    <h3 class="text-lg font-semibold mb-2">Solution Variables</h3>
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                        ${Object.entries(result.optimization_solution.solution).map(([key, value]) => 
+                                            `<div class="bg-gray-700 p-2 rounded">
+                                                <span class="text-sm text-gray-400">${key}:</span>
+                                                <span class="text-white font-mono">${value !== null ? value : 'N/A'}</span>
+                                            </div>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                messagesEl.innerHTML += `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                            <i data-lucide="alert-circle" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-red-900/20 border border-red-500 rounded-lg p-4">
+                                <p class="text-red-400">Error: ${error.response?.data?.error || error.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            sendButton.disabled = false;
+            sendButton.innerHTML = '<i data-lucide="send" class="w-5 h-5"></i>';
+            lucide.createIcons();
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        // Run example
+        function runExample(query) {
+            document.getElementById('query-input').value = query;
+            sendQuery();
+        }
+
+        // Show model modal
+        function showModel(modelData) {
+            const model = JSON.parse(atob(modelData));
+            alert(`Model Details:\n\nType: ${model.model_type}\nVariables: ${model.variables.length}\nConstraints: ${model.constraints.length}\nObjective: ${model.objective}`);
+        }
+
+        // Handle Enter key
+        document.getElementById('query-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendQuery();
+            }
+        });
+
+        // Check server status on load
+        checkServerStatus();
+        setInterval(checkServerStatus, 30000); // Check every 30 seconds
+    </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Workflow Execution Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        .result { padding: 20px; margin: 20px 0; border-radius: 10px; font-size: 16px; }
+        .success { background: #065f46; }
+        .error { background: #7f1d1d; }
+        .info { background: #374151; }
+        pre { background: #2d3748; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Workflow Execution Test</h1>
+    <div id="result" class="result info">Testing workflow execution...</div>
+    
+    <script>
+        async function testWorkflowExecution() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                console.log('Testing workflow execution...');
+                
+                const response = await fetch('http://localhost:5001/api/mcp/execute-workflow', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        industry: 'manufacturing', 
+                        workflow_id: 'production_planning' 
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('Workflow execution result:', result);
+                
+                if (result.success === true) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Workflow Execution Successful!</h3>
+                        <p><strong>Industry:</strong> ${result.industry}</p>
+                        <p><strong>Workflow ID:</strong> ${result.workflow_id}</p>
+                        <p><strong>Execution Time:</strong> ${result.execution_time}</p>
+                        <p><strong>Objective Value:</strong> $${result.results.objective_value.toLocaleString()}</p>
+                        <p><strong>Profit Increase:</strong> ${result.results.business_impact.profit_increase}</p>
+                        <p><strong>Cost Savings:</strong> $${result.results.business_impact.cost_savings.toLocaleString()}</p>
+                        <p><strong>Capacity Utilization:</strong> ${result.results.business_impact.capacity_utilization}</p>
+                        <h4>Recommendations:</h4>
+                        <ul>
+                            ${result.results.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                        <h4>Full Result:</h4>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ Workflow Execution Failed</h3>
+                        <p><strong>Error:</strong> ${result.error || 'Unknown error'}</p>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error('Workflow execution test error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Test Error</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Run the test
+        testWorkflowExecution();
+    </script>
+</body>
+</html>

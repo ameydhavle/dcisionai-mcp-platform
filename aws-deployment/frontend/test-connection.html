@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MCP Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        .result { padding: 20px; margin: 20px 0; border-radius: 10px; font-size: 18px; }
+        .success { background: #065f46; }
+        .error { background: #7f1d1d; }
+        .info { background: #374151; }
+    </style>
+</head>
+<body>
+    <h1>MCP Server Connection Test</h1>
+    <div id="health" class="result info">Testing health check...</div>
+    <div id="workflows" class="result info">Testing workflow templates...</div>
+    <div id="execution" class="result info">Testing workflow execution...</div>
+    
+    <script>
+        async function testHealth() {
+            const healthDiv = document.getElementById('health');
+            try {
+                const response = await fetch('http://localhost:5001/api/mcp/health-check');
+                const data = await response.json();
+                if (data.status === 'healthy') {
+                    healthDiv.className = 'result success';
+                    healthDiv.textContent = '✅ Health Check: Connected! MCP server is running.';
+                } else {
+                    healthDiv.className = 'result error';
+                    healthDiv.textContent = '❌ Health Check: Failed - ' + data.message;
+                }
+            } catch (error) {
+                healthDiv.className = 'result error';
+                healthDiv.textContent = '❌ Health Check: Error - ' + error.message;
+            }
+        }
+
+        async function testWorkflows() {
+            const workflowsDiv = document.getElementById('workflows');
+            try {
+                const response = await fetch('http://localhost:5001/api/mcp/workflow-templates');
+                const data = await response.json();
+                if (data.industries && data.industries.length > 0) {
+                    workflowsDiv.className = 'result success';
+                    workflowsDiv.textContent = `✅ Workflow Templates: ${data.industries.length} industries available (${data.industries.join(', ')})`;
+                } else {
+                    workflowsDiv.className = 'result error';
+                    workflowsDiv.textContent = '❌ Workflow Templates: No industries found';
+                }
+            } catch (error) {
+                workflowsDiv.className = 'result error';
+                workflowsDiv.textContent = '❌ Workflow Templates: Error - ' + error.message;
+            }
+        }
+
+        async function testExecution() {
+            const executionDiv = document.getElementById('execution');
+            try {
+                const response = await fetch('http://localhost:5001/api/mcp/execute-workflow', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ industry: 'manufacturing', workflow_id: 'production_planning' })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    executionDiv.className = 'result success';
+                    executionDiv.textContent = `✅ Workflow Execution: Success! Objective Value: ${data.results.objective_value}`;
+                } else {
+                    executionDiv.className = 'result error';
+                    executionDiv.textContent = '❌ Workflow Execution: Failed - ' + (data.error || 'Unknown error');
+                }
+            } catch (error) {
+                executionDiv.className = 'result error';
+                executionDiv.textContent = '❌ Workflow Execution: Error - ' + error.message;
+            }
+        }
+
+        // Run all tests
+        testHealth();
+        testWorkflows();
+        testExecution();
+    </script>
+</body>
+</html>
