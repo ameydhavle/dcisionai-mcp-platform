@@ -365,18 +365,24 @@ const OptimizationResults = ({ result, onClose }) => {
                   <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
                     <h4 className="text-lg font-semibold text-white mb-2">Objective Function</h4>
                     <div className="bg-black rounded p-3 font-mono text-green-400 text-lg">
-                      {result.pipeline?.model_building?.result?.objective_function || 'f(x) = optimize'}
+                      {result.pipeline?.model_building?.result?.objective?.expression || 'f(x) = optimize'}
                     </div>
+                    {result.pipeline?.model_building?.result?.objective?.description && (
+                      <div className="text-gray-400 text-sm mt-2">
+                        {result.pipeline.model_building.result.objective.description}
+                      </div>
+                    )}
                   </div>
 
                   <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
                     <h4 className="text-lg font-semibold text-white mb-2">Decision Variables</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {result.pipeline?.model_building?.result?.decision_variables ? 
-                        Object.entries(result.pipeline.model_building.result.decision_variables).map(([name, description], index) => (
+                      {result.pipeline?.model_building?.result?.variables ? 
+                        result.pipeline.model_building.result.variables.map((variable, index) => (
                           <div key={index} className="bg-gray-700 rounded p-3">
-                            <div className="text-blue-400 font-mono text-sm font-bold">{name}</div>
-                            <div className="text-gray-400 text-xs">{description}</div>
+                            <div className="text-blue-400 font-mono text-sm font-bold">{variable.name}</div>
+                            <div className="text-gray-400 text-xs">{variable.description}</div>
+                            <div className="text-gray-500 text-xs mt-1">Type: {variable.type} | Bounds: {variable.bounds}</div>
                           </div>
                         )) : (
                           <div className="text-gray-500 text-sm">No variables defined</div>
@@ -391,7 +397,8 @@ const OptimizationResults = ({ result, onClose }) => {
                       {result.pipeline?.model_building?.result?.constraints ? 
                         result.pipeline.model_building.result.constraints.map((constraint, index) => (
                           <div key={index} className="bg-gray-700 rounded p-3">
-                            <div className="text-yellow-400 font-mono text-sm">{constraint}</div>
+                            <div className="text-yellow-400 font-mono text-sm">{constraint.expression}</div>
+                            <div className="text-gray-400 text-xs mt-1">{constraint.description}</div>
                           </div>
                         )) : (
                           <div className="text-gray-500 text-sm">No constraints defined</div>
