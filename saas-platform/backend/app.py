@@ -228,6 +228,92 @@ def mcp_solve_optimization():
             "details": str(e)
         }), 500
 
+@app.route('/api/mcp/select-solver', methods=['POST'])
+def mcp_select_solver():
+    """Select the best solver for optimization problems."""
+    try:
+        data = request.get_json()
+        optimization_type = data.get('optimization_type', '')
+        problem_size = data.get('problem_size', {})
+        performance_requirement = data.get('performance_requirement', 'balanced')
+        
+        if not optimization_type:
+            return jsonify({"error": "Optimization type is required"}), 400
+        
+        from dcisionai_mcp_server.tools import DcisionAITools
+        
+        tools = DcisionAITools()
+        
+        # Run the async function in a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(tools.select_solver(
+                optimization_type=optimization_type,
+                problem_size=problem_size,
+                performance_requirement=performance_requirement
+            ))
+        finally:
+            loop.close()
+        
+        return jsonify({
+            "status": "success",
+            "result": result,
+            "message": "Solver selected successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"Solver selection error: {e}")
+        return jsonify({
+            "error": "Solver selection failed",
+            "details": str(e)
+        }), 500
+
+@app.route('/api/mcp/explain-optimization', methods=['POST'])
+def mcp_explain_optimization():
+    """Provide business-facing explainability for optimization results."""
+    try:
+        data = request.get_json()
+        problem_description = data.get('problem_description', '')
+        intent_data = data.get('intent_data', {})
+        data_analysis = data.get('data_analysis', {})
+        model_building = data.get('model_building', {})
+        optimization_solution = data.get('optimization_solution', {})
+        
+        if not problem_description:
+            return jsonify({"error": "Problem description is required"}), 400
+        
+        from dcisionai_mcp_server.tools import DcisionAITools
+        
+        tools = DcisionAITools()
+        
+        # Run the async function in a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(tools.explain_optimization(
+                problem_description=problem_description,
+                intent_data=intent_data,
+                data_analysis=data_analysis,
+                model_building=model_building,
+                optimization_solution=optimization_solution
+            ))
+        finally:
+            loop.close()
+        
+        return jsonify({
+            "status": "success",
+            "result": result,
+            "message": "Business explainability generated successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"Explainability error: {e}")
+        return jsonify({
+            "error": "Explainability generation failed",
+            "details": str(e)
+        }), 500
+
 @app.route('/api/mcp/execute-workflow', methods=['POST'])
 def mcp_execute_workflow():
     """Execute complete optimization workflow using our enhanced MCP server."""

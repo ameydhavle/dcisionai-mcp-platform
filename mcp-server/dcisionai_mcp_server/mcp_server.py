@@ -16,12 +16,15 @@ from mcp.server import Server
 from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
+import mcp.types as types
 
 from .tools import (
     classify_intent,
     analyze_data,
     build_model,
     solve_optimization,
+    select_solver,
+    explain_optimization,
     get_workflow_templates,
     execute_workflow,
 )
@@ -35,13 +38,15 @@ class DcisionAIMCPServer:
     """
     DcisionAI MCP Server using standard MCP protocol.
     
-    Provides 6 core tools for AI-powered business optimization:
+    Provides 8 core tools for AI-powered business optimization:
     1. classify_intent - Intent classification for optimization requests
     2. analyze_data - Data analysis and preprocessing
     3. build_model - Mathematical model building with Qwen 30B
     4. solve_optimization - Optimization solving and results
-    5. get_workflow_templates - Industry workflow templates
-    6. execute_workflow - End-to-end workflow execution
+    5. select_solver - Intelligent solver selection based on problem type
+    6. explain_optimization - Business-facing explainability and insights
+    7. get_workflow_templates - Industry workflow templates
+    8. execute_workflow - End-to-end workflow execution
     """
     
     def __init__(self, config: Optional[Config] = None):
@@ -159,6 +164,64 @@ class DcisionAIMCPServer:
                     }
                 ),
                 Tool(
+                    name="select_solver",
+                    description="Select the best available solver for optimization problems",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "optimization_type": {
+                                "type": "string",
+                                "description": "Type of optimization problem (linear_programming, quadratic_programming, mixed_integer_linear_programming, etc.)"
+                            },
+                            "problem_size": {
+                                "type": "object",
+                                "description": "Problem size information (num_variables, num_constraints, etc.)",
+                                "default": {}
+                            },
+                            "performance_requirement": {
+                                "type": "string",
+                                "description": "Performance requirement: speed, accuracy, or balanced",
+                                "default": "balanced"
+                            }
+                        },
+                        "required": ["optimization_type"]
+                    }
+                ),
+                Tool(
+                    name="explain_optimization",
+                    description="Provide business-facing explainability for optimization results",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "problem_description": {
+                                "type": "string",
+                                "description": "Original problem description"
+                            },
+                            "intent_data": {
+                                "type": "object",
+                                "description": "Results from intent classification",
+                                "default": {}
+                            },
+                            "data_analysis": {
+                                "type": "object",
+                                "description": "Results from data analysis",
+                                "default": {}
+                            },
+                            "model_building": {
+                                "type": "object",
+                                "description": "Results from model building",
+                                "default": {}
+                            },
+                            "optimization_solution": {
+                                "type": "object",
+                                "description": "Results from optimization solving",
+                                "default": {}
+                            }
+                        },
+                        "required": ["problem_description"]
+                    }
+                ),
+                Tool(
                     name="execute_workflow",
                     description="Execute a complete optimization workflow",
                     inputSchema={
@@ -210,6 +273,20 @@ class DcisionAIMCPServer:
                         arguments.get("data_analysis", {}),
                         arguments.get("model_building", {})
                     )
+                elif name == "select_solver":
+                    result = await select_solver(
+                        arguments.get("optimization_type", ""),
+                        arguments.get("problem_size", {}),
+                        arguments.get("performance_requirement", "balanced")
+                    )
+                elif name == "explain_optimization":
+                    result = await explain_optimization(
+                        arguments.get("problem_description", ""),
+                        arguments.get("intent_data", {}),
+                        arguments.get("data_analysis", {}),
+                        arguments.get("model_building", {}),
+                        arguments.get("optimization_solution", {})
+                    )
                 elif name == "get_workflow_templates":
                     result = await get_workflow_templates()
                 elif name == "execute_workflow":
@@ -251,7 +328,7 @@ class DcisionAIMCPServer:
                         server_name="dcisionai-optimization",
                         server_version="1.0.0",
                         capabilities=self.server.get_capabilities(
-                            notification_options=types.NotificationOptions(),
+                            notification_options=None,
                             experimental_capabilities={}
                         )
                     ),
@@ -263,7 +340,7 @@ class DcisionAIMCPServer:
             traceback.print_exc()
             raise
 
-async def main():
+def main():
     """Main entry point for the MCP server."""
     try:
         # Load configuration
@@ -271,11 +348,15 @@ async def main():
         
         # Create and run server
         server = DcisionAIMCPServer(config)
-        await server.run()
+        asyncio.run(server.run())
         
+    except KeyboardInterrupt:
+        logger.info("Server stopped by user")
     except Exception as e:
-        logger.error(f"Failed to start MCP server: {e}")
+        logger.error(f"Server error: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

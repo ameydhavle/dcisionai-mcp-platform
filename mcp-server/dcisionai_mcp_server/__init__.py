@@ -33,6 +33,8 @@ try:
         analyze_data,
         build_model,
         solve_optimization,
+        select_solver,
+        explain_optimization,
         get_workflow_templates,
         execute_workflow
     )
@@ -48,6 +50,8 @@ except Exception as e:
     analyze_data = None
     build_model = None
     solve_optimization = None
+    select_solver = None
+    explain_optimization = None
     get_workflow_templates = None
     execute_workflow = None
 
@@ -59,6 +63,8 @@ __all__ = [
     "analyze_data", 
     "build_model",
     "solve_optimization",
+    "select_solver",
+    "explain_optimization",
     "get_workflow_templates",
     "execute_workflow"
 ]

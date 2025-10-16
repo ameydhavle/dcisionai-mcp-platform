@@ -112,6 +112,64 @@ class DcisionAIMCPServer:
                 }
             },
             {
+                "name": "select_solver",
+                "description": "Select the best available solver for optimization problems",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "optimization_type": {
+                            "type": "string",
+                            "description": "Type of optimization problem (linear_programming, quadratic_programming, mixed_integer_linear_programming, etc.)"
+                        },
+                        "problem_size": {
+                            "type": "object",
+                            "description": "Problem size information (num_variables, num_constraints, etc.)",
+                            "default": {}
+                        },
+                        "performance_requirement": {
+                            "type": "string",
+                            "description": "Performance requirement: speed, accuracy, or balanced",
+                            "default": "balanced"
+                        }
+                    },
+                    "required": ["optimization_type"]
+                }
+            },
+            {
+                "name": "explain_optimization",
+                "description": "Provide business-facing explainability for optimization results",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "problem_description": {
+                            "type": "string",
+                            "description": "Original problem description"
+                        },
+                        "intent_data": {
+                            "type": "object",
+                            "description": "Results from intent classification",
+                            "default": {}
+                        },
+                        "data_analysis": {
+                            "type": "object",
+                            "description": "Results from data analysis",
+                            "default": {}
+                        },
+                        "model_building": {
+                            "type": "object",
+                            "description": "Results from model building",
+                            "default": {}
+                        },
+                        "optimization_solution": {
+                            "type": "object",
+                            "description": "Results from optimization solving",
+                            "default": {}
+                        }
+                    },
+                    "required": ["problem_description"]
+                }
+            },
+            {
                 "name": "execute_workflow",
                 "description": "Execute a complete optimization workflow",
                 "inputSchema": {
@@ -143,11 +201,13 @@ class DcisionAIMCPServer:
             "result": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {
-                    "tools": {}
+                    "tools": {
+                        "listChanged": True
+                    }
                 },
                 "serverInfo": {
                     "name": "dcisionai-optimization",
-                    "version": "1.0.0"
+                    "version": "1.2.0"
                 }
             }
         }
@@ -178,6 +238,8 @@ class DcisionAIMCPServer:
                     analyze_data,
                     build_model,
                     solve_optimization,
+                    select_solver,
+                    explain_optimization,
                     get_workflow_templates,
                     execute_workflow
                 )
@@ -223,6 +285,20 @@ class DcisionAIMCPServer:
                     arguments.get("intent_data", {}),
                     arguments.get("data_analysis", {}),
                     arguments.get("model_building", {})
+                )
+            elif tool_name == "select_solver":
+                result = await select_solver(
+                    arguments.get("optimization_type", ""),
+                    arguments.get("problem_size", {}),
+                    arguments.get("performance_requirement", "balanced")
+                )
+            elif tool_name == "explain_optimization":
+                result = await explain_optimization(
+                    arguments.get("problem_description", ""),
+                    arguments.get("intent_data", {}),
+                    arguments.get("data_analysis", {}),
+                    arguments.get("model_building", {}),
+                    arguments.get("optimization_solution", {})
                 )
             elif tool_name == "get_workflow_templates":
                 result = await get_workflow_templates()

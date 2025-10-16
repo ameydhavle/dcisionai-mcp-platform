@@ -4,15 +4,15 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dcisionai-mcp-server"
-version = "1.0.12"
-description = "DcisionAI MCP Server for Mathematical Optimization"
+version = "1.2.0"
+description = "DcisionAI MCP Server for Mathematical Optimization with Enhanced Solver Selection and Business Explainability"
 authors = [
     {name = "DcisionAI", email = "contact@dcisionai.com"},
 ]
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
-keywords = ["optimization", "mcp", "mathematical", "or-tools", "ai", "cursor", "vscode"]
+keywords = ["optimization", "mcp", "mathematical", "or-tools", "ai", "cursor", "vscode", "solver-selection", "explainability", "business-intelligence"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

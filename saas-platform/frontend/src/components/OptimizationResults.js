@@ -362,17 +362,39 @@ const OptimizationResults = ({ result, onClose }) => {
                 </h3>
                 
                 <div className="space-y-4">
-                  <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
-                    <h4 className="text-lg font-semibold text-white mb-2">Objective Function</h4>
-                    <div className="bg-black rounded p-3 font-mono text-green-400 text-lg">
-                      {result.pipeline?.model_building?.result?.objective?.expression || 'f(x) = optimize'}
-                    </div>
-                    {result.pipeline?.model_building?.result?.objective?.description && (
-                      <div className="text-gray-400 text-sm mt-2">
-                        {result.pipeline.model_building.result.objective.description}
-                      </div>
-                    )}
-                  </div>
+      <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+        <h4 className="text-lg font-semibold text-white mb-2">Solver Selection</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-gray-700 rounded p-3">
+            <div className="text-blue-400 font-mono text-sm font-bold">
+              {result.pipeline?.solver_selection?.selected_solver || 'GLOP'}
+            </div>
+            <div className="text-gray-400 text-xs">
+              Optimization Type: {result.pipeline?.solver_selection?.optimization_type || 'linear_programming'}
+            </div>
+            <div className="text-gray-500 text-xs mt-1">
+              Performance Rating: {result.pipeline?.solver_selection?.performance_rating || 'N/A'}/10
+            </div>
+          </div>
+          <div className="bg-gray-700 rounded p-3">
+            <div className="text-yellow-400 text-xs">
+              {result.pipeline?.solver_selection?.reasoning || 'Solver selected based on problem characteristics'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+        <h4 className="text-lg font-semibold text-white mb-2">Objective Function</h4>
+        <div className="bg-black rounded p-3 font-mono text-green-400 text-lg">
+          {result.pipeline?.model_building?.result?.objective?.expression || 'f(x) = optimize'}
+        </div>
+        {result.pipeline?.model_building?.result?.objective?.description && (
+          <div className="text-gray-400 text-sm mt-2">
+            {result.pipeline.model_building.result.objective.description}
+          </div>
+        )}
+      </div>
 
                   <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
                     <h4 className="text-lg font-semibold text-white mb-2">Decision Variables</h4>
@@ -559,6 +581,110 @@ const OptimizationResults = ({ result, onClose }) => {
               </div>
             </div>
           )}
+
+          {/* Business Explainability Section */}
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-600">
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Lightbulb className="w-5 h-5 mr-2" />
+              Business Insights & Explainability
+            </h3>
+            
+            {result.pipeline?.explainability ? (
+              <div className="space-y-4">
+                {/* Executive Summary */}
+                <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+                  <h4 className="text-lg font-semibold text-white mb-2">Executive Summary</h4>
+                  <div className="text-gray-300 text-sm mb-2">
+                    <strong>Problem:</strong> {result.pipeline.explainability.executive_summary?.problem_statement || 'N/A'}
+                  </div>
+                  <div className="text-gray-300 text-sm mb-2">
+                    <strong>Approach:</strong> {result.pipeline.explainability.executive_summary?.solution_approach || 'N/A'}
+                  </div>
+                  <div className="text-gray-300 text-sm mb-2">
+                    <strong>Business Impact:</strong> {result.pipeline.explainability.executive_summary?.business_impact || 'N/A'}
+                  </div>
+                  {result.pipeline.explainability.executive_summary?.key_findings && (
+                    <div className="text-gray-300 text-sm">
+                      <strong>Key Findings:</strong>
+                      <ul className="list-disc list-inside mt-1 ml-4">
+                        {result.pipeline.explainability.executive_summary.key_findings.map((finding, index) => (
+                          <li key={index}>{finding}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Analysis Breakdown */}
+                <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+                  <h4 className="text-lg font-semibold text-white mb-2">Analysis Breakdown</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h5 className="text-blue-400 font-semibold mb-2">Data Assessment</h5>
+                      <div className="text-gray-300 text-xs">
+                        <div><strong>Quality:</strong> {result.pipeline.explainability.analysis_breakdown?.data_assessment?.data_quality || 'N/A'}</div>
+                        {result.pipeline.explainability.analysis_breakdown?.data_assessment?.assumptions_made && (
+                          <div className="mt-1">
+                            <strong>Assumptions:</strong>
+                            <ul className="list-disc list-inside ml-2">
+                              {result.pipeline.explainability.analysis_breakdown.data_assessment.assumptions_made.map((assumption, index) => (
+                                <li key={index}>{assumption}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h5 className="text-green-400 font-semibold mb-2">Solution Quality</h5>
+                      <div className="text-gray-300 text-xs">
+                        <div><strong>Confidence:</strong> {result.pipeline.explainability.analysis_breakdown?.solution_quality?.confidence_level || 'N/A'}</div>
+                        {result.pipeline.explainability.analysis_breakdown?.solution_quality?.limitations && (
+                          <div className="mt-1">
+                            <strong>Limitations:</strong>
+                            <ul className="list-disc list-inside ml-2">
+                              {result.pipeline.explainability.analysis_breakdown.solution_quality.limitations.map((limitation, index) => (
+                                <li key={index}>{limitation}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Implementation Guidance */}
+                <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+                  <h4 className="text-lg font-semibold text-white mb-2">Implementation Guidance</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h5 className="text-yellow-400 font-semibold mb-2">Next Steps</h5>
+                      {result.pipeline.explainability.implementation_guidance?.next_steps && (
+                        <ul className="list-disc list-inside text-gray-300 text-xs">
+                          {result.pipeline.explainability.implementation_guidance.next_steps.map((step, index) => (
+                            <li key={index}>{step}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div>
+                      <h5 className="text-purple-400 font-semibold mb-2">Risk Considerations</h5>
+                      {result.pipeline.explainability.implementation_guidance?.risk_considerations && (
+                        <ul className="list-disc list-inside text-gray-300 text-xs">
+                          {result.pipeline.explainability.implementation_guidance.risk_considerations.map((risk, index) => (
+                            <li key={index}>{risk}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-gray-500 text-sm">Explainability analysis not available</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

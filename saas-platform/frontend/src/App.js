@@ -154,8 +154,28 @@ function App() {
         throw new Error('Model building failed');
       }
 
-      // Step 4: Optimization Solution
-      console.log('Step 4: Optimization Solution');
+      // Step 4: Solver Selection
+      console.log('Step 4: Solver Selection');
+      const solverResponse = await fetch('http://localhost:5001/api/mcp/select-solver', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          optimization_type: intentResult.result.result.optimization_type,
+          problem_size: {
+            num_variables: modelResult.result.result.variables?.length || 0,
+            num_constraints: modelResult.result.result.constraints?.length || 0
+          },
+          performance_requirement: 'balanced'
+        })
+      });
+      
+      const solverResult = await solverResponse.json();
+      console.log('Solver result:', solverResult);
+
+      // Step 5: Optimization Solution
+      console.log('Step 5: Optimization Solution');
       const solveResponse = await fetch('http://localhost:5001/api/mcp/solve-optimization', {
         method: 'POST',
         headers: {
@@ -176,6 +196,25 @@ function App() {
         throw new Error('Optimization solving failed');
       }
 
+      // Step 6: Generate Explainability
+      console.log('Step 6: Generate Explainability');
+      const explainResponse = await fetch('http://localhost:5001/api/mcp/explain-optimization', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          problem_description: input,
+          intent_data: intentResult.result,
+          data_analysis: dataResult.result,
+          model_building: modelResult.result,
+          optimization_solution: solveResult.result
+        })
+      });
+      
+      const explainResult = await explainResponse.json();
+      console.log('Explain result:', explainResult);
+
       // Combine all results into a comprehensive optimization result
       const optimizationResult = {
         status: 'success',
@@ -185,7 +224,9 @@ function App() {
           confidence: intentResult.result.result.confidence,
           entities: intentResult.result.result.entities,
           industry: intentResult.result.result.industry,
-          complexity: intentResult.result.result.complexity
+          complexity: intentResult.result.result.complexity,
+          optimization_type: intentResult.result.result.optimization_type,
+          solver_requirements: intentResult.result.result.solver_requirements
         },
         data_analysis: {
           readiness_score: dataResult.result.result.readiness_score,
@@ -201,6 +242,14 @@ function App() {
           objective: modelResult.result.result.objective,
           complexity: modelResult.result.result.model_complexity
         },
+        solver_selection: {
+          selected_solver: solverResult.result.result.selected_solver,
+          optimization_type: solverResult.result.result.optimization_type,
+          capabilities: solverResult.result.result.capabilities,
+          performance_rating: solverResult.result.result.performance_rating,
+          fallback_solvers: solverResult.result.result.fallback_solvers,
+          reasoning: solverResult.result.result.reasoning
+        },
         optimization_solution: {
           status: solveResult.result.result.status,
           objective_value: solveResult.result.result.objective_value,
@@ -208,6 +257,12 @@ function App() {
           solve_time: solveResult.result.result.solve_time,
           constraints_satisfied: solveResult.result.result.constraints_satisfied,
           recommendations: solveResult.result.result.recommendations
+        },
+        explainability: {
+          executive_summary: explainResult.result.result.executive_summary,
+          analysis_breakdown: explainResult.result.result.analysis_breakdown,
+          implementation_guidance: explainResult.result.result.implementation_guidance,
+          technical_details: explainResult.result.result.technical_details
         }
       };
       

@@ -18,6 +18,7 @@ import boto3
 from .workflows import WorkflowManager
 from .config import Config
 from .optimization_engine import solve_real_optimization
+from .solver_selector import SolverSelector
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,8 @@ class DcisionAITools:
         self.client = httpx.AsyncClient(timeout=30.0)
         # Initialize Bedrock client for direct model calls
         self.bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+        # Initialize solver selector
+        self.solver_selector = SolverSelector()
     
     def _invoke_bedrock_model(self, model_id: str, prompt: str, max_tokens: int = 4000) -> str:
         """Invoke a Bedrock model with the given prompt."""
@@ -163,12 +166,16 @@ Respond with valid JSON only:"""
                 "time_horizon": "medium_term"
             })
             
+            # Add optimization type and solver requirements to result
+            result["optimization_type"] = optimization_type
+            result["solver_requirements"] = solver_requirements
+            
             return {
                 "status": "success",
                 "step": "intent_classification",
                 "timestamp": datetime.now().isoformat(),
                 "result": result,
-                "message": "Intent classified using Claude 3 Haiku"
+                "message": "Intent classified using Claude 3 Haiku with optimization type detection"
             }
                 
         except Exception as e:
@@ -201,6 +208,10 @@ Respond with valid JSON only:"""
             intent = intent_data.get('intent', 'unknown') if intent_data else 'unknown'
             entities = intent_data.get('entities', []) if intent_data else []
             industry = intent_data.get('industry', 'general') if intent_data else 'general'
+            
+            # NEW: Determine optimization problem type
+            optimization_type = self._determine_optimization_type(problem_description, intent, industry)
+            solver_requirements = self._get_solver_requirements(optimization_type)
             
             prompt = f"""You are an expert data analyst. Analyze the data requirements for this optimization problem.
 
@@ -358,6 +369,7 @@ CRITICAL REQUIREMENTS:
 - Constraints: Linear only
 - Objective: Linear only
 - Model types: "linear_programming", "mixed_integer_linear_programming", "integer_programming"
+- **FOR PORTFOLIO OPTIMIZATION: Always use "linear_programming" model type**
 
 **PORTFOLIO OPTIMIZATION SPECIFIC**:
 - Portfolio return = Σ(wi * ri) where wi = allocation weight, ri = expected return
@@ -366,6 +378,10 @@ CRITICAL REQUIREMENTS:
 - All allocations must be non-negative: wi >= 0
 - Use realistic correlation assumptions
 - NEVER force volatility to exact values (use <= or >= bounds)
+- **CRITICAL: For volatility constraints, use LINEAR approximation:**
+  - Instead of: √(Σ(wi² * σi²) + Σ(wi * wj * σi * σj * ρij)) <= 0.15
+  - Use: Σ(wi * σi) <= 0.15 (linear approximation)
+  - This ensures OR-Tools compatibility and prevents solver crashes
 
 **VALIDATION**:
 - Ensure model is feasible (has at least one solution)
@@ -617,6 +633,294 @@ Respond with valid JSON only:"""
                 "fallback": "Default workflow execution"
             }
     
+    def _determine_optimization_type(self, problem_description: str, intent: str, industry: str) -> str:
+        """Determine the mathematical optimization problem type."""
+        problem_lower = problem_description.lower()
+        
+        # Portfolio optimization with volatility constraints (Quadratic Programming)
+        if ("portfolio" in problem_lower and "volatility" in problem_lower) or \
+           ("asset allocation" in problem_lower and "risk" in problem_lower):
+            return "quadratic_programming"
+        
+        # Production planning with binary decisions (Mixed Integer Linear Programming)
+        if ("production" in problem_lower and ("binary" in problem_lower or "yes/no" in problem_lower or "schedule" in problem_lower)) or \
+           ("manufacturing" in problem_lower and "setup" in problem_lower):
+            return "mixed_integer_linear_programming"
+        
+        # Network optimization and routing (Mixed Integer Linear Programming)
+        if ("network" in problem_lower or "routing" in problem_lower or "traveling salesman" in problem_lower) or \
+           ("assignment" in problem_lower and "binary" in problem_lower):
+            return "mixed_integer_linear_programming"
+        
+        # Resource allocation with linear constraints (Linear Programming)
+        if ("resource allocation" in problem_lower and "linear" in problem_lower) or \
+           ("transportation" in problem_lower and "cost" in problem_lower):
+            return "linear_programming"
+        
+        # Supply chain optimization (Mixed Integer Linear Programming)
+        if ("supply chain" in problem_lower or "inventory" in problem_lower and "binary" in problem_lower):
+            return "mixed_integer_linear_programming"
+        
+        # Scheduling problems (Mixed Integer Linear Programming)
+        if ("scheduling" in problem_lower or "timetable" in problem_lower):
+            return "mixed_integer_linear_programming"
+        
+        # Default to linear programming for simple problems
+        return "linear_programming"
+    
+    def _get_solver_requirements(self, optimization_type: str) -> dict:
+        """Get solver requirements for the optimization type."""
+        solver_map = {
+            "linear_programming": {
+                "primary": ["PDLP", "GLOP"],
+                "fallback": ["GLOP"],
+                "capabilities": ["linear_constraints", "continuous_variables"]
+            },
+            "quadratic_programming": {
+                "primary": ["OSQP", "ECOS"],
+                "fallback": ["linear_approximation"],
+                "capabilities": ["quadratic_constraints", "continuous_variables"]
+            },
+            "mixed_integer_linear_programming": {
+                "primary": ["SCIP", "CBC"],
+                "fallback": ["linear_programming"],
+                "capabilities": ["linear_constraints", "integer_variables", "binary_variables"]
+            },
+            "mixed_integer_quadratic_programming": {
+                "primary": ["SCIP", "GUROBI"],
+                "fallback": ["mixed_integer_linear_programming"],
+                "capabilities": ["quadratic_constraints", "integer_variables", "binary_variables"]
+            }
+        }
+        
+        return solver_map.get(optimization_type, solver_map["linear_programming"])
+    
+    async def select_solver(
+        self,
+        optimization_type: str,
+        problem_size: Optional[Dict[str, Any]] = None,
+        performance_requirement: str = "balanced"
+    ) -> Dict[str, Any]:
+        """
+        Select the best available solver for the optimization problem.
+        
+        Args:
+            optimization_type: Type of optimization problem (LP, QP, MILP, etc.)
+            problem_size: Dictionary with problem size information
+            performance_requirement: "speed", "accuracy", or "balanced"
+            
+        Returns:
+            Solver selection results with recommendations
+        """
+        try:
+            # Use the solver selector to choose the best solver
+            selection_result = self.solver_selector.select_solver(
+                optimization_type=optimization_type,
+                problem_size=problem_size or {},
+                performance_requirement=performance_requirement
+            )
+            
+            # Get additional solver recommendations
+            recommendations = self.solver_selector.get_solver_recommendations(optimization_type)
+            
+            return {
+                "status": "success",
+                "step": "solver_selection",
+                "timestamp": datetime.now().isoformat(),
+                "result": {
+                    "selected_solver": selection_result["selected_solver"],
+                    "optimization_type": optimization_type,
+                    "capabilities": selection_result["capabilities"],
+                    "performance_rating": selection_result["performance_rating"],
+                    "fallback_solvers": selection_result["fallback_solvers"],
+                    "reasoning": selection_result["reasoning"],
+                    "recommendations": recommendations,
+                    "available_solvers": self.solver_selector.list_available_solvers()
+                },
+                "message": f"Selected {selection_result['selected_solver']} for {optimization_type} optimization"
+            }
+            
+        except Exception as e:
+            logger.error(f"Solver selection error: {e}")
+            return {
+                "status": "error",
+                "step": "solver_selection",
+                "timestamp": datetime.now().isoformat(),
+                "error": str(e)
+            }
+    
+    async def explain_optimization(
+        self,
+        problem_description: str,
+        intent_data: Optional[Dict[str, Any]] = None,
+        data_analysis: Optional[Dict[str, Any]] = None,
+        model_building: Optional[Dict[str, Any]] = None,
+        optimization_solution: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Provide business-facing explainability for the optimization process.
+        
+        Args:
+            problem_description: Original problem description
+            intent_data: Results from intent classification
+            data_analysis: Results from data analysis
+            model_building: Results from model building
+            optimization_solution: Results from optimization solving
+            
+        Returns:
+            Business-friendly explanation with trade-offs and assumptions
+        """
+        try:
+            # Extract key information from each step
+            intent = intent_data.get('intent', 'unknown') if intent_data else 'unknown'
+            industry = intent_data.get('industry', 'general') if intent_data else 'general'
+            optimization_type = intent_data.get('optimization_type', 'linear_programming') if intent_data else 'linear_programming'
+            
+            data_quality = data_analysis.get('data_quality', 'unknown') if data_analysis else 'unknown'
+            readiness_score = data_analysis.get('readiness_score', 0) if data_analysis else 0
+            
+            model_complexity = model_building.get('model_complexity', 'unknown') if model_building else 'unknown'
+            variables = model_building.get('variables', []) if model_building else []
+            constraints = model_building.get('constraints', []) if model_building else []
+            
+            solution_status = optimization_solution.get('status', 'unknown') if optimization_solution else 'unknown'
+            objective_value = optimization_solution.get('objective_value', 0) if optimization_solution else 0
+            solve_time = optimization_solution.get('solve_time', 0) if optimization_solution else 0
+            
+            prompt = f"""You are a business consultant explaining an optimization analysis to executives. Provide a clear, non-technical explanation.
+
+PROBLEM CONTEXT:
+- Business Problem: {problem_description}
+- Industry: {industry}
+- Problem Type: {intent}
+- Optimization Method: {optimization_type}
+
+ANALYSIS RESULTS:
+- Data Quality: {data_quality}
+- Data Readiness: {readiness_score:.1%}
+- Model Complexity: {model_complexity}
+- Number of Variables: {len(variables)}
+- Number of Constraints: {len(constraints)}
+- Solution Status: {solution_status}
+- Objective Value: {objective_value}
+- Solve Time: {solve_time:.3f} seconds
+
+REQUIRED OUTPUT FORMAT:
+Respond with ONLY valid JSON in this exact structure:
+
+{{
+  "executive_summary": {{
+    "problem_statement": "Clear business problem description",
+    "solution_approach": "High-level approach taken",
+    "key_findings": ["Finding 1", "Finding 2", "Finding 3"],
+    "business_impact": "Expected business value and impact"
+  }},
+  "analysis_breakdown": {{
+    "data_assessment": {{
+      "data_quality": "Assessment of data quality",
+      "missing_data": ["List of missing data elements"],
+      "assumptions_made": ["Key assumptions about the data"]
+    }},
+    "model_design": {{
+      "approach_justification": "Why this optimization approach was chosen",
+      "trade_offs": ["Trade-off 1", "Trade-off 2"],
+      "simplifications": ["Any simplifications made"]
+    }},
+    "solution_quality": {{
+      "confidence_level": "High/Medium/Low",
+      "limitations": ["Limitation 1", "Limitation 2"],
+      "recommendations": ["Recommendation 1", "Recommendation 2"]
+    }}
+  }},
+  "implementation_guidance": {{
+    "next_steps": ["Step 1", "Step 2", "Step 3"],
+    "monitoring_metrics": ["Metric 1", "Metric 2"],
+    "risk_considerations": ["Risk 1", "Risk 2"]
+  }},
+  "technical_details": {{
+    "optimization_type": "{optimization_type}",
+    "solver_used": "Solver information",
+    "computational_efficiency": "Performance assessment",
+    "scalability": "How well this scales"
+  }}
+}}
+
+IMPORTANT RULES:
+1. Use business language, avoid technical jargon
+2. Focus on business value and practical implications
+3. Be honest about limitations and assumptions
+4. Provide actionable recommendations
+5. Explain trade-offs clearly
+6. Respond with ONLY the JSON object, no other text
+
+Provide the business explanation now:"""
+
+            # Use Claude 3 Haiku for explainability
+            response_text = self._invoke_bedrock_model(
+                model_id="anthropic.claude-3-haiku-20240307-v1:0",
+                prompt=prompt,
+                max_tokens=4000
+            )
+            
+            # Parse the response
+            try:
+                result = json.loads(response_text)
+            except json.JSONDecodeError:
+                # Fallback explanation if JSON parsing fails
+                result = {
+                    "executive_summary": {
+                        "problem_statement": problem_description[:200] + "...",
+                        "solution_approach": f"Used {optimization_type} optimization",
+                        "key_findings": ["Analysis completed successfully"],
+                        "business_impact": "Optimization solution found"
+                    },
+                    "analysis_breakdown": {
+                        "data_assessment": {
+                            "data_quality": data_quality,
+                            "missing_data": [],
+                            "assumptions_made": ["Standard optimization assumptions applied"]
+                        },
+                        "model_design": {
+                            "approach_justification": f"Selected {optimization_type} based on problem characteristics",
+                            "trade_offs": ["Balanced accuracy vs computational efficiency"],
+                            "simplifications": ["Model simplified for computational tractability"]
+                        },
+                        "solution_quality": {
+                            "confidence_level": "Medium",
+                            "limitations": ["Solution depends on data quality and assumptions"],
+                            "recommendations": ["Validate results with domain experts"]
+                        }
+                    },
+                    "implementation_guidance": {
+                        "next_steps": ["Review solution", "Validate assumptions", "Implement gradually"],
+                        "monitoring_metrics": ["Objective value", "Constraint satisfaction"],
+                        "risk_considerations": ["Model assumptions may not hold in practice"]
+                    },
+                    "technical_details": {
+                        "optimization_type": optimization_type,
+                        "solver_used": "OR-Tools",
+                        "computational_efficiency": f"Solved in {solve_time:.3f} seconds",
+                        "scalability": "Good for problems of this size"
+                    }
+                }
+            
+            return {
+                "status": "success",
+                "step": "explainability",
+                "timestamp": datetime.now().isoformat(),
+                "result": result,
+                "message": "Business explainability generated using Claude 3 Haiku"
+            }
+            
+        except Exception as e:
+            logger.error(f"Explainability error: {e}")
+            return {
+                "status": "error",
+                "step": "explainability",
+                "timestamp": datetime.now().isoformat(),
+                "error": str(e)
+            }
+
 
 # Global tools instance
 _tools_instance = None
@@ -628,43 +932,44 @@ def get_tools() -> DcisionAITools:
         _tools_instance = DcisionAITools()
     return _tools_instance
 
-# Convenience functions for direct tool access
-async def classify_intent(user_input: str, context: Optional[str] = None) -> Dict[str, Any]:
+# Standalone function wrappers for MCP server compatibility
+async def classify_intent(problem_description: str, context: Optional[str] = None) -> Dict[str, Any]:
     """Classify user intent for optimization requests."""
-    return await get_tools().classify_intent(user_input, context)
+    tools = get_tools()
+    return await tools.classify_intent(problem_description, context)
 
-async def analyze_data(
-    problem_description: str,
-    intent_data: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+async def analyze_data(problem_description: str, intent_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Analyze and preprocess data for optimization."""
-    return await get_tools().analyze_data(problem_description, intent_data)
+    tools = get_tools()
+    return await tools.analyze_data(problem_description, intent_data)
 
-async def build_model(
-    problem_description: str,
-    intent_data: Optional[Dict[str, Any]] = None,
-    data_analysis: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
-    """Build mathematical optimization model using Qwen 30B."""
-    return await get_tools().build_model(problem_description, intent_data, data_analysis)
+async def build_model(problem_description: str, intent_data: Optional[Dict[str, Any]] = None, data_analysis: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Build mathematical optimization model using Claude 3 Haiku."""
+    tools = get_tools()
+    return await tools.build_model(problem_description, intent_data, data_analysis)
 
-async def solve_optimization(
-    problem_description: str,
-    intent_data: Optional[Dict[str, Any]] = None,
-    data_analysis: Optional[Dict[str, Any]] = None,
-    model_building: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+async def solve_optimization(problem_description: str, intent_data: Optional[Dict[str, Any]] = None, data_analysis: Optional[Dict[str, Any]] = None, model_building: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Solve the optimization problem and generate results."""
-    return await get_tools().solve_optimization(problem_description, intent_data, data_analysis, model_building)
+    tools = get_tools()
+    return await tools.solve_optimization(problem_description, intent_data, data_analysis, model_building)
+
+async def select_solver(optimization_type: str, problem_size: Optional[Dict[str, Any]] = None, performance_requirement: str = "balanced") -> Dict[str, Any]:
+    """Select the best available solver for optimization problems."""
+    tools = get_tools()
+    return await tools.select_solver(optimization_type, problem_size, performance_requirement)
+
+async def explain_optimization(problem_description: str, intent_data: Optional[Dict[str, Any]] = None, data_analysis: Optional[Dict[str, Any]] = None, model_building: Optional[Dict[str, Any]] = None, optimization_solution: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Provide business-facing explainability for optimization results."""
+    tools = get_tools()
+    return await tools.explain_optimization(problem_description, intent_data, data_analysis, model_building, optimization_solution)
 
 async def get_workflow_templates() -> Dict[str, Any]:
     """Get available industry workflow templates."""
-    return await get_tools().get_workflow_templates()
+    tools = get_tools()
+    return await tools.get_workflow_templates()
 
-async def execute_workflow(
-    industry: str,
-    workflow_id: str,
-    parameters: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+async def execute_workflow(industry: str, workflow_id: str, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Execute a complete optimization workflow."""
-    return await get_tools().execute_workflow(industry, workflow_id, parameters)
+    tools = get_tools()
+    return await tools.execute_workflow(industry, workflow_id, user_input)
+
