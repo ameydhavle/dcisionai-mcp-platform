@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dcisionai-mcp-server"
-version = "1.5.7"
+version = "1.7.3"
 description = "DcisionAI MCP Server for Mathematical Optimization with Enhanced Solver Selection and Business Explainability"
 authors = [
     {name = "DcisionAI", email = "contact@dcisionai.com"},

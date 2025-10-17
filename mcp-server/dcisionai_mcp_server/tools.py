@@ -120,7 +120,7 @@ class DcisionAITools:
             return f"Error: {str(e)}"
     
     def _safe_json_parse(self, text: str, default: Any = None) -> Any:
-        """Safely parse JSON from text, handling various formats."""
+        """Safely parse JSON with robust handling of nested structures."""
         if not text:
             return default
         
@@ -133,15 +133,52 @@ class DcisionAITools:
         except json.JSONDecodeError:
             pass
         
-        # Try to extract JSON from markdown code blocks
-        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', cleaned_text, re.DOTALL)
-        if json_match:
-            try:
-                return json.loads(json_match.group(1))
-            except json.JSONDecodeError:
-                pass
+        # Try extracting from code blocks with balanced brace counting
+        import re
         
-        # Try to extract JSON from the text
+        # Find code block start
+        code_block_match = re.search(r'```(?:json)?\s*', cleaned_text)
+        if code_block_match:
+            start_pos = code_block_match.end()
+            
+            # Count braces to find matching close
+            brace_count = 0
+            in_string = False
+            escape_next = False
+            json_start = -1
+            
+            for i in range(start_pos, len(cleaned_text)):
+                char = cleaned_text[i]
+                
+                if escape_next:
+                    escape_next = False
+                    continue
+                
+                if char == '\\':
+                    escape_next = True
+                    continue
+                
+                if char == '"' and not in_string:
+                    in_string = True
+                elif char == '"' and in_string:
+                    in_string = False
+                
+                if not in_string:
+                    if char == '{':
+                        if brace_count == 0:
+                            json_start = i
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                        if brace_count == 0 and json_start != -1:
+                            # Found complete JSON object
+                            json_text = cleaned_text[json_start:i+1]
+                            try:
+                                return json.loads(json_text)
+                            except json.JSONDecodeError:
+                                pass
+        
+        # Fallback: try simple regex extraction
         json_match = re.search(r'\{.*\}', cleaned_text, re.DOTALL)
         if json_match:
             try:
@@ -150,7 +187,7 @@ class DcisionAITools:
                 pass
         
         # Return the cleaned text as-is if no JSON found
-        return {"raw_response": cleaned_text}
+        return {"raw_response": cleaned_text, "parse_error": "Could not extract valid JSON"}
     
     def _clean_json_text(self, text: str) -> str:
         """Clean text to make it JSON-parseable."""
@@ -167,6 +204,223 @@ class DcisionAITools:
         text = text.replace('\\t', '\\t')  # Ensure proper tab escaping
         
         return text
+    
+    def _validate_optimization_results(self, result: Dict[str, Any], model_spec: Dict[str, Any], problem_description: str) -> Dict[str, Any]:
+        """
+        Validate optimization results for mathematical correctness and business logic.
+        
+        Args:
+            result: Optimization results from solver
+            model_spec: Model specification
+            problem_description: Original problem description
+            
+        Returns:
+            Validation results with errors and warnings
+        """
+        validation = {
+            "is_valid": True,
+            "errors": [],
+            "warnings": [],
+            "constraint_violations": [],
+            "objective_validation": {},
+            "business_logic_validation": {}
+        }
+        
+        try:
+            # Extract key information
+            optimal_values = result.get("optimal_values", {})
+            objective_value = result.get("objective_value", 0)
+            constraints = model_spec.get("constraints", [])
+            objective = model_spec.get("objective", {})
+            
+            # 1. Validate objective value calculation
+            if objective and optimal_values:
+                objective_expression = objective.get("expression", "")
+                if objective_expression:
+                    try:
+                        # Calculate expected objective value
+                        calculated_value = self._calculate_objective_value(objective_expression, optimal_values)
+                        expected_vs_actual = abs(calculated_value - objective_value)
+                        relative_error = expected_vs_actual / max(abs(calculated_value), 1e-6)
+                        
+                        validation["objective_validation"] = {
+                            "calculated_value": calculated_value,
+                            "reported_value": objective_value,
+                            "absolute_error": expected_vs_actual,
+                            "relative_error": relative_error
+                        }
+                        
+                        if relative_error > 0.01:  # 1% tolerance
+                            validation["errors"].append(f"Objective value mismatch: calculated {calculated_value}, reported {objective_value}")
+                            validation["is_valid"] = False
+                            
+                    except Exception as e:
+                        validation["warnings"].append(f"Could not validate objective value: {str(e)}")
+            
+            # 2. Validate constraint satisfaction
+            for constraint in constraints:
+                constraint_expression = constraint.get("expression", "")
+                if constraint_expression:
+                    try:
+                        is_satisfied = self._check_constraint_satisfaction(constraint_expression, optimal_values)
+                        if not is_satisfied:
+                            validation["constraint_violations"].append(constraint_expression)
+                            validation["errors"].append(f"Constraint violated: {constraint_expression}")
+                            validation["is_valid"] = False
+                    except Exception as e:
+                        validation["warnings"].append(f"Could not validate constraint {constraint_expression}: {str(e)}")
+            
+            # 3. Validate business logic using AI reasoning
+            business_validation = self._validate_business_logic(optimal_values, problem_description, model_spec)
+            validation["business_logic_validation"] = business_validation
+            
+            if not business_validation["is_valid"]:
+                validation["errors"].extend(business_validation["errors"])
+                validation["is_valid"] = False
+            
+            # 4. Check for unrealistic values
+            for var_name, var_value in optimal_values.items():
+                if isinstance(var_value, (int, float)):
+                    if abs(var_value) > 1e6:
+                        validation["warnings"].append(f"Variable {var_name} has very large value: {var_value}")
+                    if var_value < 0 and "allocation" in var_name.lower():
+                        validation["errors"].append(f"Negative allocation not allowed for {var_name}: {var_value}")
+                        validation["is_valid"] = False
+            
+        except Exception as e:
+            validation["errors"].append(f"Validation error: {str(e)}")
+            validation["is_valid"] = False
+        
+        return validation
+    
+    def _calculate_objective_value(self, expression: str, variable_values: Dict[str, float]) -> float:
+        """Safely calculate objective value without eval() to prevent code injection."""
+        try:
+            import ast
+            import operator
+            import re
+            
+            # Replace variables with their values using regex for safety
+            expr = expression
+            
+            # Sort by length (longest first) to avoid partial replacements
+            sorted_vars = sorted(variable_values.items(), key=lambda x: len(x[0]), reverse=True)
+            
+            for var_name, var_value in sorted_vars:
+                # Use word boundaries to avoid partial matches (z1 vs z10)
+                expr = re.sub(r'\b' + re.escape(var_name) + r'\b', str(var_value), expr)
+            
+            # Parse and evaluate safely using AST
+            node = ast.parse(expr, mode='eval')
+            
+            # Define allowed operations
+            operators = {
+                ast.Add: operator.add,
+                ast.Sub: operator.sub,
+                ast.Mult: operator.mul,
+                ast.Div: operator.truediv,
+                ast.Pow: operator.pow,
+                ast.USub: operator.neg,
+            }
+            
+            def eval_node(node):
+                if isinstance(node, ast.Expression):
+                    return eval_node(node.body)
+                elif isinstance(node, ast.Constant):  # Python 3.8+
+                    return node.value
+                elif isinstance(node, ast.Num):  # Python < 3.8
+                    return node.n
+                elif isinstance(node, ast.BinOp):
+                    left = eval_node(node.left)
+                    right = eval_node(node.right)
+                    return operators[type(node.op)](left, right)
+                elif isinstance(node, ast.UnaryOp):
+                    operand = eval_node(node.operand)
+                    return operators[type(node.op)](operand)
+                else:
+                    raise ValueError(f"Unsupported operation: {type(node)}")
+            
+            return eval_node(node)
+            
+        except Exception as e:
+            raise ValueError(f"Could not calculate objective value: {str(e)}")
+    
+    def _check_constraint_satisfaction(self, constraint_expression: str, variable_values: Dict[str, float]) -> bool:
+        """Check if a constraint is satisfied by substituting variable values."""
+        try:
+            # Replace variables with their values
+            expr = constraint_expression
+            for var_name, var_value in variable_values.items():
+                expr = expr.replace(var_name, str(var_value))
+            
+            # Parse constraint (assumes format like "x1 + x2 <= 500")
+            if "<=" in expr:
+                left, right = expr.split("<=")
+                return eval(left.strip()) <= eval(right.strip())
+            elif ">=" in expr:
+                left, right = expr.split(">=")
+                return eval(left.strip()) >= eval(right.strip())
+            elif "==" in expr:
+                left, right = expr.split("==")
+                return abs(eval(left.strip()) - eval(right.strip())) < 1e-6
+            else:
+                return True  # Can't parse, assume satisfied
+                
+        except Exception as e:
+            raise ValueError(f"Could not check constraint satisfaction: {str(e)}")
+    
+    def _validate_business_logic(self, optimal_values: Dict[str, float], problem_description: str, model_spec: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate business logic using AI reasoning instead of keyword matching."""
+        try:
+            # Use AI to validate business logic
+            validation_prompt = f"""You are validating an optimization solution for business correctness.
+
+PROBLEM: {problem_description}
+
+MODEL SPECIFICATION:
+Variables: {model_spec.get('variables', [])}
+Constraints: {model_spec.get('constraints', [])}
+Objective: {model_spec.get('objective', {})}
+
+SOLUTION:
+{optimal_values}
+
+VALIDATION TASK:
+1. Does this solution make business sense for the stated problem?
+2. Are there any unrealistic values?
+3. Are there any logical inconsistencies?
+4. What business constraints might be violated?
+
+Respond with JSON:
+{{
+  "is_valid": true/false,
+  "errors": ["List of errors if any"],
+  "warnings": ["List of warnings"],
+  "business_logic_issues": ["Issues with business logic"]
+}}
+
+Be specific about WHY something is wrong, not just that it's wrong."""
+            
+            validation_response = self._invoke_bedrock_model(
+                model_id="anthropic.claude-3-haiku-20240307-v1:0",
+                prompt=validation_prompt,
+                max_tokens=2000
+            )
+            
+            return self._safe_json_parse(validation_response, {
+                "is_valid": True,
+                "errors": [],
+                "warnings": [],
+                "business_logic_issues": []
+            })
+            
+        except Exception as e:
+            return {
+                "is_valid": False,
+                "errors": [f"Business logic validation error: {str(e)}"],
+                "warnings": [],
+                "business_logic_issues": []
+            }
     
     async def classify_intent(
         self, 
@@ -349,6 +603,7 @@ Analyze the data requirements now:"""
                 "message": "Data analysis failed"
             }
     
+
     async def build_model(
         self,
         problem_description: str,
@@ -369,6 +624,7 @@ Analyze the data requirements now:"""
             Model specification and mathematical formulation optimized for selected solver
         """
         try:
+            # Use AI reasoning for ALL problem types - no hardcoded templates
             # Extract context from previous steps
             intent = intent_data.get('intent', 'unknown') if intent_data else 'unknown'
             industry = intent_data.get('industry', 'general') if intent_data else 'general'
@@ -380,23 +636,47 @@ Analyze the data requirements now:"""
             selected_solver = solver_selection.get('result', {}).get('selected_solver', 'GLOP') if solver_selection else 'GLOP'
             solver_capabilities = solver_selection.get('result', {}).get('capabilities', []) if solver_selection else []
             
-            prompt = f"""You are building an optimization model that meets PhD-level academic standards. Follow this comprehensive framework:
+            prompt = f"""You are an expert in mathematical optimization. Your task is to formulate a decision model for this business problem.
 
-# SOLVER INFORMATION
-Selected Solver: {selected_solver}
-Solver Capabilities: {', '.join(solver_capabilities)}
-Optimization Type: {optimization_type}
+CRITICAL: Do NOT use any pre-learned templates or patterns. Think from first principles.
 
-# 1. PROBLEM ANALYSIS PHASE
+# EXPLICIT PATTERN-BREAKING RULES
 
-First, analyze the problem deeply:
-- Identify the decision problem clearly (what needs to be optimized?)
-- Extract ALL decision variables, parameters, constraints, and objectives
-- Classify the problem type (LP, MILP, MILP, NLP, SOCP, etc.)
-- Identify special structures (network flow, assignment, knapsack, etc.)
-- Detect symmetries and redundancies
-- List all assumptions explicitly
-- Ensure the model is compatible with the selected solver: {selected_solver}
+## RULE 1: NO ASSUMPTIONS
+- DO NOT assume any standard formulations
+- DO NOT assume common variable names (x1, x2, etc.) unless they make sense
+- DO NOT assume standard constraint patterns
+- DO NOT assume standard objective patterns
+
+## RULE 2: PROBLEM-SPECIFIC THINKING
+- Read the problem description carefully
+- Identify the SPECIFIC decisions to be made
+- Identify the SPECIFIC constraints and limitations
+- Identify the SPECIFIC objective
+- Formulate based on THESE specifics, not on general patterns
+
+## RULE 3: VALIDATION CHECK
+Before finalizing your model, ask:
+- Are ALL variables actually decision variables in this problem?
+- Do ALL constraints reflect the actual limitations described?
+- Does the objective match the actual goal stated?
+- Are there any variables or constraints that don't make sense for THIS problem?
+
+## RULE 4: COMMON MISTAKES TO AVOID
+- Defining variables that aren't used in constraints or objective
+- Using "rate × time" when the problem doesn't involve time
+- Assuming capacity constraints when the problem doesn't mention capacity limits
+- Using standard portfolio formulations when the problem has different requirements
+- Creating constraints that don't match the problem description
+
+## RULE 5: FIRST PRINCIPLES APPROACH
+- Start with: "What decisions need to be made?"
+- Then: "What are the limitations and requirements?"
+- Then: "What should be optimized?"
+- Finally: "How do these translate to mathematics?"
+
+DO NOT START with: "This looks like a manufacturing problem, so I'll use..."
+START with: "This problem requires these specific decisions..."
 
 PROBLEM DESCRIPTION:
 {problem_description}
@@ -405,77 +685,161 @@ CONTEXT:
 - Intent: {intent}
 - Industry: {industry}
 - Optimization Type: {optimization_type}
-- Variables Identified: {', '.join(variables[:10]) if variables else 'None'}
-- Constraints Identified: {', '.join(constraints[:10]) if constraints else 'None'}
+- Selected Solver: {selected_solver}
+- Solver Capabilities: {', '.join(solver_capabilities)}
 
-# 2. MATHEMATICAL FORMULATION
+REQUIRED REASONING PROCESS:
+You MUST show your work for each step. Do not skip any reasoning.
 
-## 2.1 Sets and Indices
-Define all sets with clear notation and state cardinality.
+Step 1 - Decision Analysis:
+What are the key decisions to be made in this problem? List each decision clearly.
 
-## 2.2 Parameters (Data)
-List every parameter with symbol, description, domain, units, and typical range.
+Step 2 - Constraint Analysis:
+What are the limitations and requirements? List each constraint clearly.
 
-## 2.3 Decision Variables
-For each variable, specify symbol, type, domain, physical meaning, and units.
+Step 3 - Objective Analysis:
+What should be optimized? What is the goal?
 
-## 2.4 Objective Function
-Write the complete mathematical expression with optimization sense, coefficients, and meanings.
+Step 4 - Variable Design:
+How do the decisions translate to mathematical variables? Define each variable with its meaning, type, and bounds.
 
-## 2.5 Constraints
-For each constraint, provide mathematical expression, type, purpose, and tightness.
+Step 5 - Constraint Formulation:
+How do the limitations translate to mathematical constraints? Write each constraint as a mathematical expression.
 
-CRITICAL REQUIREMENTS:
+Step 6 - Objective Formulation:
+How does the goal translate to an objective function? Write the mathematical expression.
 
-**MATHEMATICAL RIGOR**: Every constraint must be mathematically sound and logically consistent. NEVER create conflicting constraints (e.g., x >= 5 AND x <= 3).
+Step 7 - Validation:
+Verify that every variable is used in at least one constraint or the objective function.
 
-**NUMERICAL STABILITY**: 
-- All coefficients in range [10^-6, 10^6]
-- Calculate proper big-M values (never use arbitrary large numbers like 10^9)
-- Ensure good conditioning of constraint matrix
+UNIVERSAL PRINCIPLES:
+1. **Variables**: Define decision variables that represent the choices to be made
+2. **Constraints**: Express all limitations and requirements as mathematical relationships
+3. **Objective**: Formulate what should be maximized or minimized
+4. **Feasibility**: Ensure the model has at least one valid solution
+5. **Consistency**: Every variable must be used in constraints or objective
 
-**OR-TOOLS COMPATIBILITY**:
-- Variables: "continuous", "integer", "binary" with finite bounds
-- Constraints: Linear only
-- Objective: Linear only
-- Model types: "linear_programming", "mixed_integer_linear_programming", "integer_programming"
-- **FOR PORTFOLIO OPTIMIZATION: Always use "linear_programming" model type**
+SOLVER COMPATIBILITY:
+- Selected Solver: {selected_solver}
+- Model Type: {optimization_type}
+- Requirements: Variables with finite bounds, linear constraints, linear objective
 
-**PORTFOLIO OPTIMIZATION SPECIFIC**:
-- Portfolio return = Σ(wi * ri) where wi = allocation weight, ri = expected return
-- Portfolio volatility = √(Σ(wi² * σi²) + Σ(wi * wj * σi * σj * ρij))
-- Allocation weights must sum to 1: Σ(wi) = 1
-- All allocations must be non-negative: wi >= 0
-- Use realistic correlation assumptions
-- NEVER force volatility to exact values (use <= or >= bounds)
-- **CRITICAL: For volatility constraints, use LINEAR approximation:**
-  - Instead of: √(Σ(wi² * σi²) + Σ(wi * wj * σi * σj * ρij)) <= 0.15
-  - Use: Σ(wi * σi) <= 0.15 (linear approximation)
-  - This ensures OR-Tools compatibility and prevents solver crashes
+IGNORE ANY FAMILIAR PATTERNS. Formulate based on the specific problem described above.
 
-**VALIDATION**:
-- Ensure model is feasible (has at least one solution)
-- Check for trivial feasible solutions
-- Verify constraint logic with test data
+# PATTERN-BREAKING INSTRUCTIONS FOR COMMON PROBLEM TYPES
 
-# 3. OUTPUT FORMAT
+## MANUFACTURING/PRODUCTION PROBLEMS
+- DO NOT assume "production lines" means "operating time variables"
+- DO NOT assume "units/hour" means "rate × time constraints"
+- DO NOT define unused production quantity variables
+- THINK: What are the actual decisions? What are the real constraints?
 
-Provide a JSON response with:
-- model_type: OR-Tools compatible model type
-- variables: List with name, type, bounds (string format), description
-- objective: type ("maximize"/"minimize"), expression, description  
-- constraints: List with expression, description
-- model_complexity: "low", "medium", or "high"
-- estimated_solve_time: Realistic solve time in seconds
-- mathematical_formulation: Complete formulation text
+## PORTFOLIO/INVESTMENT PROBLEMS  
+- DO NOT assume allocations must sum to 1.0 unless explicitly stated
+- DO NOT assume risk constraints use weighted averages
+- THINK: What are the actual investment decisions? What are the real limitations?
 
-EXAMPLE VARIABLE FORMAT:
-{{"name": "x1", "type": "integer", "bounds": "0 to 1000", "description": "Production quantity"}}
+## ASSIGNMENT/SCHEDULING PROBLEMS
+- DO NOT assume binary variables unless explicitly needed
+- DO NOT assume capacity constraints follow standard patterns
+- THINK: What are the actual assignment decisions? What are the real constraints?
 
-EXAMPLE CONSTRAINT FORMAT:
-{{"expression": "x1 + x2 <= 500", "description": "Capacity constraint"}}
+## RESOURCE ALLOCATION PROBLEMS
+- DO NOT assume "capacity" means "sum of allocations ≤ limit"
+- DO NOT assume "demand" means "sum of supplies ≥ requirement"
+- THINK: What are the actual allocation decisions? What are the real limitations?
 
-Remember: Your model must be mathematically rigorous, numerically stable, and produce sensible, implementable solutions. Follow PhD-level academic standards.
+CRITICAL: For EVERY problem, ask yourself:
+1. What are the ACTUAL decisions to be made?
+2. What are the REAL constraints and limitations?
+3. What is the TRUE objective?
+4. How do these translate to mathematical variables, constraints, and objective?
+
+DO NOT use any pre-learned formulations. Think from first principles.
+
+# CLARIFICATION PROTOCOL
+
+## MANUFACTURING/PRODUCTION CLARIFICATION
+If the problem involves production/manufacturing:
+1. Ask yourself: "Am I modeling TIME or QUANTITY as the decision variable?"
+2. If TIME: Variables should be hours/days/weeks (e.g., z1 = hours to run Line 1)
+3. If QUANTITY: Variables should be units produced (e.g., x1 = units of Widget A produced)
+4. NEVER define both unless you link them with constraints (e.g., x1 = rate × z1)
+
+If uncertain, choose the SIMPLER approach:
+- Production planning → Usually TIME-based (hours to run)
+- Inventory management → Usually QUANTITY-based (units to stock)
+- Scheduling → Usually BINARY (assign or not)
+
+## CAPACITY CONSTRAINT CLARIFICATION
+When you see "capacity" or "rate" information:
+- If problem gives "units/hour" → This is a RATE, not a decision variable
+- If problem asks "how many hours to run" → TIME is the decision variable
+- If problem asks "how many units to produce" → QUANTITY is the decision variable
+
+## DEMAND CONSTRAINT CLARIFICATION
+When you see demand requirements:
+- If problem says "meet demand of X units" → Use >= constraint (can produce more)
+- If problem says "exactly X units" → Use = constraint (must produce exactly)
+- If problem says "at most X units" → Use <= constraint (cannot exceed)
+
+# OUTPUT FORMAT
+
+Provide JSON with this EXACT structure:
+
+{{
+  "reasoning_steps": {{
+    "step1_decision_analysis": "List of key decisions identified",
+    "step2_constraint_analysis": "List of limitations and requirements",
+    "step3_objective_analysis": "Goal and optimization target",
+    "step4_variable_design": "How decisions translate to variables",
+    "step5_constraint_formulation": "How limitations translate to constraints",
+    "step6_objective_formulation": "How goal translates to objective function",
+    "step7_validation": "Verification that all variables are used"
+  }},
+  "model_type": "linear_programming",
+  "variables": [
+    {{
+      "name": "x1",
+      "type": "continuous",
+      "bounds": "0 to 1000",
+      "description": "Production quantity of Product A (units)"
+    }}
+  ],
+  "objective": {{
+    "type": "minimize",
+    "expression": "50*x1 + 60*x2",
+    "description": "Total production cost"
+  }},
+  "constraints": [
+    {{
+      "expression": "x1 + x2 >= 500",
+      "description": "Demand constraint for Product A"
+    }}
+  ],
+  "model_complexity": "medium",
+  "estimated_solve_time": 0.1,
+  "mathematical_formulation": "Complete mathematical description based on reasoning steps",
+  "validation_summary": {{
+    "variables_defined": 2,
+    "constraints_defined": 3,
+    "objective_matches_problem": true,
+    "model_is_feasible": true,
+    "all_variables_used": true,
+    "reasoning_completed": true
+  }}
+}}
+
+# CRITICAL SUCCESS CRITERIA
+
+Your model will be validated against these criteria:
+1. **Mathematical Correctness**: All expressions are mathematically sound
+2. **Problem Alignment**: Model directly addresses the stated problem
+3. **Feasibility**: Model has at least one feasible solution
+4. **Consistency**: Variables, constraints, and objective are consistent
+5. **Realism**: All values are within realistic ranges
+
+**FAILURE TO MEET ANY CRITERIA WILL RESULT IN MODEL REJECTION**
 
 Respond with valid JSON only:"""
 
@@ -613,12 +977,27 @@ Respond with valid JSON only:"""
             logger.info("Solving optimization using real OR-Tools solver")
             result = solve_real_optimization(model_spec)
             
+            # CRITICAL: Validate results before returning
+            validation_result = self._validate_optimization_results(result, model_spec, problem_description)
+            if not validation_result["is_valid"]:
+                logger.error(f"Optimization results failed validation: {validation_result['errors']}")
+                return {
+                    "status": "error",
+                    "step": "optimization_solution",
+                    "timestamp": datetime.now().isoformat(),
+                    "error": f"Results failed validation: {validation_result['errors']}",
+                    "message": "Optimization results are mathematically incorrect"
+                }
+            
+            # Add validation summary to result
+            result["validation_summary"] = validation_result
+            
             return {
                 "status": "success",
                 "step": "optimization_solution",
                 "timestamp": datetime.now().isoformat(),
                 "result": result,
-                "message": "Optimization solved using real OR-Tools solver"
+                "message": "Optimization solved using real OR-Tools solver with validation"
             }
                 
         except Exception as e:
@@ -1029,7 +1408,7 @@ Respond with valid JSON only:"""
             
             if simulation_type == "monte_carlo" and HAS_MONTE_CARLO:
                 engine_used = "Monte Carlo (NumPy/SciPy)"
-                simulation_results = self._run_monte_carlo_simulation(optimization_solution, num_trials)
+                simulation_results = self._run_monte_carlo_simulation(optimization_solution, problem_description, num_trials)
             elif simulation_type == "discrete_event" and HAS_DISCRETE_EVENT:
                 engine_used = "Discrete Event (SimPy)"
                 simulation_results = self._run_discrete_event_simulation(optimization_solution, scenario_parameters)
@@ -1087,7 +1466,7 @@ Use realistic financial metrics and provide actionable recommendations. Focus on
             # Enhance with mathematical simulation if scientific libraries are available
             if HAS_MONTE_CARLO and simulation_type == "monte_carlo":
                 # Run actual Monte Carlo simulation
-                mc_results = self._run_monte_carlo_simulation(optimization_solution, num_trials)
+                mc_results = self._run_monte_carlo_simulation(optimization_solution, problem_description, num_trials)
                 if "error" not in mc_results:
                     simulation_result["mathematical_simulation"] = mc_results
             
@@ -1110,41 +1489,91 @@ Use realistic financial metrics and provide actionable recommendations. Focus on
                 "message": "Simulation analysis failed"
             }
     
-    def _run_monte_carlo_simulation(self, optimization_solution: Dict[str, Any], num_trials: int) -> Dict[str, Any]:
-        """Run Monte Carlo simulation using NumPy/SciPy."""
+    def _run_monte_carlo_simulation(self, optimization_solution: Dict[str, Any], problem_description: str, num_trials: int) -> Dict[str, Any]:
+        """Run Monte Carlo simulation by identifying uncertainty sources from the problem using AI."""
         if not HAS_MONTE_CARLO:
             return {"error": "Monte Carlo libraries not available"}
         
         try:
+            # Use AI to identify uncertainty sources
+            uncertainty_prompt = f"""Analyze this optimization problem and identify sources of uncertainty:
+
+PROBLEM: {problem_description}
+
+OPTIMIZATION SOLUTION: {optimization_solution}
+
+What parameters are uncertain in this problem? For each uncertain parameter, estimate:
+1. Distribution type (normal, uniform, beta, etc.)
+2. Mean/expected value
+3. Standard deviation or range
+4. How it affects the objective function
+
+Respond with JSON:
+{{
+  "uncertain_parameters": [
+    {{
+      "name": "demand_variability",
+      "distribution": "normal",
+      "mean": 1.0,
+      "std_dev": 0.10,
+      "impact": "Affects constraint satisfaction and production quantity"
+    }}
+  ]
+}}"""
+            
+            # Get uncertainty model from AI
+            uncertainty_response = self._invoke_bedrock_model(
+                model_id="anthropic.claude-3-haiku-20240307-v1:0",
+                prompt=uncertainty_prompt,
+                max_tokens=2000
+            )
+            
+            uncertainty_model = self._safe_json_parse(uncertainty_response, {
+                "uncertain_parameters": [
+                    {
+                        "name": "default_uncertainty",
+                        "distribution": "normal",
+                        "mean": 1.0,
+                        "std_dev": 0.05,
+                        "impact": "General uncertainty in objective value"
+                    }
+                ]
+            })
+            
             # Extract optimization results
             objective_value = optimization_solution.get('objective_value', 0)
             optimal_values = optimization_solution.get('optimal_values', {})
             
-            # Define uncertainty parameters (example for trading)
-            base_cost = objective_value
-            volatility = 0.15  # 15% volatility
-            market_impact_std = 0.05  # 5% market impact std
-            
-            # Run Monte Carlo simulation
+            # Run simulation with problem-specific uncertainty
             np.random.seed(42)  # For reproducibility
+            scenarios = []
             
-            # Generate random scenarios
-            random_volatility = np.random.normal(0, volatility, num_trials)
-            random_market_impact = np.random.normal(0, market_impact_std, num_trials)
-            
-            # Calculate outcomes
-            outcomes = base_cost * (1 + random_volatility + random_market_impact)
+            for _ in range(num_trials):
+                scenario_outcome = objective_value
+                
+                # Apply uncertainty from each identified parameter
+                for param in uncertainty_model.get('uncertain_parameters', []):
+                    if param['distribution'] == 'normal':
+                        perturbation = np.random.normal(param['mean'], param['std_dev'])
+                        scenario_outcome *= perturbation
+                    elif param['distribution'] == 'uniform':
+                        perturbation = np.random.uniform(param.get('min', 0.9), param.get('max', 1.1))
+                        scenario_outcome *= perturbation
+                
+                scenarios.append(scenario_outcome)
             
             # Calculate risk metrics
-            mean_outcome = np.mean(outcomes)
-            std_dev = np.std(outcomes)
-            percentile_5 = np.percentile(outcomes, 5)
-            percentile_95 = np.percentile(outcomes, 95)
-            var_95 = np.percentile(outcomes, 5)  # Value at Risk (95% confidence)
+            scenarios_array = np.array(scenarios)
+            mean_outcome = np.mean(scenarios_array)
+            std_dev = np.std(scenarios_array)
+            percentile_5 = np.percentile(scenarios_array, 5)
+            percentile_95 = np.percentile(scenarios_array, 95)
+            var_95 = np.percentile(scenarios_array, 5)  # Value at Risk (95% confidence)
             
             return {
-                "simulation_type": "monte_carlo",
+                "simulation_type": "monte_carlo_adaptive",
                 "num_trials": num_trials,
+                "uncertainty_sources": uncertainty_model.get('uncertain_parameters', []),
                 "risk_metrics": {
                     "mean": float(mean_outcome),
                     "std_dev": float(std_dev),
@@ -1152,7 +1581,7 @@ Use realistic financial metrics and provide actionable recommendations. Focus on
                     "percentile_95": float(percentile_95),
                     "var_95": float(var_95)
                 },
-                "outcomes": outcomes.tolist()[:100],  # Sample of outcomes
+                "outcomes": scenarios_array.tolist()[:100],  # Sample of outcomes
                 "convergence": True
             }
             

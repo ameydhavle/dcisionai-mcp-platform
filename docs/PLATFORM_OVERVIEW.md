@@ -15,10 +15,11 @@ DcisionAI is a comprehensive platform that democratizes mathematical optimizatio
 │  🎯 MCP Server (Core Engine)                                   │
 │  ├── Intent Classification (Claude 3 Haiku)                    │
 │  ├── Data Analysis & Preprocessing                             │
+│  ├── Solver Selection (8+ Solvers)                             │
 │  ├── Model Building (AI-Powered)                               │
 │  ├── Real Optimization Solving (OR-Tools)                      │
-│  ├── Solver Selection (8+ Solvers)                             │
-│  ├── Business Explainability                                   │
+│  ├── Simulation Analysis (Monte Carlo + OSS)                   │
+│  ├── Business Explainability (Enhanced)                        │
 │  └── Workflow Automation (21 Industries)                       │
 ├─────────────────────────────────────────────────────────────────┤
 │  🌐 SaaS Platform (platform.dcisionai.com)                     │
@@ -37,16 +38,17 @@ DcisionAI is a comprehensive platform that democratizes mathematical optimizatio
 
 ## 🎯 **MCP Server (Core Engine)**
 
-### **8 Core Tools**
+### **9 Core Tools**
 
 | Tool | Purpose | Technology | Status |
 |------|---------|------------|--------|
 | `classify_intent` | Problem understanding | Claude 3 Haiku | ✅ Production |
 | `analyze_data` | Data assessment | AI + Analytics | ✅ Production |
+| `select_solver` | Optimal solver selection | ML-based selection | ✅ Production |
 | `build_model` | Mathematical formulation | Claude 3 Haiku | ✅ Production |
 | `solve_optimization` | Real optimization | OR-Tools (8+ solvers) | ✅ Production |
-| `select_solver` | Optimal solver selection | ML-based selection | ✅ Production |
-| `explain_optimization` | Business communication | AI-generated reports | ✅ Production |
+| `simulate_scenarios` | Risk analysis & simulation | Monte Carlo + OSS engines | ✅ **NEW** |
+| `explain_optimization` | Business communication | AI-generated reports | ✅ Enhanced |
 | `get_workflow_templates` | Industry workflows | 21 pre-built workflows | ✅ Production |
 | `execute_workflow` | End-to-end automation | Complete pipeline | ✅ Production |
 
@@ -70,6 +72,16 @@ DcisionAI is a comprehensive platform that democratizes mathematical optimizatio
 | **OSQP** | QP | Quadratic problems | ⭐⭐⭐⭐ |
 | **SCS** | Conic | Conic optimization | ⭐⭐⭐⭐ |
 | **CVXPY** | General | Research problems | ⭐⭐⭐ |
+
+### **Simulation Engines**
+
+| Engine | Type | Use Case | Technology |
+|--------|------|----------|------------|
+| **Monte Carlo** | Risk Analysis | Uncertainty modeling, VaR analysis | NumPy/SciPy |
+| **Discrete Event** | Process Simulation | Queuing theory, resource allocation | SimPy |
+| **Agent-Based** | Complex Systems | Market dynamics, competitive analysis | Mesa |
+| **System Dynamics** | Causal Modeling | Policy analysis, feedback loops | PySD |
+| **Stochastic Optimization** | Parameter Sensitivity | Robustness analysis, scenario planning | SALib/PyMC |
 
 ## 🌐 **SaaS Platform**
 

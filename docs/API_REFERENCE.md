@@ -6,7 +6,7 @@ This document provides comprehensive API reference for the DcisionAI platform, i
 
 ## 🎯 **MCP Server Tools**
 
-The DcisionAI MCP server provides 8 core tools for mathematical optimization. Each tool is designed to work independently or as part of a complete optimization workflow.
+The DcisionAI MCP server provides 9 core tools for mathematical optimization. Each tool is designed to work independently or as part of a complete optimization workflow.
 
 ### **Tool 1: classify_intent**
 
@@ -266,7 +266,143 @@ The DcisionAI MCP server provides 8 core tools for mathematical optimization. Ea
 }
 ```
 
-### **Tool 6: explain_optimization**
+### **Tool 6: simulate_scenarios**
+
+**Purpose**: Run simulation analysis on optimization scenarios using Monte Carlo and OSS simulation engines
+
+**Input Schema**:
+```json
+{
+  "type": "object",
+  "properties": {
+    "problem_description": {
+      "type": "string",
+      "description": "Original problem description"
+    },
+    "optimization_solution": {
+      "type": "object",
+      "description": "Results from optimization solving"
+    },
+    "scenario_parameters": {
+      "type": "object",
+      "description": "Parameters for scenario analysis"
+    },
+    "simulation_type": {
+      "type": "string",
+      "description": "Type of simulation (monte_carlo, sensitivity, what_if)",
+      "default": "monte_carlo"
+    },
+    "num_trials": {
+      "type": "integer",
+      "description": "Number of simulation trials",
+      "default": 10000
+    }
+  },
+  "required": ["problem_description"]
+}
+```
+
+**Example Request**:
+```json
+{
+  "problem_description": "Quantitative trading execution optimization",
+  "optimization_solution": {
+    "status": "optimal",
+    "objective_value": 5000,
+    "optimal_values": {"x1": 100000, "x2": 200000}
+  },
+  "simulation_type": "monte_carlo",
+  "num_trials": 10000
+}
+```
+
+**Example Response**:
+```json
+{
+  "status": "success",
+  "step": "simulation_analysis",
+  "timestamp": "2025-10-17T12:43:00.442019",
+  "result": {
+    "simulation_summary": {
+      "analysis_type": "risk_assessment",
+      "simulation_type": "monte_carlo",
+      "num_trials": 10000,
+      "status": "completed",
+      "execution_time": "2.3 seconds"
+    },
+    "scenario_analysis": {
+      "scenarios_tested": [
+        {
+          "scenario_name": "Scenario A: Relax Volume Limit",
+          "parameter_changes": {"volume_limit": "5% to 7%"},
+          "feasibility": "feasible",
+          "expected_outcome": 5250,
+          "risk_metrics": {
+            "mean": 5250,
+            "std_dev": 420,
+            "percentile_5": 4600,
+            "percentile_95": 6100,
+            "var_95": 4600
+          }
+        }
+      ]
+    },
+    "risk_analysis": {
+      "uncertainty_factors": [
+        {
+          "factor": "Market Impact",
+          "contribution_to_variance": 0.45,
+          "sensitivity": "High",
+          "recommendation": "Monitor volume carefully"
+        }
+      ],
+      "stress_testing": {
+        "worst_case_scenario": {
+          "description": "High volatility + market impact",
+          "probability": 0.05,
+          "outcome": 6100,
+          "mitigation": "Implement circuit breakers"
+        }
+      }
+    },
+    "recommendations": {
+      "primary_recommendation": {
+        "scenario": "Scenario B: Extend Deadline",
+        "expected_benefit": 450,
+        "risk_reduction": 0.23,
+        "confidence": 0.92
+      },
+      "implementation_guidance": [
+        "Extend trading deadline to 2:00pm",
+        "Maintain 5% volume limit for market stability"
+      ]
+    },
+    "mathematical_simulation": {
+      "simulation_type": "monte_carlo",
+      "num_trials": 10000,
+      "risk_metrics": {
+        "mean": 1006.44,
+        "std_dev": 153.12,
+        "percentile_5": 749.71,
+        "percentile_95": 1273.33,
+        "var_95": 749.71
+      },
+      "convergence": true
+    }
+  },
+  "message": "Simulation analysis completed using monte_carlo with 10000 trials",
+  "simulation_engine": "hybrid"
+}
+```
+
+**Supported Simulation Types**:
+- **monte_carlo**: Risk analysis using NumPy/SciPy
+- **discrete_event**: Process simulation using SimPy
+- **agent_based**: Complex systems using Mesa
+- **system_dynamics**: Causal modeling using PySD
+- **stochastic_optimization**: Parameter sensitivity using SALib/PyMC
+
+### **Tool 7: explain_optimization**
 
 **Purpose**: Provide business-facing explainability for optimization results
 
@@ -283,18 +419,18 @@ The DcisionAI MCP server provides 8 core tools for mathematical optimization. Ea
       "type": "object",
       "description": "Results from intent classification",
       "default": {}
-    },
-    "data_analysis": {
+      },
+      "data_analysis": {
       "type": "object",
       "description": "Results from data analysis",
       "default": {}
-    },
-    "model_building": {
+      },
+      "model_building": {
       "type": "object",
       "description": "Results from model building",
       "default": {}
-    },
-    "optimization_solution": {
+      },
+      "optimization_solution": {
       "type": "object",
       "description": "Results from optimization solving",
       "default": {}
@@ -350,7 +486,7 @@ The DcisionAI MCP server provides 8 core tools for mathematical optimization. Ea
 }
 ```
 
-### **Tool 7: get_workflow_templates**
+### **Tool 8: get_workflow_templates**
 
 **Purpose**: Get available industry workflow templates
 
@@ -404,7 +540,7 @@ The DcisionAI MCP server provides 8 core tools for mathematical optimization. Ea
 }
 ```
 
-### **Tool 8: execute_workflow**
+### **Tool 9: execute_workflow**
 
 **Purpose**: Execute a complete optimization workflow
 
@@ -441,9 +577,9 @@ The DcisionAI MCP server provides 8 core tools for mathematical optimization. Ea
     "industry": "financial",
     "execution_time": 45.2,
     "steps_completed": [
-      "intent_classification",
-      "data_analysis",
-      "model_building",
+    "intent_classification",
+    "data_analysis", 
+    "model_building",
       "solver_selection",
       "optimization_solving",
       "explainability"
@@ -620,10 +756,10 @@ Authorization: Bearer <your-jwt-token>
   "data_analysis": {
     "readiness_score": 0.92
   },
-  "model_building": {
+    "model_building": {
     "model_type": "linear_programming"
-  },
-  "optimization_solution": {
+    },
+    "optimization_solution": {
     "objective_value": 1.22,
     "optimal_values": {
       "x1": 0.10,

@@ -38,9 +38,10 @@ Add to your `~/.cursor/mcp.json`:
       "autoApprove": [
         "classify_intent",
         "analyze_data",
+        "select_solver",
         "build_model",
         "solve_optimization",
-        "select_solver",
+        "simulate_scenarios",
         "explain_optimization",
         "get_workflow_templates",
         "execute_workflow"
@@ -61,6 +62,19 @@ In Cursor, you can now use the DcisionAI tools directly:
 ```
 
 **Expected Result**: The MCP server will classify your intent and provide optimization recommendations.
+
+### **Step 5: Test Simulation Analysis**
+Try the new simulation tool for risk analysis:
+
+```
+@dcisionai-mcp-server simulate_scenarios "Quantitative trading execution optimization" --simulation_type monte_carlo --num_trials 10000
+```
+
+**Expected Result**: You'll get comprehensive simulation analysis including:
+- **Risk Metrics**: Mean, standard deviation, VaR (95%)
+- **Scenario Analysis**: Multiple what-if scenarios
+- **Stress Testing**: Worst-case scenario analysis
+- **Business Recommendations**: Actionable risk mitigation strategies
 
 ---
 

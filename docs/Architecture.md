@@ -16,12 +16,18 @@ DcisionAI is built on a modern, scalable architecture that combines AI-powered p
 - **Solver Selection** based on problem characteristics
 - **Performance Optimization** for large-scale problems
 
-### **3. Microservices Architecture**
+### **3. Simulation Analysis Engine**
+- **Monte Carlo Simulation** using NumPy/SciPy for risk analysis
+- **OSS Simulation Engines** (SimPy, Mesa, PySD, SALib/PyMC)
+- **Hybrid Approach** combining AI interpretation with mathematical rigor
+- **Scenario Analysis** for what-if planning and stress testing
+
+### **4. Microservices Architecture**
 - **MCP Server** as the core optimization engine
 - **SaaS Platform** for user interface and workflow management
 - **Cloud-Native** deployment on AWS infrastructure
 
-### **4. Developer-Friendly**
+### **5. Developer-Friendly**
 - **MCP Protocol** for IDE integration
 - **REST APIs** for web integration
 - **Python SDK** for custom applications
@@ -35,9 +41,10 @@ DcisionAI is built on a modern, scalable architecture that combines AI-powered p
 │  🎯 MCP Server (Core Engine)                                   │
 │  ├── Intent Classification Engine                              │
 │  ├── Data Analysis & Preprocessing                             │
+│  ├── Solver Selection System                                   │
 │  ├── AI Model Builder                                          │
 │  ├── Optimization Engine                                       │
-│  ├── Solver Selection System                                   │
+│  ├── Simulation Analysis Engine (Monte Carlo + OSS)           │
 │  ├── Business Explainability Engine                            │
 │  └── Workflow Automation Engine                                │
 ├─────────────────────────────────────────────────────────────────┤

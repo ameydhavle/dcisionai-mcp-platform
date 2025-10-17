@@ -43,10 +43,11 @@ cd saas-platform
 
 ## 🔄 **The Synergy**
 
-- **Same Core Engine**: Both use the same optimization algorithms
+- **Same Core Engine**: Both use the same optimization algorithms and simulation engines
 - **Different UX**: Technical integration vs. business interface
 - **Cross-Pollination**: MCP users discover SaaS, SaaS users request MCP
 - **Enterprise Ready**: Customers get both developer tools AND business interface
+- **Advanced Analytics**: Monte Carlo simulation, risk analysis, and scenario planning
 
 ## 📚 **Documentation**
 

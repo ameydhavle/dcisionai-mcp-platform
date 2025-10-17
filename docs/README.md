@@ -19,6 +19,7 @@ Get up and running with DcisionAI in 5 minutes. Perfect for new users who want t
 **What you'll learn:**
 - How to access the platform
 - Your first optimization problem
+- Simulation analysis and risk assessment
 - Interactive features and 3D visualizations
 - API basics and examples
 
