@@ -55,6 +55,30 @@ class DcisionAIMCPServer:
                 }
             },
             {
+                "name": "select_solver",
+                "description": "Select the best available solver for optimization problems",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "optimization_type": {
+                            "type": "string",
+                            "description": "Type of optimization problem (linear_programming, quadratic_programming, mixed_integer_linear_programming, etc.)"
+                        },
+                        "problem_size": {
+                            "type": "object",
+                            "description": "Problem size information (num_variables, num_constraints, etc.)",
+                            "default": {}
+                        },
+                        "performance_requirement": {
+                            "type": "string",
+                            "description": "Performance requirement: speed, accuracy, or balanced",
+                            "default": "balanced"
+                        }
+                    },
+                    "required": ["optimization_type"]
+                }
+            },
+            {
                 "name": "build_model",
                 "description": "Build mathematical optimization model using Qwen 30B",
                 "inputSchema": {
@@ -71,6 +95,10 @@ class DcisionAIMCPServer:
                         "data_analysis": {
                             "type": "object",
                             "description": "Results from data analysis step"
+                        },
+                        "solver_selection": {
+                            "type": "object",
+                            "description": "Results from solver selection step"
                         }
                     },
                     "required": ["problem_description"]
@@ -103,36 +131,44 @@ class DcisionAIMCPServer:
                 }
             },
             {
+                "name": "simulate_scenarios",
+                "description": "Run simulation analysis on optimization scenarios",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "problem_description": {
+                            "type": "string",
+                            "description": "Original problem description"
+                        },
+                        "optimization_solution": {
+                            "type": "object",
+                            "description": "Results from optimization solving"
+                        },
+                        "scenario_parameters": {
+                            "type": "object",
+                            "description": "Parameters for scenario analysis"
+                        },
+                        "simulation_type": {
+                            "type": "string",
+                            "description": "Type of simulation (monte_carlo, sensitivity, what_if)",
+                            "default": "monte_carlo"
+                        },
+                        "num_trials": {
+                            "type": "integer",
+                            "description": "Number of simulation trials",
+                            "default": 10000
+                        }
+                    },
+                    "required": ["problem_description"]
+                }
+            },
+            {
                 "name": "get_workflow_templates",
                 "description": "Get available industry workflow templates",
                 "inputSchema": {
                     "type": "object",
                     "properties": {},
                     "required": []
-                }
-            },
-            {
-                "name": "select_solver",
-                "description": "Select the best available solver for optimization problems",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "optimization_type": {
-                            "type": "string",
-                            "description": "Type of optimization problem (linear_programming, quadratic_programming, mixed_integer_linear_programming, etc.)"
-                        },
-                        "problem_size": {
-                            "type": "object",
-                            "description": "Problem size information (num_variables, num_constraints, etc.)",
-                            "default": {}
-                        },
-                        "performance_requirement": {
-                            "type": "string",
-                            "description": "Performance requirement: speed, accuracy, or balanced",
-                            "default": "balanced"
-                        }
-                    },
-                    "required": ["optimization_type"]
                 }
             },
             {
@@ -207,7 +243,7 @@ class DcisionAIMCPServer:
                 },
                 "serverInfo": {
                     "name": "dcisionai-optimization",
-                    "version": "1.3.4"
+                    "version": "1.4.4"
                 }
             }
         }
@@ -241,7 +277,7 @@ class DcisionAIMCPServer:
                 if parent_dir not in sys.path:
                     sys.path.insert(0, parent_dir)
                 
-                from dcisionai_mcp_server.tools import (
+                from .tools import (
                     classify_intent,
                     analyze_data,
                     build_model,
@@ -249,7 +285,8 @@ class DcisionAIMCPServer:
                     select_solver,
                     explain_optimization,
                     get_workflow_templates,
-                    execute_workflow
+                    execute_workflow,
+                    simulate_scenarios
                 )
                 logger.info("Tools imported successfully")
             except Exception as import_error:
@@ -285,7 +322,8 @@ class DcisionAIMCPServer:
                 result = await build_model(
                     arguments.get("problem_description", ""),
                     arguments.get("intent_data", {}),
-                    arguments.get("data_analysis", {})
+                    arguments.get("data_analysis", {}),
+                    arguments.get("solver_selection", {})
                 )
             elif tool_name == "solve_optimization":
                 result = await solve_optimization(
@@ -315,6 +353,14 @@ class DcisionAIMCPServer:
                     arguments.get("industry", ""),
                     arguments.get("workflow_id", ""),
                     arguments.get("user_input", {})
+                )
+            elif tool_name == "simulate_scenarios":
+                result = await simulate_scenarios(
+                    arguments.get("problem_description", ""),
+                    arguments.get("optimization_solution", {}),
+                    arguments.get("scenario_parameters", {}),
+                    arguments.get("simulation_type", "monte_carlo"),
+                    arguments.get("num_trials", 10000)
                 )
             else:
                 result = {"error": f"Unknown tool: {tool_name}"}
@@ -386,6 +432,10 @@ class DcisionAIMCPServer:
                     if method == "initialize":
                         logger.info("Handling initialize request")
                         response = await self.handle_initialize(message)
+                    elif method == "notifications/initialized":
+                        logger.info("Handling notifications/initialized")
+                        # This is a notification, no response needed
+                        response = None
                     elif method == "tools/list":
                         logger.info("Handling tools/list request")
                         response = await self.handle_tools_list(message)
@@ -403,9 +453,13 @@ class DcisionAIMCPServer:
                             }
                         }
                     
-                    logger.info(f"Sending response: {json.dumps(response, indent=2)}")
-                    print(json.dumps(response))
-                    sys.stdout.flush()
+                    # Only send response if there is one (notifications don't need responses)
+                    if response is not None:
+                        logger.info(f"Sending response: {json.dumps(response, indent=2)}")
+                        print(json.dumps(response))
+                        sys.stdout.flush()
+                    else:
+                        logger.info("No response needed for notification")
                     
                 except json.JSONDecodeError as e:
                     logger.error(f"JSON decode error: {e}")

@@ -3,8 +3,8 @@
 Backend server for DcisionAI SaaS Platform
 ==========================================
 
-Flask server that integrates with our improved MCP server (version 1.0.11)
-with enhanced constraint parsing, Claude 3 Haiku model building, and PDLP solver.
+Flask server that acts as an MCP client connecting to our hosted MCP server
+on AWS Bedrock AgentCore Runtime.
 """
 
 from flask import Flask, request, jsonify
@@ -17,8 +17,8 @@ import os
 import asyncio
 from datetime import datetime
 
-# Add the MCP server to the path
-sys.path.append('/Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/mcp-server')
+# Import synchronous MCP client
+from sync_mcp_client import get_sync_mcp_client, initialize_sync_mcp_client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,70 +29,75 @@ CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000'],
      allow_headers=['Content-Type', 'Authorization'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
-# MCP Server Configuration
-MCP_SERVER_URL = "http://localhost:8000"
+# MCP Server Configuration - AWS AgentCore Runtime
+MCP_SERVER_URL = os.getenv('MCP_SERVER_URL', 'https://bedrock-agentcore.us-west-2.amazonaws.com/runtimes/your-agent-arn/invocations?qualifier=DEFAULT')
 
 @app.route('/api/mcp/health-check', methods=['GET'])
 def mcp_health_check():
     """MCP health check endpoint for frontend."""
     try:
-        # Test our improved MCP server
-        from dcisionai_mcp_server.tools import DcisionAITools
-        
-        tools = DcisionAITools()
+        # Test MCP client connection to hosted server
+        try:
+            mcp_client = get_sync_mcp_client()
+            health_result = mcp_client.health_check()
+        except Exception as e:
+            logger.error(f"Health check error: {e}")
+            health_result = {"status": "error", "error": str(e)}
         
         return jsonify({
-            "status": "healthy",
-            "message": "Enhanced MCP server (v1.0.11) is running",
-            "features": [
-                "Claude 3 Haiku model building",
-                "Enhanced constraint parser",
-                "PDLP solver integration",
-                "Real OR-Tools optimization"
-            ],
-            "timestamp": datetime.now().isoformat(),
-            "endpoints": {
-                "classify_intent": "/api/mcp/classify-intent",
-                "analyze_data": "/api/mcp/analyze-data",
-                "build_model": "/api/mcp/build-model",
-                "solve_optimization": "/api/mcp/solve-optimization",
-                "execute_workflow": "/api/mcp/execute-workflow"
-            }
-        })
+                "status": "healthy",
+                "message": "DcisionAI MCP server (v1.3.4) is running on AWS AgentCore",
+                "mcp_server_url": MCP_SERVER_URL,
+                "health_status": health_result.get("status", "unknown"),
+                "features": [
+                    "Claude 3 Haiku model building",
+                    "OR-Tools optimization with 8+ solvers",
+                    "Business explainability",
+                    "21 industry workflows",
+                    "AWS AgentCore hosting"
+                ],
+                "timestamp": datetime.now().isoformat(),
+                "endpoints": {
+                    "classify_intent": "/api/mcp/classify-intent",
+                    "analyze_data": "/api/mcp/analyze-data",
+                    "build_model": "/api/mcp/build-model",
+                    "solve_optimization": "/api/mcp/solve-optimization",
+                    "select_solver": "/api/mcp/select-solver",
+                    "explain_optimization": "/api/mcp/explain-optimization",
+                    "execute_workflow": "/api/mcp/execute-workflow"
+                }
+            })
     except Exception as e:
         logger.error(f"MCP server health check failed: {e}")
         return jsonify({
             "status": "unhealthy",
-            "message": f"MCP server error: {str(e)}"
+            "message": f"MCP server error: {str(e)}",
+            "mcp_server_url": MCP_SERVER_URL
         }), 503
 
 @app.route('/api/mcp/classify-intent', methods=['POST'])
 def mcp_classify_intent():
-    """Enhanced intent classification using our improved MCP server."""
+    """Intent classification using hosted MCP server on AWS AgentCore."""
     try:
         data = request.get_json()
         problem_description = data.get('problem_description', '')
+        context = data.get('context')
         
         if not problem_description:
             return jsonify({"error": "Problem description is required"}), 400
         
-        # Use our improved MCP server
-        from dcisionai_mcp_server.tools import DcisionAITools
-        
-        tools = DcisionAITools()
-        
-        # Run the async function in a new event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        # Use MCP client to call hosted server
         try:
-            result = loop.run_until_complete(tools.classify_intent(problem_description=problem_description))
-        finally:
-            loop.close()
+            mcp_client = get_sync_mcp_client()
+            result = mcp_client.classify_intent(problem_description, context)
+        except Exception as e:
+            logger.error(f"MCP client error: {e}")
+            result = {"status": "error", "error": str(e)}
         
         return jsonify({
             "status": "success",
             "result": result,
-            "message": "Intent classified using enhanced MCP server"
+            "message": "Intent classified using hosted MCP server on AWS AgentCore"
         })
         
     except Exception as e:

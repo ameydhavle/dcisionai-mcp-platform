@@ -1,0 +1,7 @@
+# DcisionAI Optimization Server - Simplified AgentCore Runtime Requirements
+# Core AgentCore dependencies only
+bedrock-agentcore>=0.1.21
+
+# Basic dependencies
+boto3>=1.34.0
+botocore>=1.34.0

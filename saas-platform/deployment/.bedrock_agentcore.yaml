@@ -1,0 +1,158 @@
+default_agent: dcisionai_agentcore_production
+agents:
+  dcisionai_agentcore_runtime:
+    name: dcisionai_agentcore_runtime
+    entrypoint: /Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/saas-platform/deployment/dcisionai_agentcore_runtime.py
+    platform: linux/arm64
+    container_runtime: none
+    source_path: /Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/saas-platform/deployment
+    aws:
+      execution_role: arn:aws:iam::808953421331:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-4cb9ddb25f
+      execution_role_auto_create: false
+      account: '808953421331'
+      region: us-east-1
+      ecr_repository: 808953421331.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-dcisionai_agentcore_runtime
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: null
+      agent_arn: null
+      agent_session_id: null
+    codebuild:
+      project_name: null
+      execution_role: null
+      source_bucket: null
+    memory:
+      mode: STM_ONLY
+      memory_id: dcisionai_agentcore_runtime_mem-napnnaG3wC
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:808953421331:memory/dcisionai_agentcore_runtime_mem-napnnaG3wC
+      memory_name: dcisionai_agentcore_runtime_mem
+      event_expiry_days: 30
+      first_invoke_memory_check_done: false
+      was_created_by_toolkit: true
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null
+  dcisionai_agentcore_runtime_v2:
+    name: dcisionai_agentcore_runtime_v2
+    entrypoint: /Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/saas-platform/deployment/dcisionai_agentcore_runtime_v2.py
+    platform: linux/arm64
+    container_runtime: none
+    source_path: /Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/saas-platform/deployment
+    aws:
+      execution_role: arn:aws:iam::808953421331:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-81b7e674e1
+      execution_role_auto_create: false
+      account: '808953421331'
+      region: us-east-1
+      ecr_repository: 808953421331.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-dcisionai_agentcore_runtime_v2
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: null
+      agent_arn: null
+      agent_session_id: null
+    codebuild:
+      project_name: null
+      execution_role: null
+      source_bucket: null
+    memory:
+      mode: STM_ONLY
+      memory_id: dcisionai_agentcore_runtime_v2_mem-Z8NA3e5JaQ
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:808953421331:memory/dcisionai_agentcore_runtime_v2_mem-Z8NA3e5JaQ
+      memory_name: dcisionai_agentcore_runtime_v2_mem
+      event_expiry_days: 30
+      first_invoke_memory_check_done: false
+      was_created_by_toolkit: true
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null
+  dcisionai_agentcore_simple:
+    name: dcisionai_agentcore_simple
+    entrypoint: /Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/saas-platform/deployment/dcisionai_agentcore_simple.py
+    platform: linux/arm64
+    container_runtime: none
+    source_path: /Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/saas-platform/deployment
+    aws:
+      execution_role: arn:aws:iam::808953421331:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-ed4afdab2f
+      execution_role_auto_create: false
+      account: '808953421331'
+      region: us-east-1
+      ecr_repository: 808953421331.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-dcisionai_agentcore_simple
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: dcisionai_agentcore_simple-tQW3AYBUlY
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:808953421331:runtime/dcisionai_agentcore_simple-tQW3AYBUlY
+      agent_session_id: b5ef3220-21b3-4d51-8292-8ef9c7194917
+    codebuild:
+      project_name: bedrock-agentcore-dcisionai_agentcore_simple-builder
+      execution_role: arn:aws:iam::808953421331:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-ed4afdab2f
+      source_bucket: bedrock-agentcore-codebuild-sources-808953421331-us-east-1
+    memory:
+      mode: STM_ONLY
+      memory_id: dcisionai_agentcore_simple_mem-hBgQDR8lm7
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:808953421331:memory/dcisionai_agentcore_simple_mem-hBgQDR8lm7
+      memory_name: dcisionai_agentcore_simple_mem
+      event_expiry_days: 30
+      first_invoke_memory_check_done: true
+      was_created_by_toolkit: true
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null
+  dcisionai_agentcore_production:
+    name: dcisionai_agentcore_production
+    entrypoint: /Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/saas-platform/deployment/dcisionai_agentcore_production.py
+    platform: linux/arm64
+    container_runtime: none
+    source_path: /Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/saas-platform/deployment
+    aws:
+      execution_role: arn:aws:iam::808953421331:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-3e7c53c6f2
+      execution_role_auto_create: false
+      account: '808953421331'
+      region: us-east-1
+      ecr_repository: 808953421331.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-dcisionai_agentcore_production
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: dcisionai_agentcore_production-QE0dSBA4gz
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:808953421331:runtime/dcisionai_agentcore_production-QE0dSBA4gz
+      agent_session_id: abf46bdc-7ab5-4593-972d-8bf92d584b34
+    codebuild:
+      project_name: bedrock-agentcore-dcisionai_agentcore_production-builder
+      execution_role: arn:aws:iam::808953421331:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-3e7c53c6f2
+      source_bucket: bedrock-agentcore-codebuild-sources-808953421331-us-east-1
+    memory:
+      mode: STM_ONLY
+      memory_id: dcisionai_agentcore_production_mem-wc6fAIBPzV
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:808953421331:memory/dcisionai_agentcore_production_mem-wc6fAIBPzV
+      memory_name: dcisionai_agentcore_production_mem
+      event_expiry_days: 30
+      first_invoke_memory_check_done: true
+      was_created_by_toolkit: false
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null

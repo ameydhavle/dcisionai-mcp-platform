@@ -1,0 +1,35 @@
+# DcisionAI MCP Server - Minimal AgentCore Runtime Requirements
+# Core AgentCore dependencies
+bedrock-agentcore>=0.1.21
+
+# DcisionAI MCP Server package
+dcisionai-mcp-server>=1.3.4
+
+# Core optimization libraries (pre-compiled wheels only)
+ortools>=9.8.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# HTTP and networking
+httpx>=0.27.0
+httpcore>=0.18.0
+requests>=2.31.0
+
+# Data processing
+pyyaml>=6.0
+pydantic>=2.0.0
+
+# AWS SDK
+boto3>=1.34.0
+botocore>=1.34.0
+
+# Logging and utilities
+structlog>=23.0.0
+rich>=13.0.0
+
+# Note: Excluded packages that require compilation:
+# - ecos (requires gcc)
+# - cvxopt (requires gcc) 
+# - scs (requires gcc)
+# - cvxpy (depends on above)
+# - osqp (requires gcc)

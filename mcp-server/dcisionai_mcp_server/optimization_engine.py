@@ -487,8 +487,8 @@ class RealOptimizationEngine:
     def _parse_simple_linear_expression(self, expr: str):
         """Parse simple linear expression like '2*x1 + 1*x2' into OR-Tools expression."""
         try:
-            # Clean up expression - handle power notation and empty terms
-            expr = expr.replace('**', '*').replace('^', '*').replace(' ', '')
+            # Clean up expression - handle power notation, empty terms, and commas
+            expr = expr.replace('**', '*').replace('^', '*').replace(' ', '').replace(',', '')
             
             # Split by + and - operators, but preserve the signs
             import re
@@ -509,6 +509,8 @@ class RealOptimizationEngine:
                         parts = term.split('*')
                         if len(parts) == 2:
                             coeff_str, var_name = parts
+                            # Clean coefficient string - remove commas and other invalid characters
+                            coeff_str = coeff_str.replace(',', '').strip()
                             try:
                                 coeff = float(coeff_str) * current_sign
                                 
