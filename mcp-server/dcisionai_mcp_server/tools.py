@@ -1,55 +1,43 @@
 #!/usr/bin/env python3
 """
-DcisionAI MCP Tools
-==================
-
-Core optimization tools for the DcisionAI MCP server.
-Implements the 6 main tools for AI-powered business optimization.
+DcisionAI MCP Tools - Production Version 2.0
+============================================
+SECURITY: No eval(), uses AST parsing
+VALIDATION: Comprehensive result validation  
+RELIABILITY: Multi-region failover, rate limiting
 """
 
 import asyncio
 import json
 import logging
 import re
-import random
-import math
+import os
+import hashlib
+import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from dataclasses import dataclass, asdict
+from functools import lru_cache
 
-# Try to import OSS simulation engines
+# Import MathOpt model builder
+try:
+    from .mathopt_model_builder import MathOptModelBuilder, HAS_MATHOPT
+except ImportError:
+    HAS_MATHOPT = False
+    logging.warning("MathOpt model builder not available")
+from collections import deque
+import ast
+import operator
+
 try:
     import numpy as np
-    import scipy.stats as stats
     HAS_MONTE_CARLO = True
 except ImportError:
     HAS_MONTE_CARLO = False
 
-try:
-    import simpy
-    HAS_DISCRETE_EVENT = True
-except ImportError:
-    HAS_DISCRETE_EVENT = False
-
-try:
-    import mesa
-    HAS_AGENT_BASED = True
-except ImportError:
-    HAS_AGENT_BASED = False
-
-try:
-    import pysd
-    HAS_SYSTEM_DYNAMICS = True
-except ImportError:
-    HAS_SYSTEM_DYNAMICS = False
-
-try:
-    import SALib
-    import pymc
-    HAS_STOCHASTIC_OPT = True
-except ImportError:
-    HAS_STOCHASTIC_OPT = False
-import httpx
 import boto3
+from botocore.exceptions import ClientError
+
 from .workflows import WorkflowManager
 from .config import Config
 from .optimization_engine import solve_real_optimization
@@ -57,98 +45,374 @@ from .solver_selector import SolverSelector
 
 logger = logging.getLogger(__name__)
 
-class DcisionAITools:
-    """Core tools for DcisionAI optimization workflows."""
+# ============================================================================
+# DATA STRUCTURES
+# ============================================================================
+
+@dataclass
+class Variable:
+    name: str
+    type: str
+    bounds: str
+    description: str
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+@dataclass
+class Constraint:
+    expression: str
+    description: str
+    type: str = "inequality"
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+@dataclass
+class Objective:
+    type: str
+    expression: str
+    description: str
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+@dataclass
+class ModelSpec:
+    variables: List[Variable]
+    constraints: List[Constraint]
+    objective: Objective
+    model_type: str
+    model_complexity: str = "medium"
+    estimated_solve_time: float = 1.0
     
-    def __init__(self, config: Optional[Config] = None):
-        self.config = config or Config()
-        self.workflow_manager = WorkflowManager()
-        self.client = httpx.AsyncClient(timeout=30.0)
-        # Initialize Bedrock client for direct model calls
-        self.bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
-        # Initialize solver selector
-        self.solver_selector = SolverSelector()
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'ModelSpec':
+        if 'result' in data:
+            data = data['result']
+        if 'raw_response' in data:
+            data = json.loads(data['raw_response'])
+        
+        variables = [Variable(**v) if isinstance(v, dict) else v for v in data.get('variables', [])]
+        constraints = [Constraint(**c) if isinstance(c, dict) else c for c in data.get('constraints', [])]
+        obj = data.get('objective', {})
+        objective = Objective(**obj) if isinstance(obj, dict) else obj
+        
+        return cls(
+            variables=variables,
+            constraints=constraints,
+            objective=objective,
+            model_type=data.get('model_type', 'linear_programming'),
+            model_complexity=data.get('model_complexity', 'medium'),
+            estimated_solve_time=data.get('estimated_solve_time', 1.0)
+        )
     
-    def _invoke_bedrock_model(self, model_id: str, prompt: str, max_tokens: int = 4000) -> str:
-        """Invoke a Bedrock model with the given prompt."""
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'variables': [v.to_dict() for v in self.variables],
+            'constraints': [c.to_dict() for c in self.constraints],
+            'objective': self.objective.to_dict(),
+            'model_type': self.model_type,
+            'model_complexity': self.model_complexity,
+            'estimated_solve_time': self.estimated_solve_time
+        }
+
+# ============================================================================
+# KNOWLEDGE BASE
+# ============================================================================
+
+class KnowledgeBase:
+    def __init__(self, path: str):
+        self.path = path
+        self.kb = self._load()
+    
+    def _load(self) -> Dict[str, Any]:
         try:
-            # For Qwen models, use the appropriate request format
-            if "qwen" in model_id.lower():
-                body = json.dumps({
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
-                    "max_tokens": max_tokens,
-                    "temperature": 0.1,
-                    "top_p": 0.9,
-                    "stop": ["```", "Human:", "Assistant:"]
-                })
-            else:
-                # For Claude models
+            if os.path.exists(self.path):
+                with open(self.path) as f:
+                    return json.load(f)
+        except Exception as e:
+            logger.warning(f"KB load failed: {e}")
+        return {'examples': []}
+    
+    @lru_cache(maxsize=500)
+    def search(self, query: str, top_k: int = 2) -> str:
+        query_lower = query.lower()
+        results = []
+        
+        for ex in self.kb.get('examples', []):
+            score = sum(2 for w in query_lower.split() if w in ex.get('problem_description', '').lower())
+            score += sum(3 for kw in ex.get('keywords', []) if kw.lower() in query_lower)
+            if score > 0:
+                results.append((score, ex))
+        
+        results.sort(key=lambda x: x[0], reverse=True)
+        if not results[:top_k]:
+            return "No similar examples."
+        
+        context = "Similar:\n"
+        for _, ex in results[:top_k]:
+            context += f"- {ex.get('problem_type', '')}: {ex.get('solution', '')[:80]}...\n"
+        return context[:300]
+    
+    def get_problem_type_guidance(self, problem_description: str) -> str:
+        """Get specific guidance based on problem type."""
+        query_lower = problem_description.lower()
+        
+        if 'portfolio' in query_lower or 'investment' in query_lower or 'asset' in query_lower:
+            return """
+**Portfolio Optimization Guidance:**
+- Decision variables represent investment allocations or asset weights
+- Constraints include budget limits, risk limits, and diversification requirements
+- Objective balances return maximization with risk minimization
+- Consider correlation matrices, expected returns, and risk measures
+- If individual stocks are mentioned, create individual stock variables
+- If sector constraints exist, create sector-level constraints
+"""
+        elif 'production' in query_lower or 'factory' in query_lower or 'manufacturing' in query_lower:
+            return """
+**Production Planning Guidance:**
+- Decision variables typically represent production quantities or resource allocation
+- Constraints often include capacity limits, demand requirements, and resource availability
+- Objective is usually cost minimization or profit maximization
+- Consider time periods, production lines, and inventory constraints
+"""
+        elif 'schedule' in query_lower or 'task' in query_lower or 'employee' in query_lower:
+            return """
+**Scheduling Optimization Guidance:**
+- Decision variables represent task assignments, start times, or resource allocations
+- Constraints include precedence relationships, resource capacity, and deadlines
+- Objective is usually makespan minimization or cost optimization
+- Consider task dependencies, resource constraints, and time windows
+"""
+        else:
+            return """
+**Generic Optimization Guidance:**
+- Identify the key decisions to be made (decision variables)
+- Determine the limitations and requirements (constraints)
+- Define the optimization goal (objective function)
+- Ensure all variables are used and constraints are mathematically sound
+"""
+
+# ============================================================================
+# RATE LIMITING
+# ============================================================================
+
+class RateLimiter:
+    def __init__(self, max_calls: int, period: float):
+        self.max_calls = max_calls
+        self.period = period
+        self.calls = deque()
+        self.lock = asyncio.Lock()
+    
+    async def acquire(self):
+        async with self.lock:
+            now = time.time()
+            while self.calls and self.calls[0] < now - self.period:
+                self.calls.popleft()
+            while len(self.calls) >= self.max_calls:
+                await asyncio.sleep(0.1)
+                now = time.time()
+                while self.calls and self.calls[0] < now - self.period:
+                    self.calls.popleft()
+            self.calls.append(now)
+
+# ============================================================================
+# SAFE EXPRESSION EVALUATOR (NO eval()!)
+# ============================================================================
+
+class SafeEvaluator:
+    OPS = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.Pow: operator.pow,
+        ast.USub: operator.neg,
+    }
+    
+    @classmethod
+    def evaluate(cls, expr: str, vars: Dict[str, float]) -> float:
+        for name, val in sorted(vars.items(), key=lambda x: -len(x[0])):
+            expr = re.sub(r'\b' + re.escape(name) + r'\b', str(val), expr)
+        try:
+            node = ast.parse(expr, mode='eval')
+            return cls._eval(node.body)
+        except Exception as e:
+            raise ValueError(f"Expression evaluation failed: {e}")
+    
+    @classmethod
+    def _eval(cls, node):
+        if isinstance(node, (ast.Constant, ast.Num)):
+            return node.value if hasattr(node, 'value') else node.n
+        elif isinstance(node, ast.BinOp):
+            return cls.OPS[type(node.op)](cls._eval(node.left), cls._eval(node.right))
+        elif isinstance(node, ast.UnaryOp):
+            return cls.OPS[type(node.op)](cls._eval(node.operand))
+        raise ValueError(f"Unsupported: {type(node)}")
+
+# ============================================================================
+# VALIDATION ENGINE
+# ============================================================================
+
+class Validator:
+    def __init__(self):
+        self.eval = SafeEvaluator()
+    
+    def validate(self, result: Dict, model: ModelSpec) -> Dict[str, Any]:
+        errors = []
+        warnings = []
+        
+        status = result.get('status')
+        values = result.get('optimal_values', {})
+        obj_val = result.get('objective_value', 0)
+        
+        if status == 'optimal' and values:
+            try:
+                calc = self.eval.evaluate(model.objective.expression, values)
+                err = abs(calc - obj_val) / max(abs(calc), 1e-10)
+                if err > 0.001:
+                    errors.append(f"Objective mismatch: calc={calc:.4f}, reported={obj_val:.4f}")
+            except Exception as e:
+                warnings.append(f"Could not validate objective: {e}")
+        
+        if status == 'optimal' and values:
+            for c in model.constraints:
+                try:
+                    if not self._check_constraint(c.expression, values):
+                        errors.append(f"Violated: {c.expression}")
+                except Exception as e:
+                    warnings.append(f"Could not check {c.expression}: {e}")
+        
+        return {
+            'is_valid': len(errors) == 0,
+            'errors': errors,
+            'warnings': warnings
+        }
+    
+    def _check_constraint(self, expr: str, vars: Dict[str, float]) -> bool:
+        if '<=' in expr:
+            left, right = expr.split('<=', 1)
+            return self.eval.evaluate(left, vars) <= self.eval.evaluate(right, vars) + 1e-6
+        elif '>=' in expr:
+            left, right = expr.split('>=', 1)
+            return self.eval.evaluate(left, vars) >= self.eval.evaluate(right, vars) - 1e-6
+        elif '==' in expr or '=' in expr:
+            left, right = expr.split('==' if '==' in expr else '=', 1)
+            return abs(self.eval.evaluate(left, vars) - self.eval.evaluate(right, vars)) < 1e-6
+        return True
+
+# ============================================================================
+# BEDROCK CLIENT WITH FAILOVER
+# ============================================================================
+
+class BedrockClient:
+    def __init__(self, regions: List[str] = None):
+        self.regions = regions or ['us-east-1', 'us-west-2']
+        self.current = 0
+        self.clients = {}
+        for r in self.regions:
+            try:
+                self.clients[r] = boto3.client('bedrock-runtime', region_name=r)
+            except Exception as e:
+                logger.error(f"Failed to init {r}: {e}")
+        self.limiters = {
+            'haiku': RateLimiter(10, 1.0),
+            'sonnet': RateLimiter(5, 1.0)
+        }
+    
+    async def invoke(self, model_id: str, prompt: str, max_tokens: int = 4000) -> str:
+        limiter = self.limiters['haiku' if 'haiku' in model_id.lower() else 'sonnet']
+        await limiter.acquire()
+        
+        for attempt in range(len(self.regions)):
+            region = self.regions[self.current]
+            client = self.clients.get(region)
+            if not client:
+                self.current = (self.current + 1) % len(self.regions)
+                continue
+            
+            try:
                 body = json.dumps({
                     "anthropic_version": "bedrock-2023-05-31",
                     "max_tokens": max_tokens,
                     "temperature": 0.1,
                     "messages": [{"role": "user", "content": prompt}]
                 })
-            
-            response = self.bedrock_client.invoke_model(
-                modelId=model_id,
-                body=body,
-                contentType="application/json"
-            )
-            
-            response_body = json.loads(response['body'].read())
-            
-            # Handle different response formats
-            if 'content' in response_body and len(response_body['content']) > 0:
-                return response_body['content'][0]['text']
-            elif 'choices' in response_body and len(response_body['choices']) > 0:
-                # Qwen models return choices format
-                return response_body['choices'][0]['message']['content']
-            elif 'completion' in response_body:
-                return response_body['completion']
-            else:
-                logger.error(f"Unexpected Bedrock response format: {response_body}")
-                return "Error: Unexpected response format"
-            
-        except Exception as e:
-            logger.error(f"Bedrock invocation error for {model_id}: {str(e)}")
-            return f"Error: {str(e)}"
+                
+                resp = await asyncio.to_thread(
+                    client.invoke_model,
+                    modelId=model_id,
+                    body=body,
+                    contentType="application/json"
+                )
+                
+                data = json.loads(resp['body'].read())
+                if 'content' in data:
+                    return data['content'][0]['text']
+                elif 'completion' in data:
+                    return data['completion']
+                raise ValueError("Unexpected response")
+                
+            except Exception as e:
+                if "ServiceUnavailable" in str(e) or "Throttling" in str(e):
+                    self.current = (self.current + 1) % len(self.regions)
+                    if attempt < len(self.regions) - 1:
+                        continue
+                raise
+        
+        raise RuntimeError("All regions failed")
+
+# ============================================================================
+# MAIN TOOLS CLASS
+# ============================================================================
+
+class DcisionAITools:
+    def __init__(self, config: Optional[Config] = None):
+        self.config = config or Config()
+        self.bedrock = BedrockClient()
+        self.validator = Validator()
+        self.solver_selector = SolverSelector()
+        self.workflow_manager = WorkflowManager()
+        
+        kb_path = os.path.join(os.path.dirname(__file__), '..', 'dcisionai_kb.json')
+        self.kb = KnowledgeBase(kb_path)
+        self.cache = {}
+        
+        logger.info("DcisionAI Tools v2.0 initialized")
     
-    def _safe_json_parse(self, text: str, default: Any = None) -> Any:
-        """Safely parse JSON with robust handling of nested structures."""
+    def _parse_json(self, text: str) -> Dict[str, Any]:
+        """Enhanced JSON parsing with comprehensive error handling and recovery"""
         if not text:
-            return default
+            return {"raw_response": ""}
         
-        # Clean the text to remove control characters and other issues
-        cleaned_text = self._clean_json_text(text)
+        # Enhanced text cleaning
+        text = re.sub(r'```json\s*', '', text)
+        text = re.sub(r'```\s*', '', text)
+        text = re.sub(r',(\s*[}\]])', r'\1', text)  # Remove trailing commas
+        text = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', text)  # Quote unquoted keys
+        text = re.sub(r':\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*([,}])', r': "\1"\2', text)  # Quote unquoted string values
+        text = text.strip()
         
-        # Try direct JSON parsing first
+        # Try direct parsing first
         try:
-            return json.loads(cleaned_text)
-        except json.JSONDecodeError:
-            pass
+            result = json.loads(text)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError as e:
+            logger.debug(f"Direct JSON parsing failed: {e}")
         
-        # Try extracting from code blocks with balanced brace counting
-        import re
-        
-        # Find code block start
-        code_block_match = re.search(r'```(?:json)?\s*', cleaned_text)
-        if code_block_match:
-            start_pos = code_block_match.end()
+        # Try to find JSON object in the text - look for the first complete JSON object
+        try:
+            # Find the first opening brace
+            start_pos = text.find('{')
+            if start_pos == -1:
+                raise ValueError("No opening brace found")
             
-            # Count braces to find matching close
+            # Count braces to find the matching closing brace
             brace_count = 0
             in_string = False
             escape_next = False
-            json_start = -1
             
-            for i in range(start_pos, len(cleaned_text)):
-                char = cleaned_text[i]
+            for i in range(start_pos, len(text)):
+                char = text[i]
                 
                 if escape_next:
                     escape_next = False
@@ -158,533 +422,246 @@ class DcisionAITools:
                     escape_next = True
                     continue
                 
-                if char == '"' and not in_string:
-                    in_string = True
-                elif char == '"' and in_string:
-                    in_string = False
+                if char == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
                 
                 if not in_string:
                     if char == '{':
-                        if brace_count == 0:
-                            json_start = i
                         brace_count += 1
                     elif char == '}':
                         brace_count -= 1
-                        if brace_count == 0 and json_start != -1:
-                            # Found complete JSON object
-                            json_text = cleaned_text[json_start:i+1]
-                            try:
-                                return json.loads(json_text)
-                            except json.JSONDecodeError:
-                                pass
-        
-        # Fallback: try simple regex extraction
-        json_match = re.search(r'\{.*\}', cleaned_text, re.DOTALL)
-        if json_match:
-            try:
-                return json.loads(json_match.group(0))
-            except json.JSONDecodeError:
-                pass
-        
-        # Return the cleaned text as-is if no JSON found
-        return {"raw_response": cleaned_text, "parse_error": "Could not extract valid JSON"}
-    
-    def _clean_json_text(self, text: str) -> str:
-        """Clean text to make it JSON-parseable."""
-        import re
-        
-        # Remove control characters (except newlines and tabs)
-        text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
-        
-        # Remove trailing commas before closing braces/brackets
-        text = re.sub(r',(\s*[}\]])', r'\1', text)
-        
-        # Fix common JSON issues
-        text = text.replace('\\n', '\\n')  # Ensure proper newline escaping
-        text = text.replace('\\t', '\\t')  # Ensure proper tab escaping
-        
-        return text
-    
-    def _validate_optimization_results(self, result: Dict[str, Any], model_spec: Dict[str, Any], problem_description: str) -> Dict[str, Any]:
-        """
-        Validate optimization results for mathematical correctness and business logic.
-        
-        Args:
-            result: Optimization results from solver
-            model_spec: Model specification
-            problem_description: Original problem description
-            
-        Returns:
-            Validation results with errors and warnings
-        """
-        validation = {
-            "is_valid": True,
-            "errors": [],
-            "warnings": [],
-            "constraint_violations": [],
-            "objective_validation": {},
-            "business_logic_validation": {}
-        }
-        
-        try:
-            # Extract key information
-            optimal_values = result.get("optimal_values", {})
-            objective_value = result.get("objective_value", 0)
-            constraints = model_spec.get("constraints", [])
-            objective = model_spec.get("objective", {})
-            
-            # 1. Validate objective value calculation
-            if objective and optimal_values:
-                objective_expression = objective.get("expression", "")
-                if objective_expression:
-                    try:
-                        # Calculate expected objective value
-                        calculated_value = self._calculate_objective_value(objective_expression, optimal_values)
-                        expected_vs_actual = abs(calculated_value - objective_value)
-                        relative_error = expected_vs_actual / max(abs(calculated_value), 1e-6)
-                        
-                        validation["objective_validation"] = {
-                            "calculated_value": calculated_value,
-                            "reported_value": objective_value,
-                            "absolute_error": expected_vs_actual,
-                            "relative_error": relative_error
-                        }
-                        
-                        if relative_error > 0.01:  # 1% tolerance
-                            validation["errors"].append(f"Objective value mismatch: calculated {calculated_value}, reported {objective_value}")
-                            validation["is_valid"] = False
+                        if brace_count == 0:
+                            # Found matching closing brace
+                            json_text = text[start_pos:i+1]
                             
-                    except Exception as e:
-                        validation["warnings"].append(f"Could not validate objective value: {str(e)}")
+                            # Enhanced cleaning
+                            json_text = re.sub(r'[\x00-\x1f\x7f-\x9f]', ' ', json_text)  # Control characters
+                            json_text = re.sub(r'\\n', ' ', json_text)  # Newlines in strings
+                            json_text = re.sub(r'\\t', ' ', json_text)  # Tabs in strings
+                            json_text = re.sub(r'\\r', ' ', json_text)  # Carriage returns
+                            
+                            result = json.loads(json_text)
+                            if isinstance(result, dict):
+                                return result
+                            break
             
-            # 2. Validate constraint satisfaction
-            for constraint in constraints:
-                constraint_expression = constraint.get("expression", "")
-                if constraint_expression:
-                    try:
-                        is_satisfied = self._check_constraint_satisfaction(constraint_expression, optimal_values)
-                        if not is_satisfied:
-                            validation["constraint_violations"].append(constraint_expression)
-                            validation["errors"].append(f"Constraint violated: {constraint_expression}")
-                            validation["is_valid"] = False
-                    except Exception as e:
-                        validation["warnings"].append(f"Could not validate constraint {constraint_expression}: {str(e)}")
+            # If we get here, no matching closing brace was found
+            raise ValueError("No matching closing brace found")
             
-            # 3. Validate business logic using AI reasoning
-            business_validation = self._validate_business_logic(optimal_values, problem_description, model_spec)
-            validation["business_logic_validation"] = business_validation
-            
-            if not business_validation["is_valid"]:
-                validation["errors"].extend(business_validation["errors"])
-                validation["is_valid"] = False
-            
-            # 4. Check for unrealistic values
-            for var_name, var_value in optimal_values.items():
-                if isinstance(var_value, (int, float)):
-                    if abs(var_value) > 1e6:
-                        validation["warnings"].append(f"Variable {var_name} has very large value: {var_value}")
-                    if var_value < 0 and "allocation" in var_name.lower():
-                        validation["errors"].append(f"Negative allocation not allowed for {var_name}: {var_value}")
-                        validation["is_valid"] = False
-            
-        except Exception as e:
-            validation["errors"].append(f"Validation error: {str(e)}")
-            validation["is_valid"] = False
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.debug(f"Brace counting JSON parsing failed: {e}")
         
-        return validation
-    
-    def _calculate_objective_value(self, expression: str, variable_values: Dict[str, float]) -> float:
-        """Safely calculate objective value without eval() to prevent code injection."""
+        # Try regex fallback with improved patterns
         try:
-            import ast
-            import operator
-            import re
+            # Try multiple regex patterns for different JSON structures
+            patterns = [
+                r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}',  # Original pattern
+                r'\{[^{}]*"[^"]*"[^{}]*\}',  # Pattern for quoted strings
+                r'\{[^{}]*:[^{}]*\}',  # Pattern for key-value pairs
+            ]
             
-            # Replace variables with their values using regex for safety
-            expr = expression
-            
-            # Sort by length (longest first) to avoid partial replacements
-            sorted_vars = sorted(variable_values.items(), key=lambda x: len(x[0]), reverse=True)
-            
-            for var_name, var_value in sorted_vars:
-                # Use word boundaries to avoid partial matches (z1 vs z10)
-                expr = re.sub(r'\b' + re.escape(var_name) + r'\b', str(var_value), expr)
-            
-            # Parse and evaluate safely using AST
-            node = ast.parse(expr, mode='eval')
-            
-            # Define allowed operations
-            operators = {
-                ast.Add: operator.add,
-                ast.Sub: operator.sub,
-                ast.Mult: operator.mul,
-                ast.Div: operator.truediv,
-                ast.Pow: operator.pow,
-                ast.USub: operator.neg,
-            }
-            
-            def eval_node(node):
-                if isinstance(node, ast.Expression):
-                    return eval_node(node.body)
-                elif isinstance(node, ast.Constant):  # Python 3.8+
-                    return node.value
-                elif isinstance(node, ast.Num):  # Python < 3.8
-                    return node.n
-                elif isinstance(node, ast.BinOp):
-                    left = eval_node(node.left)
-                    right = eval_node(node.right)
-                    return operators[type(node.op)](left, right)
-                elif isinstance(node, ast.UnaryOp):
-                    operand = eval_node(node.operand)
-                    return operators[type(node.op)](operand)
-                else:
-                    raise ValueError(f"Unsupported operation: {type(node)}")
-            
-            return eval_node(node)
-            
+            for pattern in patterns:
+                matches = re.finditer(pattern, text, re.DOTALL)
+                for match in matches:
+                    try:
+                        json_text = match.group(0)
+                        # Enhanced cleaning
+                        json_text = re.sub(r'[\x00-\x1f\x7f-\x9f]', ' ', json_text)
+                        json_text = re.sub(r'\\n', ' ', json_text)
+                        json_text = re.sub(r'\\t', ' ', json_text)
+                        json_text = re.sub(r'\\r', ' ', json_text)
+                        
+                        result = json.loads(json_text)
+                        if isinstance(result, dict):
+                            return result
+                    except json.JSONDecodeError:
+                        continue
         except Exception as e:
-            raise ValueError(f"Could not calculate objective value: {str(e)}")
-    
-    def _check_constraint_satisfaction(self, constraint_expression: str, variable_values: Dict[str, float]) -> bool:
-        """Check if a constraint is satisfied by substituting variable values."""
+            logger.debug(f"Regex JSON parsing failed: {e}")
+        
+        # Try to extract partial JSON and fix common issues
         try:
-            # Replace variables with their values
-            expr = constraint_expression
-            for var_name, var_value in variable_values.items():
-                expr = expr.replace(var_name, str(var_value))
-            
-            # Parse constraint (assumes format like "x1 + x2 <= 500")
-            if "<=" in expr:
-                left, right = expr.split("<=")
-                return eval(left.strip()) <= eval(right.strip())
-            elif ">=" in expr:
-                left, right = expr.split(">=")
-                return eval(left.strip()) >= eval(right.strip())
-            elif "==" in expr:
-                left, right = expr.split("==")
-                return abs(eval(left.strip()) - eval(right.strip())) < 1e-6
-            else:
-                return True  # Can't parse, assume satisfied
-                
+            # Find the largest potential JSON object
+            start_pos = text.find('{')
+            if start_pos != -1:
+                # Try to find a reasonable end point
+                end_pos = text.rfind('}')
+                if end_pos > start_pos:
+                    json_text = text[start_pos:end_pos+1]
+                    
+                    # Try to fix common JSON issues
+                    json_text = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', json_text)
+                    json_text = re.sub(r':\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*([,}])', r': "\1"\2', json_text)
+                    json_text = re.sub(r'[\x00-\x1f\x7f-\x9f]', ' ', json_text)
+                    
+                    result = json.loads(json_text)
+                    if isinstance(result, dict):
+                        return result
         except Exception as e:
-            raise ValueError(f"Could not check constraint satisfaction: {str(e)}")
+            logger.debug(f"Partial JSON parsing failed: {e}")
+        
+        # If all else fails, return raw response with debug info
+        logger.warning(f"JSON parsing failed for text: {text[:200]}...")
+        return {"raw_response": text}
     
-    def _validate_business_logic(self, optimal_values: Dict[str, float], problem_description: str, model_spec: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate business logic using AI reasoning instead of keyword matching."""
+    async def classify_intent(self, problem_description: str, context: Optional[str] = None) -> Dict[str, Any]:
         try:
-            # Use AI to validate business logic
-            validation_prompt = f"""You are validating an optimization solution for business correctness.
+            cache_key = hashlib.md5(f"intent:{problem_description}".encode()).hexdigest()
+            if cache_key in self.cache:
+                return self.cache[cache_key]
+            
+            kb_ctx = self.kb.search(problem_description)
+            
+            prompt = f"""Classify this optimization problem.
 
 PROBLEM: {problem_description}
+SIMILAR: {kb_ctx}
 
-MODEL SPECIFICATION:
-Variables: {model_spec.get('variables', [])}
-Constraints: {model_spec.get('constraints', [])}
-Objective: {model_spec.get('objective', {})}
-
-SOLUTION:
-{optimal_values}
-
-VALIDATION TASK:
-1. Does this solution make business sense for the stated problem?
-2. Are there any unrealistic values?
-3. Are there any logical inconsistencies?
-4. What business constraints might be violated?
-
-Respond with JSON:
+JSON only:
 {{
-  "is_valid": true/false,
-  "errors": ["List of errors if any"],
-  "warnings": ["List of warnings"],
-  "business_logic_issues": ["Issues with business logic"]
-}}
-
-Be specific about WHY something is wrong, not just that it's wrong."""
+  "intent": "resource_allocation|production_planning|portfolio_optimization|scheduling",
+  "industry": "manufacturing|finance|healthcare|retail|logistics|general",
+  "optimization_type": "linear_programming|quadratic_programming|mixed_integer_linear_programming",
+  "complexity": "low|medium|high",
+  "confidence": 0.85
+}}"""
             
-            validation_response = self._invoke_bedrock_model(
-                model_id="anthropic.claude-3-haiku-20240307-v1:0",
-                prompt=validation_prompt,
-                max_tokens=2000
-            )
+            resp = await self.bedrock.invoke("anthropic.claude-3-haiku-20240307-v1:0", prompt, 1000)
+            result = self._parse_json(resp)
+            result.setdefault('intent', 'unknown')
+            result.setdefault('optimization_type', 'linear_programming')
+            result.setdefault('confidence', 0.7)
             
-            return self._safe_json_parse(validation_response, {
-                "is_valid": True,
-                "errors": [],
-                "warnings": [],
-                "business_logic_issues": []
-            })
-            
-        except Exception as e:
-            return {
-                "is_valid": False,
-                "errors": [f"Business logic validation error: {str(e)}"],
-                "warnings": [],
-                "business_logic_issues": []
-            }
-    
-    async def classify_intent(
-        self, 
-        problem_description: str, 
-        context: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Classify user intent for optimization requests using Claude 3 Haiku.
-        
-        Args:
-            problem_description: User's optimization request or problem description
-            context: Optional context information
-            
-        Returns:
-            Intent classification results with confidence scores
-        """
-        try:
-            prompt = f"""You are an expert business analyst. Classify the intent of this optimization request.
-
-PROBLEM DESCRIPTION:
-{problem_description}
-
-CONTEXT:
-{context or "No additional context provided"}
-
-Analyze the request and provide a JSON response with:
-- intent: The primary optimization intent (e.g., "production_planning", "resource_allocation", "cost_optimization", "demand_forecasting", "inventory_management")
-- industry: The industry sector (e.g., "manufacturing", "logistics", "retail", "healthcare", "finance")
-- complexity: The complexity level ("low", "medium", "high")
-- confidence: Confidence score (0.0 to 1.0)
-- entities: List of key entities mentioned (products, resources, constraints, etc.)
-- optimization_type: Type of optimization ("linear", "nonlinear", "mixed_integer", "constraint_satisfaction")
-- time_horizon: Planning horizon ("short_term", "medium_term", "long_term")
-
-Respond with valid JSON only:"""
-
-            # Use Claude 3 Haiku for intent classification
-            response_text = self._invoke_bedrock_model(
-                model_id="anthropic.claude-3-haiku-20240307-v1:0",
-                prompt=prompt,
-                max_tokens=1000
-            )
-            
-            result = self._safe_json_parse(response_text, {
-                "intent": "unknown",
-                "industry": "general",
-                "complexity": "medium",
-                "confidence": 0.5,
-                "entities": [],
-                "optimization_type": "linear",
-                "time_horizon": "medium_term"
-            })
-            
-            # Determine optimization type and solver requirements
-            optimization_type = self._determine_optimization_type(problem_description, result.get("intent", "unknown"), result.get("industry", "general"))
-            solver_requirements = self._get_solver_requirements(optimization_type)
-            
-            # Add optimization type and solver requirements to result
-            result["optimization_type"] = optimization_type
-            result["solver_requirements"] = solver_requirements
-            
-            return {
+            response = {
                 "status": "success",
                 "step": "intent_classification",
                 "timestamp": datetime.now().isoformat(),
                 "result": result,
-                "message": "Intent classified using Claude 3 Haiku with optimization type detection"
+                "message": f"Intent: {result['intent']}"
             }
-                
-        except Exception as e:
-            logger.error(f"Intent classification error: {str(e)}")
-            return {
-                "status": "error",
-                "step": "intent_classification",
-                "timestamp": datetime.now().isoformat(),
-                "error": str(e),
-                "message": "Intent classification failed"
-            }
-    
-    async def analyze_data(
-        self,
-        problem_description: str,
-        intent_data: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """
-        Analyze data requirements and readiness for optimization using Claude 3 Haiku.
-        
-        Args:
-            problem_description: Description of the optimization problem
-            intent_data: Results from intent classification step
+            self.cache[cache_key] = response
+            return response
             
-        Returns:
-            Data analysis results with readiness assessment
-        """
+        except Exception as e:
+            logger.error(f"Intent error: {e}")
+            return {"status": "error", "step": "intent_classification", "error": str(e)}
+    
+    async def analyze_data(self, problem_description: str, intent_data: Optional[Dict] = None) -> Dict[str, Any]:
         try:
-            # Extract key information for better context
             intent = intent_data.get('intent', 'unknown') if intent_data else 'unknown'
-            entities = intent_data.get('entities', []) if intent_data else []
-            industry = intent_data.get('industry', 'general') if intent_data else 'general'
+            kb_ctx = self.kb.search(problem_description)
             
-            # NEW: Determine optimization problem type
-            optimization_type = self._determine_optimization_type(problem_description, intent, industry)
-            solver_requirements = self._get_solver_requirements(optimization_type)
-            
-            prompt = f"""You are an expert data analyst. Analyze the data requirements for this optimization problem.
+            prompt = f"""Analyze data for optimization.
 
-PROBLEM DESCRIPTION:
-{problem_description}
+PROBLEM: {problem_description}
+INTENT: {intent}
+SIMILAR: {kb_ctx}
 
-CONTEXT:
-- Intent: {intent}
-- Industry: {industry}
-- Key Entities: {', '.join(entities[:5]) if entities else 'None'}
-
-REQUIRED OUTPUT FORMAT:
-Respond with ONLY valid JSON in this exact structure:
-
+JSON only:
 {{
-  "readiness_score": 0.92,
-  "entities": 15,
-  "data_quality": "high",
-  "missing_data": [],
-  "data_sources": ["ERP_system", "production_logs", "demand_forecast", "capacity_planning"],
-  "variables_identified": ["x1", "x2", "x3", "x4", "x5", "y1", "y2", "y3", "z1", "z2", "z3", "z4"],
-  "constraints_identified": ["capacity", "demand", "labor", "material", "quality"],
-  "recommendations": [
-    "Ensure all production capacity data is up-to-date",
-    "Validate demand forecast accuracy",
-    "Include setup costs in optimization model"
-  ]
-}}
-
-IMPORTANT RULES:
-1. Readiness score should be between 0.0 and 1.0
-2. Entities should be the number of data entities identified
-3. Data quality should be: low, medium, high
-4. Missing data should be a list of required but missing data sources
-5. Data sources should be realistic sources for the industry
-6. Variables should be mathematical variable names (x1, x2, etc.)
-7. Constraints should be constraint types relevant to the problem
-8. Recommendations should be actionable data improvement suggestions
-9. Respond with ONLY the JSON object, no other text
-
-Analyze the data requirements now:"""
-
-            # Use Claude 3 Haiku for fast data analysis
-            response_text = self._invoke_bedrock_model(
-                model_id="anthropic.claude-3-haiku-20240307-v1:0",
-                prompt=prompt,
-                max_tokens=2000
-            )
+  "readiness_score": 0.85,
+  "entities": 10,
+  "data_quality": "high|medium|low",
+  "variables_identified": ["x1", "x2"],
+  "constraints_identified": ["capacity", "demand"]
+}}"""
             
-            # Parse the JSON response
-            result = self._safe_json_parse(response_text, {
-                "readiness_score": 0.8,
-                "entities": 5,
-                "data_quality": "medium",
-                "missing_data": [],
-                "data_sources": ["general_data"],
-                "variables_identified": ["x1", "x2", "x3"],
-                "constraints_identified": ["capacity"],
-                "recommendations": ["Ensure data quality and completeness"]
-            })
+            resp = await self.bedrock.invoke("anthropic.claude-3-haiku-20240307-v1:0", prompt, 2000)
+            result = self._parse_json(resp)
+            result.setdefault('readiness_score', 0.8)
+            result.setdefault('entities', 0)
             
             return {
                 "status": "success",
                 "step": "data_analysis",
                 "timestamp": datetime.now().isoformat(),
                 "result": result,
-                "message": f"Data analyzed: {result.get('readiness_score', 0.0):.2f} readiness with {result.get('entities', 0)} entities"
+                "message": f"Ready: {result['readiness_score']:.1%}"
             }
-                
         except Exception as e:
-            logger.error(f"Data analysis error: {str(e)}")
-            return {
-                "status": "error",
-                "step": "data_analysis",
-                "timestamp": datetime.now().isoformat(),
-                "error": str(e),
-                "message": "Data analysis failed"
-            }
+            logger.error(f"Data error: {e}")
+            return {"status": "error", "step": "data_analysis", "error": str(e)}
     
-
     async def build_model(
         self,
         problem_description: str,
-        intent_data: Optional[Dict[str, Any]] = None,
-        data_analysis: Optional[Dict[str, Any]] = None,
-        solver_selection: Optional[Dict[str, Any]] = None
+        intent_data: Optional[Dict] = None,
+        data_analysis: Optional[Dict] = None,
+        solver_selection: Optional[Dict] = None,
+        max_retries: int = 2
     ) -> Dict[str, Any]:
-        """
-        Build mathematical optimization model using Qwen 30B Coder.
-        
-        Args:
-            problem_description: Detailed problem description
-            intent_data: Results from intent classification step
-            data_analysis: Results from data analysis step
-            solver_selection: Results from solver selection step
-            
-        Returns:
-            Model specification and mathematical formulation optimized for selected solver
-        """
         try:
-            # Use AI reasoning for ALL problem types - no hardcoded templates
-            # Extract context from previous steps
-            intent = intent_data.get('intent', 'unknown') if intent_data else 'unknown'
-            industry = intent_data.get('industry', 'general') if intent_data else 'general'
-            optimization_type = intent_data.get('optimization_type', 'linear') if intent_data else 'linear'
-            variables = data_analysis.get('variables_identified', []) if data_analysis else []
-            constraints = data_analysis.get('constraints_identified', []) if data_analysis else []
-            
-            # Extract solver information
+            opt_type = intent_data.get('optimization_type', 'linear_programming') if intent_data else 'linear_programming'
+            industry = intent_data.get('industry', 'unknown') if intent_data else 'unknown'
             selected_solver = solver_selection.get('result', {}).get('selected_solver', 'GLOP') if solver_selection else 'GLOP'
-            solver_capabilities = solver_selection.get('result', {}).get('capabilities', []) if solver_selection else []
+            solver_capabilities = ['linear', 'quadratic', 'integer']  # Default capabilities
             
-            prompt = f"""You are an expert in mathematical optimization. Your task is to formulate a decision model for this business problem.
+            kb_ctx = self.kb.search(problem_description)
+            kb_guidance = self.kb.get_problem_type_guidance(problem_description)
+            
+            for attempt in range(max_retries + 1):
+                retry_note = f"\nPREVIOUS FAILED. Ensure all variables used.\n" if attempt > 0 else ""
+                
+                prompt = f"""{retry_note}You are a PhD-level optimization expert. Build a mathematical optimization model.
 
-CRITICAL: Do NOT use any pre-learned templates or patterns. Think from first principles.
+# CRITICAL RULES FOR MODEL BUILDING
 
-# EXPLICIT PATTERN-BREAKING RULES
-
-## RULE 1: NO ASSUMPTIONS
-- DO NOT assume any standard formulations
-- DO NOT assume common variable names (x1, x2, etc.) unless they make sense
-- DO NOT assume standard constraint patterns
-- DO NOT assume standard objective patterns
-
-## RULE 2: PROBLEM-SPECIFIC THINKING
-- Read the problem description carefully
+## RULE 1: PROBLEM-SPECIFIC FORMULATION
+- Read the problem description CAREFULLY
 - Identify the SPECIFIC decisions to be made
-- Identify the SPECIFIC constraints and limitations
-- Identify the SPECIFIC objective
 - Formulate based on THESE specifics, not on general patterns
 
-## RULE 3: VALIDATION CHECK
+## RULE 2: VARIABLE DESIGN PRINCIPLES
+- Define variables that represent the ACTUAL decisions
+- For portfolio problems: If individual stocks are mentioned, create individual stock variables
+- For production problems: If individual products are mentioned, create individual product variables
+- NEVER oversimplify by grouping when individual items have different constraints
+
+         ## RULE 2A: VARIABLE EXPANSION FOR COMPLEX PROBLEMS
+         - **Multi-dimensional problems**: If problem has multiple dimensions (e.g., sites × seasons × archaeologists), create variables for EACH combination
+         - **Time-based problems**: If problem spans multiple time periods, create variables for EACH time period
+         - **Resource allocation**: If problem involves multiple resources and multiple tasks, create variables for EACH resource-task combination
+         - **Scheduling problems**: If problem involves multiple entities (nurses, shifts, days), create variables for EACH entity-shift-day combination
+         - **Routing problems**: If problem involves multiple vehicles and multiple locations, create variables for EACH vehicle-location combination
+         - **Matrix problems**: If problem involves matrices (e.g., 5 vehicles × 20 customers), create variables for EACH matrix element
+         - **Example**: For "10 nurses × 7 days × 3 shifts", create 210 variables (x_nurse_day_shift), not 1 generic variable
+         
+         ## CRITICAL: NO MATHEMATICAL NOTATION IN VARIABLES
+         - **NEVER use Σ (summation) or mathematical notation in variable names**
+         - **NEVER use generic variables like x_n_d_s for multi-dimensional problems**
+         - **ALWAYS create individual variables for each combination**
+         - **Example**: For 3 nurses × 2 days × 2 shifts, create 12 variables:
+           - x_nurse1_day1_shift1, x_nurse1_day1_shift2, x_nurse1_day2_shift1, x_nurse1_day2_shift2
+           - x_nurse2_day1_shift1, x_nurse2_day1_shift2, x_nurse2_day2_shift1, x_nurse2_day2_shift2
+           - x_nurse3_day1_shift1, x_nurse3_day1_shift2, x_nurse3_day2_shift1, x_nurse3_day2_shift2
+
+## RULE 3: CONSTRAINT CAPTURE
+- Capture ALL constraints mentioned in the problem
+- If problem says "max 10% per stock", create individual stock variables
+- If problem says "max 30% per sector", create sector-level constraints
+- Ensure constraints can be mathematically enforced
+
+## RULE 4: VALIDATION CHECK
 Before finalizing your model, ask:
 - Are ALL variables actually decision variables in this problem?
 - Do ALL constraints reflect the actual limitations described?
 - Does the objective match the actual goal stated?
-- Are there any variables or constraints that don't make sense for THIS problem?
+- Can the model enforce ALL stated constraints?
 
-## RULE 4: COMMON MISTAKES TO AVOID
-- Defining variables that aren't used in constraints or objective
-- Using "rate × time" when the problem doesn't involve time
-- Assuming capacity constraints when the problem doesn't mention capacity limits
-- Using standard portfolio formulations when the problem has different requirements
-- Creating constraints that don't match the problem description
+# KNOWLEDGE BASE CONTEXT
+{kb_ctx}
 
-## RULE 5: FIRST PRINCIPLES APPROACH
-- Start with: "What decisions need to be made?"
-- Then: "What are the limitations and requirements?"
-- Then: "What should be optimized?"
-- Finally: "How do these translate to mathematics?"
-
-DO NOT START with: "This looks like a manufacturing problem, so I'll use..."
-START with: "This problem requires these specific decisions..."
+# PROBLEM-TYPE GUIDANCE
+{kb_guidance}
 
 PROBLEM DESCRIPTION:
 {problem_description}
 
 CONTEXT:
-- Intent: {intent}
+- Intent: {intent_data.get('intent', 'unknown') if intent_data else 'unknown'}
 - Industry: {industry}
-- Optimization Type: {optimization_type}
+- Optimization Type: {opt_type}
 - Selected Solver: {selected_solver}
 - Solver Capabilities: {', '.join(solver_capabilities)}
 
@@ -700,8 +677,18 @@ What are the limitations and requirements? List each constraint clearly.
 Step 3 - Objective Analysis:
 What should be optimized? What is the goal?
 
-Step 4 - Variable Design:
-How do the decisions translate to mathematical variables? Define each variable with its meaning, type, and bounds.
+         Step 4 - Variable Design:
+         How do the decisions translate to mathematical variables? Define each variable with its meaning, type, and bounds.
+         **CRITICAL**: For multi-dimensional problems, create variables for EACH combination. Do not use generic variables.
+         **Example**: For "10 nurses × 7 days × 3 shifts", create 210 specific variables like x_nurse1_day1_shift1, x_nurse1_day1_shift2, etc.
+         
+         **VARIABLE EXPANSION REQUIREMENTS**:
+         - Count the total number of combinations needed
+         - Create a separate variable for each combination
+         - Use descriptive names that include all dimensions
+         - List ALL variables explicitly in the variables array
+         - Do NOT use mathematical notation (Σ, etc.) in variable names
+         - Do NOT create generic variables like x_n_d_s
 
 Step 5 - Constraint Formulation:
 How do the limitations translate to mathematical constraints? Write each constraint as a mathematical expression.
@@ -712,117 +699,89 @@ How does the goal translate to an objective function? Write the mathematical exp
 Step 7 - Validation:
 Verify that every variable is used in at least one constraint or the objective function.
 
-UNIVERSAL PRINCIPLES:
-1. **Variables**: Define decision variables that represent the choices to be made
-2. **Constraints**: Express all limitations and requirements as mathematical relationships
-3. **Objective**: Formulate what should be maximized or minimized
-4. **Feasibility**: Ensure the model has at least one valid solution
-5. **Consistency**: Every variable must be used in constraints or objective
+# PROBLEM-SPECIFIC VARIABLE EXPANSION GUIDANCE
 
-SOLVER COMPATIBILITY:
-- Selected Solver: {selected_solver}
-- Model Type: {optimization_type}
-- Requirements: Variables with finite bounds, linear constraints, linear objective
+## PORTFOLIO OPTIMIZATION
+If this is a portfolio problem:
+- If individual stocks are mentioned (e.g., "AAPL, MSFT, GOOGL"), create individual stock variables
+- If sector constraints exist (e.g., "max 30% per sector"), create sector-level constraints
+- If stock constraints exist (e.g., "max 10% per stock"), create individual stock constraints
+- Example: For 5 stocks in 4 sectors, you need 5 stock variables, not 4 sector variables
 
-IGNORE ANY FAMILIAR PATTERNS. Formulate based on the specific problem described above.
+         ## SCHEDULING PROBLEMS
+         If this is a scheduling problem:
+         - For "N nurses × D days × S shifts", create N×D×S variables (x_nurse_day_shift)
+         - For "T tasks × R resources", create T×R variables (x_task_resource)
+         - For "P projects × D developers", create P×D variables (x_project_developer)
+         - Example: 10 nurses × 7 days × 3 shifts = 210 variables, not 1 generic variable
+         
+         **NURSE SCHEDULING EXAMPLE**:
+         For "3 nurses × 2 days × 2 shifts", create these 12 variables:
+         - x_nurse1_day1_shift1, x_nurse1_day1_shift2, x_nurse1_day2_shift1, x_nurse1_day2_shift2
+         - x_nurse2_day1_shift1, x_nurse2_day1_shift2, x_nurse2_day2_shift1, x_nurse2_day2_shift2  
+         - x_nurse3_day1_shift1, x_nurse3_day1_shift2, x_nurse3_day2_shift1, x_nurse3_day2_shift2
+         Each variable should be binary (0 or 1) with descriptive names including all dimensions.
 
-# PATTERN-BREAKING INSTRUCTIONS FOR COMMON PROBLEM TYPES
+## ROUTING PROBLEMS
+If this is a routing problem:
+- For "V vehicles × L locations", create V×L variables (x_vehicle_location)
+- For "V vehicles × C customers", create V×C variables (x_vehicle_customer)
+- For "V vehicles × L locations × T time periods", create V×L×T variables
+- Example: 5 vehicles × 20 customers = 100 variables, not 2 generic variables
 
-## MANUFACTURING/PRODUCTION PROBLEMS
-- DO NOT assume "production lines" means "operating time variables"
-- DO NOT assume "units/hour" means "rate × time constraints"
-- DO NOT define unused production quantity variables
-- THINK: What are the actual decisions? What are the real constraints?
+## PRODUCTION PLANNING
+If this is a production planning problem:
+- For "P products × T time periods", create P×T variables (x_product_time)
+- For "P products × M machines × T time periods", create P×M×T variables
+- For "P products × W warehouses", create P×W variables (x_product_warehouse)
+- Example: 4 products × 6 months = 24 variables, not 2 generic variables
 
-## PORTFOLIO/INVESTMENT PROBLEMS  
-- DO NOT assume allocations must sum to 1.0 unless explicitly stated
-- DO NOT assume risk constraints use weighted averages
-- THINK: What are the actual investment decisions? What are the real limitations?
-
-## ASSIGNMENT/SCHEDULING PROBLEMS
-- DO NOT assume binary variables unless explicitly needed
-- DO NOT assume capacity constraints follow standard patterns
-- THINK: What are the actual assignment decisions? What are the real constraints?
-
-## RESOURCE ALLOCATION PROBLEMS
-- DO NOT assume "capacity" means "sum of allocations ≤ limit"
-- DO NOT assume "demand" means "sum of supplies ≥ requirement"
-- THINK: What are the actual allocation decisions? What are the real limitations?
-
-CRITICAL: For EVERY problem, ask yourself:
-1. What are the ACTUAL decisions to be made?
-2. What are the REAL constraints and limitations?
-3. What is the TRUE objective?
-4. How do these translate to mathematical variables, constraints, and objective?
-
-DO NOT use any pre-learned formulations. Think from first principles.
-
-# CLARIFICATION PROTOCOL
-
-## MANUFACTURING/PRODUCTION CLARIFICATION
-If the problem involves production/manufacturing:
-1. Ask yourself: "Am I modeling TIME or QUANTITY as the decision variable?"
-2. If TIME: Variables should be hours/days/weeks (e.g., z1 = hours to run Line 1)
-3. If QUANTITY: Variables should be units produced (e.g., x1 = units of Widget A produced)
-4. NEVER define both unless you link them with constraints (e.g., x1 = rate × z1)
-
-If uncertain, choose the SIMPLER approach:
-- Production planning → Usually TIME-based (hours to run)
-- Inventory management → Usually QUANTITY-based (units to stock)
-- Scheduling → Usually BINARY (assign or not)
-
-## CAPACITY CONSTRAINT CLARIFICATION
-When you see "capacity" or "rate" information:
-- If problem gives "units/hour" → This is a RATE, not a decision variable
-- If problem asks "how many hours to run" → TIME is the decision variable
-- If problem asks "how many units to produce" → QUANTITY is the decision variable
-
-## DEMAND CONSTRAINT CLARIFICATION
-When you see demand requirements:
-- If problem says "meet demand of X units" → Use >= constraint (can produce more)
-- If problem says "exactly X units" → Use = constraint (must produce exactly)
-- If problem says "at most X units" → Use <= constraint (cannot exceed)
+## RESOURCE ALLOCATION
+If this is a resource allocation problem:
+- For "R resources × T tasks", create R×T variables (x_resource_task)
+- For "R resources × P projects × T time periods", create R×P×T variables
+- For "A agents × J jobs", create A×J variables (x_agent_job)
+- Example: 5 developers × 3 projects = 15 variables, not 2 generic variables
 
 # OUTPUT FORMAT
-
 Provide JSON with this EXACT structure:
 
 {{
   "reasoning_steps": {{
     "step1_decision_analysis": "List of key decisions identified",
-    "step2_constraint_analysis": "List of limitations and requirements",
+    "step2_constraint_analysis": "List of limitations and requirements", 
     "step3_objective_analysis": "Goal and optimization target",
     "step4_variable_design": "How decisions translate to variables",
     "step5_constraint_formulation": "How limitations translate to constraints",
     "step6_objective_formulation": "How goal translates to objective function",
     "step7_validation": "Verification that all variables are used"
   }},
-  "model_type": "linear_programming",
+  "model_type": "{opt_type}",
   "variables": [
     {{
       "name": "x1",
-      "type": "continuous",
-      "bounds": "0 to 1000",
-      "description": "Production quantity of Product A (units)"
+      "type": "continuous", 
+      "bounds": "0 to 1",
+      "description": "Allocation to stock 1 (fraction)"
     }}
   ],
   "objective": {{
-    "type": "minimize",
-    "expression": "50*x1 + 60*x2",
-    "description": "Total production cost"
+    "type": "maximize",
+    "expression": "0.12*x1 + 0.08*x2 + 0.10*x3 + 0.06*x4",
+    "description": "Expected portfolio return"
   }},
   "constraints": [
     {{
-      "expression": "x1 + x2 >= 500",
-      "description": "Demand constraint for Product A"
+      "expression": "x1 + x2 + x3 + x4 = 1",
+      "description": "Total allocation must equal 100%"
     }}
   ],
   "model_complexity": "medium",
   "estimated_solve_time": 0.1,
   "mathematical_formulation": "Complete mathematical description based on reasoning steps",
   "validation_summary": {{
-    "variables_defined": 2,
-    "constraints_defined": 3,
+    "variables_defined": 4,
+    "constraints_defined": 5,
     "objective_matches_problem": true,
     "model_is_feasible": true,
     "all_variables_used": true,
@@ -830,1132 +789,356 @@ Provide JSON with this EXACT structure:
   }}
 }}
 
-# CRITICAL SUCCESS CRITERIA
-
-Your model will be validated against these criteria:
-1. **Mathematical Correctness**: All expressions are mathematically sound
-2. **Problem Alignment**: Model directly addresses the stated problem
-3. **Feasibility**: Model has at least one feasible solution
-4. **Consistency**: Variables, constraints, and objective are consistent
-5. **Realism**: All values are within realistic ranges
-
-**FAILURE TO MEET ANY CRITERIA WILL RESULT IN MODEL REJECTION**
-
 Respond with valid JSON only:"""
-
-            # Use Claude 3 Haiku for model building (better mathematical reasoning)
-            response_text = self._invoke_bedrock_model(
-                model_id="anthropic.claude-3-haiku-20240307-v1:0",
-                prompt=prompt,
-                max_tokens=4000
-            )
-            
-            result = self._safe_json_parse(response_text, {
-                "model_type": "linear_programming",
-                "variables": [],
-                "objective": {"type": "maximize", "expression": "unknown"},
-                "constraints": [],
-                "model_complexity": "medium",
-                "estimated_solve_time": 30,
-                "mathematical_formulation": "Model formulation not available"
-            })
-            
-            return {
-                "status": "success",
-                "step": "model_building",
-                "timestamp": datetime.now().isoformat(),
-                "result": result,
-                "message": "Model built using Claude 3 Haiku"
-            }
                 
+                resp = await self.bedrock.invoke("anthropic.claude-3-haiku-20240307-v1:0", prompt, 6000)
+                result = self._parse_json(resp)
+                
+                # Debug output
+                logger.info(f"Model building attempt {attempt+1}:")
+                logger.info(f"Raw response length: {len(resp) if resp else 0}")
+                logger.info(f"Raw response preview: {resp[:200] if resp else 'None'}...")
+                logger.info(f"Generated result keys: {list(result.keys()) if result else 'None'}")
+                if result and 'raw_response' in result:
+                    logger.info(f"Raw response in result: {result['raw_response'][:200]}...")
+                if result and 'reasoning_steps' in result:
+                    logger.info(f"Reasoning steps keys: {list(result['reasoning_steps'].keys()) if result['reasoning_steps'] else 'None'}")
+                
+                if self._validate_model_v2(result):
+                    result.setdefault('model_type', opt_type)
+                    
+                    # Try to build MathOpt model if available
+                    mathopt_result = None
+                    if HAS_MATHOPT:
+                        try:
+                            mathopt_builder = MathOptModelBuilder()
+                            mathopt_result = mathopt_builder.build_model_from_reasoning(result)
+                            if mathopt_result.get('status') == 'success':
+                                result['mathopt_model'] = mathopt_result
+                                logger.info("MathOpt model built successfully")
+                        except Exception as e:
+                            logger.warning(f"MathOpt model building failed: {e}")
+                    
+                    return {
+                        "status": "success",
+                        "step": "model_building",
+                        "timestamp": datetime.now().isoformat(),
+                        "result": result,
+                        "message": f"Model built with 7-step reasoning{' + MathOpt' if mathopt_result and mathopt_result.get('status') == 'success' else ''} (attempt {attempt+1})"
+                    }
+                else:
+                    logger.warning(f"Model validation failed on attempt {attempt+1}")
+                    if result:
+                        logger.warning(f"Missing keys: {[k for k in ['variables', 'constraints', 'objective', 'reasoning_steps'] if k not in result]}")
+                        if 'reasoning_steps' in result:
+                            required_steps = ['step1_decision_analysis', 'step2_constraint_analysis', 'step3_objective_analysis', 'step4_variable_design', 'step5_constraint_formulation', 'step6_objective_formulation', 'step7_validation']
+                            missing_steps = [s for s in required_steps if s not in result['reasoning_steps']]
+                            if missing_steps:
+                                logger.warning(f"Missing reasoning steps: {missing_steps}")
+            
+            return {"status": "error", "step": "model_building", "error": "Validation failed after retries"}
+            
         except Exception as e:
-            logger.error(f"Model building error: {str(e)}")
-            return {
-                "status": "error",
-                "step": "model_building",
-                "timestamp": datetime.now().isoformat(),
-                "error": str(e),
-                "message": "Model building failed"
-            }
+            logger.error(f"Model error: {e}")
+            return {"status": "error", "step": "model_building", "error": str(e)}
+    
+    def _validate_model(self, data: Dict) -> bool:
+        if not data.get('variables') or not data.get('constraints') or not data.get('objective'):
+            return False
+        
+        var_names = {v['name'] for v in data['variables'] if isinstance(v, dict)}
+        all_text = ' '.join(c.get('expression', '') for c in data['constraints'] if isinstance(c, dict))
+        all_text += ' ' + data['objective'].get('expression', '') if isinstance(data.get('objective'), dict) else ''
+        
+        return all(name in all_text for name in var_names)
+    
+    def _validate_model_v2(self, data: Dict) -> bool:
+        """Enhanced validation for v2.0 models with 7-step reasoning."""
+        # Basic structure validation
+        if not data.get('variables') or not data.get('constraints') or not data.get('objective'):
+            return False
+        
+        # Check for reasoning steps
+        if not data.get('reasoning_steps'):
+            return False
+        
+        # Check that all 7 steps are present
+        required_steps = [
+            'step1_decision_analysis', 'step2_constraint_analysis', 'step3_objective_analysis',
+            'step4_variable_design', 'step5_constraint_formulation', 'step6_objective_formulation',
+            'step7_validation'
+        ]
+        reasoning_steps = data.get('reasoning_steps', {})
+        if not all(step in reasoning_steps for step in required_steps):
+            return False
+        
+        # Variable usage validation
+        var_names = {v['name'] for v in data['variables'] if isinstance(v, dict)}
+        all_text = ' '.join(c.get('expression', '') for c in data['constraints'] if isinstance(c, dict))
+        all_text += ' ' + data['objective'].get('expression', '') if isinstance(data.get('objective'), dict) else ''
+        
+        # All variables must be used
+        if not all(name in all_text for name in var_names):
+            return False
+        
+        # Check validation summary
+        validation_summary = data.get('validation_summary', {})
+        if not validation_summary.get('all_variables_used', False):
+            return False
+        
+        return True
     
     async def solve_optimization(
         self,
         problem_description: str,
-        intent_data: Optional[Dict[str, Any]] = None,
-        data_analysis: Optional[Dict[str, Any]] = None,
-        model_building: Optional[Dict[str, Any]] = None
+        intent_data: Optional[Dict] = None,
+        data_analysis: Optional[Dict] = None,
+        model_building: Optional[Dict] = None
     ) -> Dict[str, Any]:
-        """
-        Solve the optimization problem using real OR-Tools solver.
-        
-        Args:
-            problem_description: Description of the optimization problem
-            intent_data: Results from intent classification step
-            data_analysis: Results from data analysis step
-            model_building: Results from model building step
-            
-        Returns:
-            Real optimization results from OR-Tools
-        """
         try:
-            # Check if we have a valid model from Qwen
-            # Handle both direct model data and wrapped result data
-            if not model_building:
-                return {
-                    "status": "error",
-                    "step": "optimization_solution",
-                    "timestamp": datetime.now().isoformat(),
-                    "error": "No valid model available for solving",
-                    "message": "Model building step required before solving"
-                }
+            if not model_building or 'result' not in model_building:
+                return {"status": "error", "error": "No model"}
             
-            # Extract model specification - handle both formats
-            variables = []
-            model_spec = {}
+            model_spec = ModelSpec.from_dict(model_building['result'])
+            solver_result = solve_real_optimization(model_spec.to_dict())
             
-            # Check if we have a wrapped format with result
-            if 'result' in model_building:
-                model_spec = model_building.get('result', {})
-                
-                # Check if we have a raw_response that needs JSON parsing
-                if 'raw_response' in model_spec:
-                    try:
-                        import json
-                        # Clean and parse the JSON string from raw_response
-                        cleaned_json = self._clean_json_text(model_spec['raw_response'])
-                        parsed_model = json.loads(cleaned_json)
-                        variables = parsed_model.get('variables', [])
-                        model_spec = parsed_model  # Use the parsed model
-                        logger.info(f"Successfully parsed model with {len(variables)} variables")
-                    except json.JSONDecodeError as e:
-                        logger.error(f"Failed to parse model JSON: {e}")
-                        return {
-                            "status": "error",
-                            "step": "optimization_solution",
-                            "timestamp": datetime.now().isoformat(),
-                            "error": f"Failed to parse model JSON: {str(e)}",
-                            "message": "Model building step produced invalid JSON"
-                        }
-                else:
-                    # Direct variables in result
-                    variables = model_spec.get('variables', [])
-            else:
-                # Direct format - check if it has raw_response
-                if 'raw_response' in model_building:
-                    try:
-                        import json
-                        # Clean and parse the JSON string from raw_response
-                        cleaned_json = self._clean_json_text(model_building['raw_response'])
-                        parsed_model = json.loads(cleaned_json)
-                        variables = parsed_model.get('variables', [])
-                        model_spec = parsed_model  # Use the parsed model
-                        logger.info(f"Successfully parsed model with {len(variables)} variables")
-                    except json.JSONDecodeError as e:
-                        logger.error(f"Failed to parse model JSON: {e}")
-                        return {
-                            "status": "error",
-                            "step": "optimization_solution",
-                            "timestamp": datetime.now().isoformat(),
-                            "error": f"Failed to parse model JSON: {str(e)}",
-                            "message": "Model building step produced invalid JSON"
-                        }
-                else:
-                    # Direct variables
-                    model_spec = model_building
-                    variables = model_building.get('variables', [])
+            validation = self.validator.validate(solver_result, model_spec)
             
-            if not variables:
-                return {
-                    "status": "error",
-                    "step": "optimization_solution",
-                    "timestamp": datetime.now().isoformat(),
-                    "error": "No valid model variables found",
-                    "message": "Model building step required before solving"
-                }
+            if not validation['is_valid'] and solver_result.get('status') == 'optimal':
+                logger.warning(f"Validation errors: {validation['errors']}")
             
-            # Use real optimization engine with OR-Tools
-            logger.info("Solving optimization using real OR-Tools solver")
-            result = solve_real_optimization(model_spec)
-            
-            # CRITICAL: Validate results before returning
-            validation_result = self._validate_optimization_results(result, model_spec, problem_description)
-            if not validation_result["is_valid"]:
-                logger.error(f"Optimization results failed validation: {validation_result['errors']}")
-                return {
-                    "status": "error",
-                    "step": "optimization_solution",
-                    "timestamp": datetime.now().isoformat(),
-                    "error": f"Results failed validation: {validation_result['errors']}",
-                    "message": "Optimization results are mathematically incorrect"
-                }
-            
-            # Add validation summary to result
-            result["validation_summary"] = validation_result
+            solver_result['validation'] = validation
             
             return {
-                "status": "success",
+                "status": "success" if validation['is_valid'] else "error",
                 "step": "optimization_solution",
+                "timestamp": datetime.now().isoformat(),
+                "result": solver_result,
+                "message": f"Solved: {solver_result.get('status')}"
+            }
+            
+        except Exception as e:
+            logger.error(f"Solve error: {e}")
+            return {"status": "error", "step": "optimization_solution", "error": str(e)}
+    
+    async def select_solver(self, optimization_type: str, problem_size: Optional[Dict] = None, performance_requirement: str = "balanced") -> Dict[str, Any]:
+        try:
+            result = self.solver_selector.select_solver(optimization_type, problem_size or {}, performance_requirement)
+            return {
+                "status": "success",
+                "step": "solver_selection",
                 "timestamp": datetime.now().isoformat(),
                 "result": result,
-                "message": "Optimization solved using real OR-Tools solver with validation"
+                "message": f"Selected: {result['selected_solver']}"
             }
-                
         except Exception as e:
-            logger.error(f"Real optimization solving error: {str(e)}")
-            return {
-                "status": "error",
-                "step": "optimization_solution",
-                "timestamp": datetime.now().isoformat(),
-                "error": str(e),
-                "message": "Real optimization solving failed"
-            }
+            return {"status": "error", "step": "solver_selection", "error": str(e)}
     
-    async def get_workflow_templates(self) -> Dict[str, Any]:
-        """
-        Get available industry workflow templates.
-        
-        Returns:
-            List of available workflows organized by industry
-        """
-        try:
-            # Use local workflow manager instead of HTTP calls
-                return {
-                    "status": "success",
-                    "workflow_templates": self.workflow_manager.get_all_workflows(),
-                    "total_workflows": 21,
-                    "industries": 7
-                }
-                
-        except Exception as e:
-            logger.error(f"Error in get_workflow_templates: {e}")
-            return {
-                "status": "success",
-                "workflow_templates": self.workflow_manager.get_all_workflows(),
-                "total_workflows": 21,
-                "industries": 7
-            }
-    
-    async def execute_workflow(
+    async def explain_optimization(
         self,
-        industry: str,
-        workflow_id: str,
-        user_input: Optional[Dict[str, Any]] = None
+        problem_description: str,
+        intent_data: Optional[Dict] = None,
+        data_analysis: Optional[Dict] = None,
+        model_building: Optional[Dict] = None,
+        optimization_solution: Optional[Dict] = None
     ) -> Dict[str, Any]:
-        """
-        Execute a complete optimization workflow locally.
-        
-        Args:
-            industry: Target industry (manufacturing, healthcare, etc.)
-            workflow_id: Specific workflow to execute
-            user_input: Optional user input parameters
-            
-        Returns:
-            Complete workflow execution results
-        """
         try:
-            import time
-            start_time = time.time()
-            
-            # Get workflow template
-            workflow_templates = await self.get_workflow_templates()
-            workflows = workflow_templates.get("workflow_templates", {}).get("workflows", {})
-            
-            if industry not in workflows:
+            # Validate that we have actual optimization results to explain
+            if not optimization_solution or optimization_solution.get('status') != 'success':
                 return {
                     "status": "error",
-                    "error": f"Industry '{industry}' not found",
-                    "available_industries": list(workflows.keys())
+                    "step": "explainability",
+                    "error": "Cannot explain optimization results: No successful optimization found",
+                    "message": "Optimization must be completed successfully before explanation can be generated"
                 }
             
-            industry_workflows = workflows[industry]
-            if workflow_id not in industry_workflows:
+            # Validate that we have actual results
+            result_data = optimization_solution.get('result', {})
+            if not result_data or result_data.get('status') != 'optimal':
                 return {
-                    "status": "error",
-                    "error": f"Workflow '{workflow_id}' not found in industry '{industry}'",
-                    "available_workflows": list(industry_workflows.keys())
+                    "status": "error", 
+                    "step": "explainability",
+                    "error": "Cannot explain optimization results: No optimal solution found",
+                    "message": "Optimal solution required for business explanation"
                 }
             
-            workflow_info = industry_workflows[workflow_id]
+            status = result_data.get('status', 'unknown')
+            objective_value = result_data.get('objective_value', 0)
+            optimal_values = result_data.get('optimal_values', {})
             
-            # Execute the workflow based on industry and workflow_id
-            if industry == "financial" and workflow_id == "portfolio_optimization":
-                return await self._execute_portfolio_optimization_workflow(user_input or {})
-            elif industry == "manufacturing" and workflow_id == "production_planning":
-                return await self._execute_production_planning_workflow(user_input or {})
-            elif industry == "healthcare" and workflow_id == "staff_scheduling":
-                return await self._execute_staff_scheduling_workflow(user_input or {})
-            elif industry == "retail" and workflow_id == "demand_forecasting":
-                return await self._execute_demand_forecasting_workflow(user_input or {})
-            elif industry == "logistics" and workflow_id == "route_optimization":
-                return await self._execute_route_optimization_workflow(user_input or {})
-            else:
-                # Generic workflow execution
-                return await self._execute_generic_workflow(industry, workflow_id, user_input or {})
-                
-        except Exception as e:
-            logger.error(f"Error in execute_workflow: {e}")
-            return {
-                "status": "error",
-                "error": str(e),
-                "fallback": "Default workflow execution"
-            }
-    
-    async def _execute_portfolio_optimization_workflow(self, user_input: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute portfolio optimization workflow."""
-        try:
-            # Step 1: Intent Classification
-            problem_description = f"Portfolio optimization with investment amount: {user_input.get('investment_amount', 100000)}"
-            intent_result = await self.classify_intent(problem_description, "financial")
+            prompt = f"""Explain optimization result to business stakeholders.
+
+PROBLEM: {problem_description}
+OPTIMIZATION STATUS: {status}
+OBJECTIVE VALUE: {objective_value}
+OPTIMAL VALUES: {optimal_values}
+
+IMPORTANT: Only provide explanations based on the actual optimization results above. Do not make up or estimate values.
+
+JSON only:
+{{
+  "executive_summary": {{
+    "problem_statement": "Clear statement of the original problem",
+    "key_findings": ["actual finding 1", "actual finding 2"],
+    "business_impact": "Actual quantified impact based on objective value"
+  }},
+  "implementation_guidance": {{
+    "next_steps": ["step 1", "step 2"],
+    "risk_considerations": ["risk 1"]
+  }}
+}}"""
             
-            # Step 2: Data Analysis
-            data_result = await self.analyze_data(problem_description, intent_result.get("result", {}))
-            
-            # Step 3: Model Building
-            model_result = await self.build_model(problem_description, intent_result.get("result", {}), data_result.get("result", {}))
-            
-            # Step 4: Solver Selection
-            solver_result = await self.select_solver(
-                intent_result.get("result", {}).get("optimization_type", "linear_programming"),
-                {"num_variables": 8, "num_constraints": 10}
-            )
-            
-            # Step 5: Optimization Solving
-            solve_result = await self.solve_optimization(
-                problem_description,
-                intent_result.get("result", {}),
-                data_result.get("result", {}),
-                model_result.get("result", {})
-            )
-            
-            # Step 6: Explainability
-            explain_result = await self.explain_optimization(
-                problem_description,
-                intent_result.get("result", {}),
-                data_result.get("result", {}),
-                model_result.get("result", {}),
-                solve_result.get("result", {})
-            )
+            resp = await self.bedrock.invoke("anthropic.claude-3-haiku-20240307-v1:0", prompt, 3000)
+            result = self._parse_json(resp)
             
             return {
                 "status": "success",
-                "workflow_type": "portfolio_optimization",
-                "industry": "financial",
-                "execution_time": 25.3,
-                "steps_completed": 6,
-                "results": {
-                    "intent_classification": intent_result,
-                    "data_analysis": data_result,
-                    "model_building": model_result,
-                    "solver_selection": solver_result,
-                    "optimization_solution": solve_result,
-                    "explainability": explain_result
-                },
-                "summary": {
-                    "problem_type": "Portfolio Optimization",
-                    "investment_amount": user_input.get('investment_amount', 100000),
-                    "expected_return": solve_result.get("result", {}).get("objective_value", 0),
-                    "solve_time": solve_result.get("result", {}).get("solve_time", 0),
-                    "business_impact": solve_result.get("result", {}).get("business_impact", {})
-                }
+                "step": "explainability",
+                "timestamp": datetime.now().isoformat(),
+                "result": result,
+                "message": "Explanation generated based on actual optimization results"
             }
         except Exception as e:
-            return {
-                "status": "error",
-                "error": f"Portfolio optimization workflow failed: {str(e)}",
-                "workflow_type": "portfolio_optimization"
-            }
-    
-    async def _execute_production_planning_workflow(self, user_input: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute production planning workflow."""
-        return {
-            "status": "success",
-            "workflow_type": "production_planning",
-            "industry": "manufacturing",
-            "execution_time": 18.7,
-            "steps_completed": 4,
-            "results": {
-                "message": "Production planning workflow executed successfully",
-                "recommendations": ["Optimize production schedule", "Allocate resources efficiently"]
-            }
-        }
-    
-    async def _execute_staff_scheduling_workflow(self, user_input: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute staff scheduling workflow."""
-        return {
-            "status": "success",
-            "workflow_type": "staff_scheduling",
-            "industry": "healthcare",
-            "execution_time": 22.1,
-            "steps_completed": 5,
-            "results": {
-                "message": "Staff scheduling workflow executed successfully",
-                "recommendations": ["Optimize shift patterns", "Balance workload distribution"]
-            }
-        }
-    
-    async def _execute_demand_forecasting_workflow(self, user_input: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute demand forecasting workflow."""
-        return {
-            "status": "success",
-            "workflow_type": "demand_forecasting",
-            "industry": "retail",
-            "execution_time": 16.4,
-            "steps_completed": 4,
-            "results": {
-                "message": "Demand forecasting workflow executed successfully",
-                "recommendations": ["Improve inventory management", "Optimize supply chain"]
-            }
-        }
-    
-    async def _execute_route_optimization_workflow(self, user_input: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute route optimization workflow."""
-        return {
-            "status": "success",
-            "workflow_type": "route_optimization",
-            "industry": "logistics",
-            "execution_time": 19.8,
-            "steps_completed": 5,
-            "results": {
-                "message": "Route optimization workflow executed successfully",
-                "recommendations": ["Minimize travel time", "Reduce fuel costs"]
-            }
-        }
-    
-    async def _execute_generic_workflow(self, industry: str, workflow_id: str, user_input: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute generic workflow for unsupported combinations."""
-        return {
-            "status": "success",
-            "workflow_type": workflow_id,
-                "industry": industry,
-            "execution_time": 12.5,
-            "steps_completed": 3,
-            "results": {
-                "message": f"Generic {workflow_id} workflow executed for {industry} industry",
-                "recommendations": ["Customize workflow for specific requirements"]
-            }
-        }
-    
-    def _determine_optimization_type(self, problem_description: str, intent: str, industry: str) -> str:
-        """Determine the mathematical optimization problem type."""
-        problem_lower = problem_description.lower()
-        
-        # Portfolio optimization with volatility constraints (Quadratic Programming)
-        if ("portfolio" in problem_lower and "volatility" in problem_lower) or \
-           ("asset allocation" in problem_lower and "risk" in problem_lower):
-            return "quadratic_programming"
-        
-        # Production planning with binary decisions (Mixed Integer Linear Programming)
-        if ("production" in problem_lower and ("binary" in problem_lower or "yes/no" in problem_lower or "schedule" in problem_lower)) or \
-           ("manufacturing" in problem_lower and "setup" in problem_lower):
-            return "mixed_integer_linear_programming"
-        
-        # Network optimization and routing (Mixed Integer Linear Programming)
-        if ("network" in problem_lower or "routing" in problem_lower or "traveling salesman" in problem_lower) or \
-           ("assignment" in problem_lower and "binary" in problem_lower):
-            return "mixed_integer_linear_programming"
-        
-        # Resource allocation with linear constraints (Linear Programming)
-        if ("resource allocation" in problem_lower and "linear" in problem_lower) or \
-           ("transportation" in problem_lower and "cost" in problem_lower):
-            return "linear_programming"
-        
-        # Supply chain optimization (Mixed Integer Linear Programming)
-        if ("supply chain" in problem_lower or "inventory" in problem_lower and "binary" in problem_lower):
-            return "mixed_integer_linear_programming"
-        
-        # Scheduling problems (Mixed Integer Linear Programming)
-        if ("scheduling" in problem_lower or "timetable" in problem_lower):
-            return "mixed_integer_linear_programming"
-        
-        # Default to linear programming for simple problems
-        return "linear_programming"
-    
-    def _get_solver_requirements(self, optimization_type: str) -> dict:
-        """Get solver requirements for the optimization type."""
-        solver_map = {
-            "linear_programming": {
-                "primary": ["PDLP", "GLOP"],
-                "fallback": ["GLOP"],
-                "capabilities": ["linear_constraints", "continuous_variables"]
-            },
-            "quadratic_programming": {
-                "primary": ["OSQP", "ECOS"],
-                "fallback": ["linear_approximation"],
-                "capabilities": ["quadratic_constraints", "continuous_variables"]
-            },
-            "mixed_integer_linear_programming": {
-                "primary": ["SCIP", "CBC"],
-                "fallback": ["linear_programming"],
-                "capabilities": ["linear_constraints", "integer_variables", "binary_variables"]
-            },
-            "mixed_integer_quadratic_programming": {
-                "primary": ["SCIP", "GUROBI"],
-                "fallback": ["mixed_integer_linear_programming"],
-                "capabilities": ["quadratic_constraints", "integer_variables", "binary_variables"]
-            }
-        }
-        
-        return solver_map.get(optimization_type, solver_map["linear_programming"])
-    
-    async def select_solver(
-        self,
-        optimization_type: str,
-        problem_size: Optional[Dict[str, Any]] = None,
-        performance_requirement: str = "balanced"
-    ) -> Dict[str, Any]:
-        """
-        Select the best available solver for the optimization problem.
-        
-        Args:
-            optimization_type: Type of optimization problem (LP, QP, MILP, etc.)
-            problem_size: Dictionary with problem size information
-            performance_requirement: "speed", "accuracy", or "balanced"
-            
-        Returns:
-            Solver selection results with recommendations
-        """
-        try:
-            # Use the solver selector to choose the best solver
-            selection_result = self.solver_selector.select_solver(
-                optimization_type=optimization_type,
-                problem_size=problem_size or {},
-                performance_requirement=performance_requirement
-            )
-            
-            # Get additional solver recommendations
-            recommendations = self.solver_selector.get_solver_recommendations(optimization_type)
-            
-            return {
-                "status": "success",
-                "step": "solver_selection",
-                "timestamp": datetime.now().isoformat(),
-                "result": {
-                    "selected_solver": selection_result["selected_solver"],
-                    "optimization_type": optimization_type,
-                    "capabilities": selection_result["capabilities"],
-                    "performance_rating": selection_result["performance_rating"],
-                    "fallback_solvers": selection_result["fallback_solvers"],
-                    "reasoning": selection_result["reasoning"],
-                    "recommendations": recommendations,
-                    "available_solvers": self.solver_selector.list_available_solvers()
-                },
-                "message": f"Selected {selection_result['selected_solver']} for {optimization_type} optimization"
-            }
-            
-        except Exception as e:
-            logger.error(f"Solver selection error: {e}")
-            return {
-                "status": "error",
-                "step": "solver_selection",
-                "timestamp": datetime.now().isoformat(),
-                "error": str(e)
-            }
+            return {"status": "error", "step": "explainability", "error": str(e)}
     
     async def simulate_scenarios(
         self,
         problem_description: str,
-        optimization_solution: Optional[Dict[str, Any]] = None,
-        scenario_parameters: Optional[Dict[str, Any]] = None,
+        optimization_solution: Optional[Dict] = None,
+        scenario_parameters: Optional[Dict] = None,
         simulation_type: str = "monte_carlo",
         num_trials: int = 10000
     ) -> Dict[str, Any]:
-        """
-        Run simulation analysis on optimization scenarios.
-        
-        Args:
-            problem_description: Original problem description
-            optimization_solution: Results from optimization solving
-            scenario_parameters: Parameters for scenario analysis
-            simulation_type: Type of simulation (monte_carlo, sensitivity, what_if)
-            num_trials: Number of simulation trials
-            
-        Returns:
-            Simulation results with risk analysis and scenario comparison
-        """
         try:
-            # Extract optimization results
-            solution_status = optimization_solution.get('status', 'unknown') if optimization_solution else 'unknown'
-            objective_value = optimization_solution.get('objective_value', 0) if optimization_solution else 0
-            optimal_values = optimization_solution.get('optimal_values', {}) if optimization_solution else {}
+            # Validate that we have actual optimization results to simulate
+            if not optimization_solution or optimization_solution.get('status') != 'success':
+                return {
+                    "status": "error",
+                    "step": "simulation_analysis",
+                    "error": "Cannot simulate scenarios: No successful optimization found",
+                    "message": "Optimization must be completed successfully before simulation can be performed"
+                }
             
-            # Determine simulation approach based on solution status
-            if solution_status == 'infeasible':
-                simulation_focus = "INFEASIBILITY SCENARIO ANALYSIS"
-                analysis_type = "alternative_scenarios"
-            elif solution_status == 'optimal':
-                simulation_focus = "RISK ANALYSIS & SENSITIVITY"
-                analysis_type = "risk_assessment"
-            else:
-                simulation_focus = "GENERAL SIMULATION ANALYSIS"
-                analysis_type = "scenario_analysis"
+            # Validate that we have actual results
+            result_data = optimization_solution.get('result', {})
+            if not result_data or result_data.get('status') != 'optimal':
+                return {
+                    "status": "error",
+                    "step": "simulation_analysis", 
+                    "error": "Cannot simulate scenarios: No optimal solution found",
+                    "message": "Optimal solution required for scenario simulation"
+                }
             
-            # Check available simulation engines
-            available_engines = []
-            if HAS_MONTE_CARLO:
-                available_engines.append("Monte Carlo (NumPy/SciPy)")
-            if HAS_DISCRETE_EVENT:
-                available_engines.append("Discrete Event (SimPy)")
-            if HAS_AGENT_BASED:
-                available_engines.append("Agent-Based (Mesa)")
-            if HAS_SYSTEM_DYNAMICS:
-                available_engines.append("System Dynamics (PySD)")
-            if HAS_STOCHASTIC_OPT:
-                available_engines.append("Stochastic Optimization (SALib/PyMC)")
+            if simulation_type != "monte_carlo" or not HAS_MONTE_CARLO:
+                return {
+                    "status": "error",
+                    "error": f"Only Monte Carlo supported (NumPy required)",
+                    "available_simulations": ["monte_carlo"],
+                    "roadmap": ["discrete_event", "agent_based"]
+                }
             
-            # Select appropriate engine based on simulation type
-            engine_used = "AI-Powered Simulation (Claude 3 Haiku)"
-            simulation_results = None
+            obj_val = result_data.get('objective_value', 0)
+            if obj_val == 0:
+                return {
+                    "status": "error",
+                    "step": "simulation_analysis",
+                    "error": "Cannot simulate scenarios: Zero objective value",
+                    "message": "Valid objective value required for meaningful simulation"
+                }
             
-            if simulation_type == "monte_carlo" and HAS_MONTE_CARLO:
-                engine_used = "Monte Carlo (NumPy/SciPy)"
-                simulation_results = self._run_monte_carlo_simulation(optimization_solution, problem_description, num_trials)
-            elif simulation_type == "discrete_event" and HAS_DISCRETE_EVENT:
-                engine_used = "Discrete Event (SimPy)"
-                simulation_results = self._run_discrete_event_simulation(optimization_solution, scenario_parameters)
-            elif simulation_type == "agent_based" and HAS_AGENT_BASED:
-                engine_used = "Agent-Based (Mesa)"
-                simulation_results = self._run_agent_based_simulation(optimization_solution, scenario_parameters)
-            elif simulation_type == "system_dynamics" and HAS_SYSTEM_DYNAMICS:
-                engine_used = "System Dynamics (PySD)"
-                simulation_results = self._run_system_dynamics_simulation(optimization_solution, scenario_parameters)
-            elif simulation_type == "stochastic_optimization" and HAS_STOCHASTIC_OPT:
-                engine_used = "Stochastic Optimization (SALib/PyMC)"
-                simulation_results = self._run_stochastic_optimization_simulation(optimization_solution, scenario_parameters)
-            
-            # Create a simplified prompt that's less likely to cause JSON parsing issues
-            prompt = f"""You are a quantitative analyst running simulation analysis. Provide comprehensive scenario analysis.
-
-{simulation_focus}
-
-PROBLEM CONTEXT:
-- Business Problem: {problem_description}
-- Solution Status: {solution_status}
-- Objective Value: {objective_value}
-- Optimal Values: {optimal_values}
-
-SIMULATION PARAMETERS:
-- Simulation Type: {simulation_type}
-- Number of Trials: {num_trials}
-- Analysis Type: {analysis_type}
-- Engine Used: {engine_used}
-- Available Engines: {', '.join(available_engines)}
-
-ACTUAL SIMULATION RESULTS:
-{json.dumps(simulation_results, indent=2) if simulation_results else "Using AI-powered simulation"}
-
-Provide a comprehensive simulation analysis in valid JSON format with the following structure:
-- simulation_summary: analysis type, simulation type, num trials, status, execution time
-- scenario_analysis: scenarios tested with feasibility, expected outcomes, risk metrics
-- risk_analysis: uncertainty factors, stress testing scenarios
-- recommendations: primary recommendation, implementation guidance, risk mitigation
-- technical_details: simulation engine, available engines, computational efficiency
-
-Use realistic financial metrics and provide actionable recommendations. Focus on decision-making insights."""
-
-            # Use Claude 3 Haiku for simulation analysis
-            response_text = self._invoke_bedrock_model(
-                model_id="anthropic.claude-3-haiku-20240307-v1:0",
-                prompt=prompt,
-                max_tokens=4000
-            )
-            
-            # Clean and parse the response
-            cleaned_response = self._clean_json_text(response_text)
-            simulation_result = json.loads(cleaned_response)
-            
-            # Enhance with mathematical simulation if scientific libraries are available
-            if HAS_MONTE_CARLO and simulation_type == "monte_carlo":
-                # Run actual Monte Carlo simulation
-                mc_results = self._run_monte_carlo_simulation(optimization_solution, problem_description, num_trials)
-                if "error" not in mc_results:
-                    simulation_result["mathematical_simulation"] = mc_results
+            np.random.seed(42)
+            scenarios = np.random.normal(obj_val, obj_val * 0.1, num_trials)
             
             return {
                 "status": "success",
                 "step": "simulation_analysis",
                 "timestamp": datetime.now().isoformat(),
-                "result": simulation_result,
-                "message": f"Simulation analysis completed using {simulation_type} with {num_trials} trials",
-                "simulation_engine": "hybrid" if HAS_MONTE_CARLO else "ai_only"
-            }
-            
-        except Exception as e:
-            logger.error(f"Simulation analysis error: {e}")
-            return {
-                "status": "error",
-                "step": "simulation_analysis",
-                "timestamp": datetime.now().isoformat(),
-                "error": str(e),
-                "message": "Simulation analysis failed"
-            }
-    
-    def _run_monte_carlo_simulation(self, optimization_solution: Dict[str, Any], problem_description: str, num_trials: int) -> Dict[str, Any]:
-        """Run Monte Carlo simulation by identifying uncertainty sources from the problem using AI."""
-        if not HAS_MONTE_CARLO:
-            return {"error": "Monte Carlo libraries not available"}
-        
-        try:
-            # Use AI to identify uncertainty sources
-            uncertainty_prompt = f"""Analyze this optimization problem and identify sources of uncertainty:
-
-PROBLEM: {problem_description}
-
-OPTIMIZATION SOLUTION: {optimization_solution}
-
-What parameters are uncertain in this problem? For each uncertain parameter, estimate:
-1. Distribution type (normal, uniform, beta, etc.)
-2. Mean/expected value
-3. Standard deviation or range
-4. How it affects the objective function
-
-Respond with JSON:
-{{
-  "uncertain_parameters": [
-    {{
-      "name": "demand_variability",
-      "distribution": "normal",
-      "mean": 1.0,
-      "std_dev": 0.10,
-      "impact": "Affects constraint satisfaction and production quantity"
-    }}
-  ]
-}}"""
-            
-            # Get uncertainty model from AI
-            uncertainty_response = self._invoke_bedrock_model(
-                model_id="anthropic.claude-3-haiku-20240307-v1:0",
-                prompt=uncertainty_prompt,
-                max_tokens=2000
-            )
-            
-            uncertainty_model = self._safe_json_parse(uncertainty_response, {
-                "uncertain_parameters": [
-                    {
-                        "name": "default_uncertainty",
-                        "distribution": "normal",
-                        "mean": 1.0,
-                        "std_dev": 0.05,
-                        "impact": "General uncertainty in objective value"
+                "result": {
+                    "simulation_type": "monte_carlo",
+                    "num_trials": num_trials,
+                    "risk_metrics": {
+                        "mean": float(np.mean(scenarios)),
+                        "std_dev": float(np.std(scenarios)),
+                        "percentile_5": float(np.percentile(scenarios, 5)),
+                        "percentile_95": float(np.percentile(scenarios, 95))
                     }
-                ]
-            })
-            
-            # Extract optimization results
-            objective_value = optimization_solution.get('objective_value', 0)
-            optimal_values = optimization_solution.get('optimal_values', {})
-            
-            # Run simulation with problem-specific uncertainty
-            np.random.seed(42)  # For reproducibility
-            scenarios = []
-            
-            for _ in range(num_trials):
-                scenario_outcome = objective_value
-                
-                # Apply uncertainty from each identified parameter
-                for param in uncertainty_model.get('uncertain_parameters', []):
-                    if param['distribution'] == 'normal':
-                        perturbation = np.random.normal(param['mean'], param['std_dev'])
-                        scenario_outcome *= perturbation
-                    elif param['distribution'] == 'uniform':
-                        perturbation = np.random.uniform(param.get('min', 0.9), param.get('max', 1.1))
-                        scenario_outcome *= perturbation
-                
-                scenarios.append(scenario_outcome)
-            
-            # Calculate risk metrics
-            scenarios_array = np.array(scenarios)
-            mean_outcome = np.mean(scenarios_array)
-            std_dev = np.std(scenarios_array)
-            percentile_5 = np.percentile(scenarios_array, 5)
-            percentile_95 = np.percentile(scenarios_array, 95)
-            var_95 = np.percentile(scenarios_array, 5)  # Value at Risk (95% confidence)
-            
-            return {
-                "simulation_type": "monte_carlo_adaptive",
-                "num_trials": num_trials,
-                "uncertainty_sources": uncertainty_model.get('uncertain_parameters', []),
-                "risk_metrics": {
-                    "mean": float(mean_outcome),
-                    "std_dev": float(std_dev),
-                    "percentile_5": float(percentile_5),
-                    "percentile_95": float(percentile_95),
-                    "var_95": float(var_95)
                 },
-                "outcomes": scenarios_array.tolist()[:100],  # Sample of outcomes
-                "convergence": True
+                "message": f"Monte Carlo completed ({num_trials} trials) based on actual optimization results"
             }
-            
         except Exception as e:
-            logger.error(f"Monte Carlo simulation error: {e}")
-            return {"error": str(e)}
+            return {"status": "error", "step": "simulation_analysis", "error": str(e)}
     
-    def _run_discrete_event_simulation(self, optimization_solution: Dict[str, Any], scenario_parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """Run discrete event simulation using SimPy."""
-        if not HAS_DISCRETE_EVENT:
-            return {"error": "SimPy not available"}
-        
+    async def get_workflow_templates(self) -> Dict[str, Any]:
         try:
-            # This would implement a discrete event simulation
-            # For now, return a placeholder
             return {
-                "simulation_type": "discrete_event",
-                "status": "placeholder",
-                "message": "Discrete event simulation not yet implemented"
+                "status": "success",
+                "workflow_templates": self.workflow_manager.get_all_workflows(),
+                "total_workflows": 21
             }
-            
         except Exception as e:
-            logger.error(f"Discrete event simulation error: {e}")
-            return {"error": str(e)}
+            return {"status": "error", "error": str(e)}
     
-    def _run_agent_based_simulation(self, optimization_solution: Dict[str, Any], scenario_parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """Run agent-based simulation using Mesa."""
-        if not HAS_AGENT_BASED:
-            return {"error": "Mesa not available"}
-        
+    async def execute_workflow(self, industry: str, workflow_id: str, user_input: Optional[Dict] = None) -> Dict[str, Any]:
         try:
-            # This would implement an agent-based simulation
-            # For now, return a placeholder
-            return {
-                "simulation_type": "agent_based",
-                "status": "placeholder",
-                "message": "Agent-based simulation not yet implemented"
-            }
+            problem_desc = f"{workflow_id} for {industry}"
             
-        except Exception as e:
-            logger.error(f"Agent-based simulation error: {e}")
-            return {"error": str(e)}
-    
-    def _run_system_dynamics_simulation(self, optimization_solution: Dict[str, Any], scenario_parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """Run system dynamics simulation using PySD."""
-        if not HAS_SYSTEM_DYNAMICS:
-            return {"error": "PySD not available"}
-        
-        try:
-            # This would implement a system dynamics simulation
-            # For now, return a placeholder
-            return {
-                "simulation_type": "system_dynamics",
-                "status": "placeholder",
-                "message": "System dynamics simulation not yet implemented"
-            }
-            
-        except Exception as e:
-            logger.error(f"System dynamics simulation error: {e}")
-            return {"error": str(e)}
-    
-    def _run_stochastic_optimization_simulation(self, optimization_solution: Dict[str, Any], scenario_parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """Run stochastic optimization simulation using SALib/PyMC."""
-        if not HAS_STOCHASTIC_OPT:
-            return {"error": "SALib/PyMC not available"}
-        
-        try:
-            # This would implement a stochastic optimization simulation
-            # For now, return a placeholder
-            return {
-                "simulation_type": "stochastic_optimization",
-                "status": "placeholder",
-                "message": "Stochastic optimization simulation not yet implemented"
-            }
-            
-        except Exception as e:
-            logger.error(f"Stochastic optimization simulation error: {e}")
-            return {"error": str(e)}
-
-    async def explain_optimization(
-        self,
-        problem_description: str,
-        intent_data: Optional[Dict[str, Any]] = None,
-        data_analysis: Optional[Dict[str, Any]] = None,
-        model_building: Optional[Dict[str, Any]] = None,
-        optimization_solution: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """
-        Provide business-facing explainability for the optimization process.
-        
-        Args:
-            problem_description: Original problem description
-            intent_data: Results from intent classification
-            data_analysis: Results from data analysis
-            model_building: Results from model building
-            optimization_solution: Results from optimization solving
-            
-        Returns:
-            Business-friendly explanation with trade-offs and assumptions
-        """
-        try:
-            # Extract key information from each step
-            intent = intent_data.get('intent', 'unknown') if intent_data else 'unknown'
-            industry = intent_data.get('industry', 'general') if intent_data else 'general'
-            optimization_type = intent_data.get('optimization_type', 'linear_programming') if intent_data else 'linear_programming'
-            
-            data_quality = data_analysis.get('data_quality', 'unknown') if data_analysis else 'unknown'
-            readiness_score = data_analysis.get('readiness_score', 0) if data_analysis else 0
-            
-            model_complexity = model_building.get('model_complexity', 'unknown') if model_building else 'unknown'
-            variables = model_building.get('variables', []) if model_building else []
-            constraints = model_building.get('constraints', []) if model_building else []
-            
-            # Ensure variables and constraints are lists
-            if isinstance(variables, int):
-                variables = [f"var_{i+1}" for i in range(variables)]
-            if isinstance(constraints, int):
-                constraints = [f"constraint_{i+1}" for i in range(constraints)]
-            
-            # Extract solver results with proper handling
-            solution_status = optimization_solution.get('status', 'unknown') if optimization_solution else 'unknown'
-            objective_value = optimization_solution.get('objective_value', 0) if optimization_solution else 0
-            solve_time = optimization_solution.get('solve_time', 0) if optimization_solution else 0
-            optimal_values = optimization_solution.get('optimal_values', {}) if optimization_solution else {}
-            constraints_satisfied = optimization_solution.get('constraints_satisfied', True) if optimization_solution else True
-            recommendations = optimization_solution.get('recommendations', []) if optimization_solution else []
-            error_message = optimization_solution.get('error', '') if optimization_solution else ''
-            
-            # Determine explanation type based on solver outcome
-            if solution_status == 'infeasible':
-                explanation_focus = "INFEASIBLE PROBLEM ANALYSIS"
-                status_explanation = f"""
-SOLVER OUTCOME: INFEASIBLE
-- The optimization problem has NO SOLUTION that satisfies all constraints
-- This means the constraints are too restrictive or conflicting
-- Error: {error_message}
-- Recommendations: {recommendations}
-"""
-            elif solution_status == 'optimal':
-                explanation_focus = "OPTIMAL SOLUTION ANALYSIS"
-                status_explanation = f"""
-SOLVER OUTCOME: OPTIMAL SOLUTION FOUND
-- Best possible solution achieved
-- Objective Value: {objective_value}
-- All constraints satisfied: {constraints_satisfied}
-- Optimal Values: {optimal_values}
-"""
-            elif solution_status == 'unbounded':
-                explanation_focus = "UNBOUNDED PROBLEM ANALYSIS"
-                status_explanation = f"""
-SOLVER OUTCOME: UNBOUNDED
-- The objective can be improved indefinitely
-- This usually indicates missing constraints
-- Error: {error_message}
-"""
-            else:
-                explanation_focus = "GENERAL OPTIMIZATION ANALYSIS"
-                status_explanation = f"""
-SOLVER OUTCOME: {solution_status.upper()}
-- Objective Value: {objective_value}
-- Solve Time: {solve_time:.3f} seconds
-- Error: {error_message}
-"""
-
-            prompt = f"""You are a business consultant explaining an optimization analysis to executives. Provide a clear, non-technical explanation.
-
-{explanation_focus}
-
-PROBLEM CONTEXT:
-- Business Problem: {problem_description}
-- Industry: {industry}
-- Problem Type: {intent}
-- Optimization Method: {optimization_type}
-
-ANALYSIS RESULTS:
-- Data Quality: {data_quality}
-- Data Readiness: {readiness_score:.1%}
-- Model Complexity: {model_complexity}
-- Number of Variables: {len(variables)}
-- Number of Constraints: {len(constraints)}
-{status_explanation}
-
-REQUIRED OUTPUT FORMAT:
-Respond with ONLY valid JSON in this exact structure:
-
-{{
-  "executive_summary": {{
-    "problem_statement": "Clear business problem description",
-    "solution_approach": "High-level approach taken",
-    "key_findings": ["Finding 1", "Finding 2", "Finding 3"],
-    "business_impact": "Expected business value and impact",
-    "solver_outcome": "{solution_status}",
-    "outcome_explanation": "Clear explanation of what the solver result means for the business"
-  }},
-  "solver_analysis": {{
-    "status": "{solution_status}",
-    "objective_value": {objective_value},
-    "solve_time": {solve_time},
-    "constraints_satisfied": {constraints_satisfied},
-    "infeasibility_analysis": {{
-      "conflicting_constraints": ["List constraints that conflict"],
-      "overly_restrictive_constraints": ["List constraints that are too tight"],
-      "suggested_relaxations": ["How to fix the infeasibility"]
-    }},
-    "optimal_solution_details": {{
-      "key_variables": {optimal_values},
-      "binding_constraints": ["Constraints that limit the solution"],
-      "sensitivity_insights": ["What changes would improve the solution"]
-    }}
-  }},
-  "analysis_breakdown": {{
-    "data_assessment": {{
-      "data_quality": "Assessment of data quality",
-      "missing_data": ["List of missing data elements"],
-      "assumptions_made": ["Key assumptions about the data"]
-    }},
-    "model_design": {{
-      "approach_justification": "Why this optimization approach was chosen",
-      "trade_offs": ["Trade-off 1", "Trade-off 2"],
-      "simplifications": ["Any simplifications made"]
-    }},
-    "solution_quality": {{
-      "confidence_level": "High/Medium/Low",
-      "limitations": ["Limitation 1", "Limitation 2"],
-      "recommendations": ["Recommendation 1", "Recommendation 2"]
-    }}
-  }},
-  "implementation_guidance": {{
-    "next_steps": ["Step 1", "Step 2", "Step 3"],
-    "monitoring_metrics": ["Metric 1", "Metric 2"],
-    "risk_considerations": ["Risk 1", "Risk 2"]
-  }},
-  "technical_details": {{
-    "optimization_type": "{optimization_type}",
-    "solver_used": "Solver information",
-    "computational_efficiency": "Performance assessment",
-    "scalability": "How well this scales"
-  }}
-}}
-
-IMPORTANT RULES:
-1. Use business language, avoid technical jargon
-2. Focus on business value and practical implications
-3. Be honest about limitations and assumptions
-4. For INFEASIBLE problems: Explain WHY it's infeasible and HOW to fix it
-5. For OPTIMAL solutions: Highlight the key insights and business value
-6. For UNBOUNDED problems: Explain what constraints are missing
-7. Always provide actionable next steps based on the solver outcome
-8. Provide actionable recommendations
-9. Explain trade-offs clearly
-10. Respond with ONLY the JSON object, no other text
-
-Provide the business explanation now:"""
-
-            # Use Claude 3 Haiku for explainability
-            response_text = self._invoke_bedrock_model(
-                model_id="anthropic.claude-3-haiku-20240307-v1:0",
-                prompt=prompt,
-                max_tokens=4000
-            )
-            
-            # Parse the response
-            try:
-                result = json.loads(response_text)
-            except json.JSONDecodeError:
-                # Fallback explanation if JSON parsing fails
-                result = {
-                    "executive_summary": {
-                        "problem_statement": problem_description[:200] + "...",
-                        "solution_approach": f"Used {optimization_type} optimization",
-                        "key_findings": ["Analysis completed successfully"],
-                        "business_impact": "Optimization solution found"
-                    },
-                    "analysis_breakdown": {
-                        "data_assessment": {
-                            "data_quality": data_quality,
-                            "missing_data": [],
-                            "assumptions_made": ["Standard optimization assumptions applied"]
-                        },
-                        "model_design": {
-                            "approach_justification": f"Selected {optimization_type} based on problem characteristics",
-                            "trade_offs": ["Balanced accuracy vs computational efficiency"],
-                            "simplifications": ["Model simplified for computational tractability"]
-                        },
-                        "solution_quality": {
-                            "confidence_level": "Medium",
-                            "limitations": ["Solution depends on data quality and assumptions"],
-                            "recommendations": ["Validate results with domain experts"]
-                        }
-                    },
-                    "implementation_guidance": {
-                        "next_steps": ["Review solution", "Validate assumptions", "Implement gradually"],
-                        "monitoring_metrics": ["Objective value", "Constraint satisfaction"],
-                        "risk_considerations": ["Model assumptions may not hold in practice"]
-                    },
-                    "technical_details": {
-                        "optimization_type": optimization_type,
-                        "solver_used": "OR-Tools",
-                        "computational_efficiency": f"Solved in {solve_time:.3f} seconds",
-                        "scalability": "Good for problems of this size"
-                    }
-                }
+            intent_result = await self.classify_intent(problem_desc, industry)
+            data_result = await self.analyze_data(problem_desc, intent_result.get('result'))
+            model_result = await self.build_model(problem_desc, intent_result.get('result'), data_result.get('result'))
+            solve_result = await self.solve_optimization(problem_desc, intent_result.get('result'), data_result.get('result'), model_result)
+            explain_result = await self.explain_optimization(problem_desc, intent_result.get('result'), data_result.get('result'), model_result, solve_result.get('result'))
             
             return {
                 "status": "success",
-                "step": "explainability",
-                "timestamp": datetime.now().isoformat(),
-                "result": result,
-                "message": "Business explainability generated using Claude 3 Haiku"
+                "workflow_type": workflow_id,
+                "industry": industry,
+                "steps_completed": 5,
+                "results": {
+                    "intent_classification": intent_result,
+                    "data_analysis": data_result,
+                    "model_building": model_result,
+                    "optimization_solution": solve_result,
+                    "explainability": explain_result
                 }
-                
-        except Exception as e:
-            logger.error(f"Explainability error: {e}")
-            return {
-                "status": "error",
-                "step": "explainability",
-                "timestamp": datetime.now().isoformat(),
-                "error": str(e)
             }
-    
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
 
-# Global tools instance
+# ============================================================================
+# GLOBAL INSTANCE & WRAPPERS
+# ============================================================================
+
 _tools_instance = None
 
 def get_tools() -> DcisionAITools:
-    """Get the global tools instance."""
     global _tools_instance
     if _tools_instance is None:
         _tools_instance = DcisionAITools()
     return _tools_instance
 
-# Standalone function wrappers for MCP server compatibility
 async def classify_intent(problem_description: str, context: Optional[str] = None) -> Dict[str, Any]:
-    """Classify user intent for optimization requests."""
-    tools = get_tools()
-    return await tools.classify_intent(problem_description, context)
+    return await get_tools().classify_intent(problem_description, context)
 
-async def analyze_data(problem_description: str, intent_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Analyze and preprocess data for optimization."""
-    tools = get_tools()
-    return await tools.analyze_data(problem_description, intent_data)
+async def analyze_data(problem_description: str, intent_data: Optional[Dict] = None) -> Dict[str, Any]:
+    return await get_tools().analyze_data(problem_description, intent_data)
 
-async def build_model(problem_description: str, intent_data: Optional[Dict[str, Any]] = None, data_analysis: Optional[Dict[str, Any]] = None, solver_selection: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Build mathematical optimization model using Claude 3 Haiku."""
-    tools = get_tools()
-    return await tools.build_model(problem_description, intent_data, data_analysis, solver_selection)
+async def build_model(problem_description: str, intent_data: Optional[Dict] = None, data_analysis: Optional[Dict] = None, solver_selection: Optional[Dict] = None) -> Dict[str, Any]:
+    return await get_tools().build_model(problem_description, intent_data, data_analysis, solver_selection)
 
-async def solve_optimization(problem_description: str, intent_data: Optional[Dict[str, Any]] = None, data_analysis: Optional[Dict[str, Any]] = None, model_building: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Solve the optimization problem and generate results."""
-    tools = get_tools()
-    return await tools.solve_optimization(problem_description, intent_data, data_analysis, model_building)
+async def solve_optimization(problem_description: str, intent_data: Optional[Dict] = None, data_analysis: Optional[Dict] = None, model_building: Optional[Dict] = None) -> Dict[str, Any]:
+    return await get_tools().solve_optimization(problem_description, intent_data, data_analysis, model_building)
 
-async def select_solver(optimization_type: str, problem_size: Optional[Dict[str, Any]] = None, performance_requirement: str = "balanced") -> Dict[str, Any]:
-    """Select the best available solver for optimization problems."""
-    tools = get_tools()
-    return await tools.select_solver(optimization_type, problem_size, performance_requirement)
+async def select_solver(optimization_type: str, problem_size: Optional[Dict] = None, performance_requirement: str = "balanced") -> Dict[str, Any]:
+    return await get_tools().select_solver(optimization_type, problem_size, performance_requirement)
 
-async def explain_optimization(problem_description: str, intent_data: Optional[Dict[str, Any]] = None, data_analysis: Optional[Dict[str, Any]] = None, model_building: Optional[Dict[str, Any]] = None, optimization_solution: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Provide business-facing explainability for optimization results."""
-    tools = get_tools()
-    return await tools.explain_optimization(problem_description, intent_data, data_analysis, model_building, optimization_solution)
+async def explain_optimization(problem_description: str, intent_data: Optional[Dict] = None, data_analysis: Optional[Dict] = None, model_building: Optional[Dict] = None, optimization_solution: Optional[Dict] = None) -> Dict[str, Any]:
+    return await get_tools().explain_optimization(problem_description, intent_data, data_analysis, model_building, optimization_solution)
+
+async def simulate_scenarios(problem_description: str, optimization_solution: Optional[Dict] = None, scenario_parameters: Optional[Dict] = None, simulation_type: str = "monte_carlo", num_trials: int = 10000) -> Dict[str, Any]:
+    return await get_tools().simulate_scenarios(problem_description, optimization_solution, scenario_parameters, simulation_type, num_trials)
 
 async def get_workflow_templates() -> Dict[str, Any]:
-    """Get available industry workflow templates."""
-    tools = get_tools()
-    return await tools.get_workflow_templates()
+    return await get_tools().get_workflow_templates()
 
-async def execute_workflow(industry: str, workflow_id: str, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Execute a complete optimization workflow."""
-    tools = get_tools()
-    return await tools.execute_workflow(industry, workflow_id, user_input)
-
-async def simulate_scenarios(problem_description: str, optimization_solution: Optional[Dict[str, Any]] = None, scenario_parameters: Optional[Dict[str, Any]] = None, simulation_type: str = "monte_carlo", num_trials: int = 10000) -> Dict[str, Any]:
-    """Run simulation analysis on optimization scenarios."""
-    tools = get_tools()
-    return await tools.simulate_scenarios(problem_description, optimization_solution, scenario_parameters, simulation_type, num_trials)
-
+async def execute_workflow(industry: str, workflow_id: str, user_input: Optional[Dict] = None) -> Dict[str, Any]:
+    return await get_tools().execute_workflow(industry, workflow_id, user_input)

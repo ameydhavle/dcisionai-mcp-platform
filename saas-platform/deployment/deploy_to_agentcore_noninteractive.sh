@@ -35,9 +35,9 @@ echo "📁 Setting up project structure..."
 mkdir -p $PROJECT_NAME
 cd $PROJECT_NAME
 
-# Copy MCP server and requirements
-cp ../agentcore_mcp_server.py ./mcp_server.py
-cp ../requirements.txt ./requirements.txt
+# Copy standalone MCP server (completely avoiding protobuf conflicts)
+cp ../dcisionai_agentcore_standalone.py ./mcp_server.py
+cp ../requirements_standalone.txt ./requirements.txt
 touch __init__.py
 
 echo "✅ Project structure created:"
@@ -81,8 +81,8 @@ echo "  2. Push to Amazon ECR"
 echo "  3. Create AgentCore runtime"
 echo "  4. Deploy to AWS"
 
-# Use the configuration file for non-interactive deployment
-agentcore configure --config agentcore_config.yaml --non-interactive
+# Use the correct syntax for non-interactive deployment
+agentcore configure --entrypoint mcp_server.py --non-interactive
 
 # Deploy the agent
 agentcore launch

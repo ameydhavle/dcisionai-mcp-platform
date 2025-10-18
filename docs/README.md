@@ -1,183 +1,247 @@
-# 📚 DcisionAI Platform Documentation
+# DcisionAI Documentation
 
-Welcome to the comprehensive documentation for the DcisionAI Platform - the Intelligent Enterprise Decision Layer.
+## 🚀 **Welcome to DcisionAI**
 
-## 🎯 **What is DcisionAI?**
-
-DcisionAI is a revolutionary decision support platform that bridges the gap between AI chatbots and spreadsheets, providing mathematically proven optimal decisions with full transparency and interactivity.
-
-## 📖 **Documentation Overview**
-
-### **🎯 Strategic Plans**
-- **[Dual-Front Strategy](./DUAL_FRONT_STRATEGY.md)** - Complete strategic overview of our dual-market approach
-- **[SaaS Platform Plan](./SAAS_PLATFORM_PLAN.md)** - Business market strategy and go-to-market plan
-- **[MCP Server Plan](./MCP_SERVER_PLAN.md)** - Developer market strategy and distribution plan
-
-### **🚀 [Quick Start Guide](./QUICK_START.md)**
-Get up and running with DcisionAI in 5 minutes. Perfect for new users who want to start optimizing immediately.
-
-**What you'll learn:**
-- How to access the platform
-- Your first optimization problem
-- Simulation analysis and risk assessment
-- Interactive features and 3D visualizations
-- API basics and examples
-
-### **🌟 [Platform Overview](./PLATFORM_OVERVIEW.md)**
-Comprehensive overview of DcisionAI's capabilities, use cases, and business value.
-
-**What you'll learn:**
-- Platform capabilities and features
-- Use cases across industries
-- Technical specifications
-- Business value and ROI
-
-### **🏗️ [Architecture Documentation](./Architecture.md)**
-Detailed technical architecture of the DcisionAI platform.
-
-**What you'll learn:**
-- System architecture and components
-- 8 core tools and their functions
-- Frontend and backend architecture
-- Deployment and infrastructure
-
-### **🔌 [API Reference](./API_REFERENCE.md)**
-Complete API documentation with examples and endpoints.
-
-**What you'll learn:**
-- All available API endpoints
-- Request/response formats
-- Error handling and rate limits
-- SDK support and examples
-
-## 🎯 **Quick Navigation**
-
-### **For Business Users**
-- Start with [Quick Start Guide](./QUICK_START.md)
-- Explore [Platform Overview](./PLATFORM_OVERVIEW.md)
-- Review [SaaS Platform Plan](./SAAS_PLATFORM_PLAN.md) for business strategy
-- Try the web interface: https://platform.dcisionai.com
-
-### **For Developers**
-- Check [API Reference](./API_REFERENCE.md)
-- Review [Architecture Documentation](./Architecture.md)
-- Read [MCP Server Plan](./MCP_SERVER_PLAN.md) for developer strategy
-- Use the API: `https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod`
-
-### **For Enterprises**
-- Read [Platform Overview](./PLATFORM_OVERVIEW.md) for business value
-- Review [Dual-Front Strategy](./DUAL_FRONT_STRATEGY.md) for complete strategic overview
-- Explore both [SaaS Platform Plan](./SAAS_PLATFORM_PLAN.md) and [MCP Server Plan](./MCP_SERVER_PLAN.md)
-- Review [Architecture Documentation](./ARCHITECTURE.md) for technical details
-- Contact enterprise@dcisionai.com for custom solutions
-
-## 🚀 **Platform Status**
-
-### **Current Version**: 5.0.0-enhanced-with-new-tools
-### **Status**: ✅ **FULLY OPERATIONAL**
-### **Availability**: 24/7 global access
-
-### **Live Endpoints**
-- **Frontend**: https://platform.dcisionai.com
-- **API**: https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod
-- **Health Check**: https://h5w9r03xkf.execute-api.us-east-1.amazonaws.com/prod/health
-
-## 🔧 **8 Core Tools**
-
-### **Original 4 Tools (Optimization Pipeline)**
-1. **Intent Classification** - Analyze and classify optimization problems
-2. **Data Analysis** - Assess data requirements and readiness
-3. **Model Building** - Create mathematical optimization models
-4. **Optimization Solving** - Solve problems using advanced algorithms
-
-### **New 4 Tools (Enhanced Analysis)**
-5. **3D Landscape Generation** - Interactive 3D visualization
-6. **Sensitivity Analysis** - Parameter impact assessment
-7. **Monte Carlo Risk Analysis** - Risk simulations and metrics
-8. **Enhanced Business Impact** - Sophisticated financial analysis
-
-## 🎨 **Key Features**
-
-### **Decision Intelligence**
-- **Mathematical Rigor**: Real optimization using PuLP CBC solver
-- **AI-Powered**: AWS Bedrock with Claude models
-- **Explainable Results**: Clear reasoning behind every decision
-- **Interactive Analysis**: Real-time parameter adjustment
-
-### **Advanced Visualizations**
-- **3D Decision Landscape**: Interactive 3D optimization space
-- **Sensitivity Analysis**: Parameter impact with sliders
-- **Risk Analysis**: Monte Carlo simulations with confidence intervals
-- **Business Impact**: Financial and operational metrics
-
-### **Enterprise Ready**
-- **Professional UI**: Perplexity-style interface
-- **Production Infrastructure**: AWS-hosted with global CDN
-- **API Access**: REST API with SDK support
-- **Scalable**: Serverless architecture with auto-scaling
-
-## 🌟 **Use Cases**
-
-### **Manufacturing**
-- Production optimization and scheduling
-- Supply chain and logistics optimization
-- Quality control and resource allocation
-- Capacity planning and utilization
-
-### **Retail**
-- Inventory management and optimization
-- Pricing strategy and dynamic pricing
-- Store layout and product placement
-- Marketing mix optimization
-
-### **Finance**
-- Portfolio optimization and risk management
-- Credit risk and lending decisions
-- Fraud detection and prevention
-- Capital allocation and investment
-
-### **Healthcare**
-- Resource planning and allocation
-- Treatment optimization and protocols
-- Supply chain and inventory management
-- Capacity planning and utilization
-
-## 🔗 **External Resources**
-
-### **Platform Access**
-- **Web Interface**: https://platform.dcisionai.com
-- **API Documentation**: https://docs.dcisionai.com
-- **Status Page**: https://status.dcisionai.com
-
-### **Support**
-- **General Support**: support@dcisionai.com
-- **Enterprise Sales**: enterprise@dcisionai.com
-- **Developer Support**: dev@dcisionai.com
-
-### **Community**
-- **GitHub**: https://github.com/dcisionai
-- **Discord**: https://discord.gg/dcisionai
-- **Twitter**: https://twitter.com/dcisionai
-
-## 📊 **Documentation Stats**
-
-- **Last Updated**: October 2025
-- **Version**: 5.0.0-enhanced-with-new-tools
-- **Tools Documented**: 8/8 ✅
-- **API Endpoints**: 9/9 ✅
-- **Examples**: 20+ code examples
-- **Use Cases**: 15+ industry examples
-
-## 🎯 **Getting Started**
-
-1. **Read the [Quick Start Guide](./QUICK_START.md)** for immediate setup
-2. **Explore the [Platform Overview](./PLATFORM_OVERVIEW.md)** for comprehensive understanding
-3. **Try the platform** at https://platform.dcisionai.com
-4. **Check the [API Reference](./API_REFERENCE.md)** for integration
-5. **Review the [Architecture](./ARCHITECTURE.md)** for technical details
+DcisionAI is a comprehensive mathematical optimization platform that transforms complex business problems into actionable solutions using advanced AI reasoning and industry-leading optimization engines.
 
 ---
 
-*DcisionAI Platform Documentation - Your guide to intelligent decision support*
+## 📚 **Documentation Overview**
 
-**Ready to optimize? Start with the [Quick Start Guide](./QUICK_START.md)!** 🚀
+### **Getting Started**
+- **[Quick Start Guide](QUICK_START.md)** - Get up and running in 5 minutes
+- **[Platform Overview](PLATFORM_OVERVIEW.md)** - Comprehensive platform capabilities
+- **[Architecture](Architecture.md)** - System architecture and design principles
+
+### **API & Integration**
+- **[API Reference](API_REFERENCE.md)** - Complete REST API documentation
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Production deployment instructions
+
+### **Component Documentation**
+- **[MCP Server](mcp-server/README.md)** - Model Context Protocol server documentation
+- **[SaaS Platform](saas-platform/README.md)** - Web platform development guide
+- **[AgentCore Integration](agentcore/README.md)** - AWS Bedrock AgentCore deployment
+
+---
+
+## 🎯 **Quick Navigation**
+
+### **For End Users**
+1. **[Quick Start Guide](QUICK_START.md)** - Start optimizing immediately
+2. **[Platform Overview](PLATFORM_OVERVIEW.md)** - Understand capabilities
+3. **[API Reference](API_REFERENCE.md)** - Integrate with your applications
+
+### **For Developers**
+1. **[MCP Server](mcp-server/README.md)** - Integrate with IDEs and applications
+2. **[SaaS Platform](saas-platform/README.md)** - Contribute to the web platform
+3. **[Architecture](Architecture.md)** - Understand system design
+
+### **For DevOps/IT**
+1. **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Production deployment
+2. **[AgentCore Integration](agentcore/README.md)** - AWS infrastructure setup
+3. **[Architecture](Architecture.md)** - Infrastructure requirements
+
+---
+
+## 🌟 **Key Features**
+
+### **AI-Driven Optimization**
+- **Claude 3 Haiku Integration**: Advanced AI reasoning for model formulation
+- **Pattern-Breaking Technology**: Avoids training data biases for fresh analysis
+- **Chain-of-Thought Reasoning**: Transparent, auditable decision-making process
+
+### **Universal Problem Solving**
+- **Industry-Agnostic**: Works across any domain without hardcoded templates
+- **Multi-Solver Support**: OR-Tools, Gurobi, CPLEX, and specialized solvers
+- **Automatic Solver Selection**: AI chooses optimal solver based on problem characteristics
+
+### **Enterprise-Grade Platform**
+- **Serverless Architecture**: AWS Bedrock AgentCore Runtime for infinite scale
+- **High Availability**: 99.9% uptime with AWS infrastructure
+- **Security & Compliance**: Enterprise-grade authentication and data protection
+
+---
+
+## 🛠️ **Available Tools**
+
+### **Core Optimization Workflow**
+1. **`classify_intent`** - Problem classification and domain identification
+2. **`analyze_data`** - Data readiness assessment and quality analysis
+3. **`select_solver`** - Intelligent solver selection based on problem characteristics
+4. **`build_model`** - Mathematical model formulation using AI reasoning
+5. **`solve_optimization`** - Execute optimization and generate solutions
+6. **`explain_optimization`** - Business-facing explanation of results
+7. **`simulate_scenarios`** - Strategic analysis and risk assessment
+
+### **Advanced Features**
+- **`get_workflow_templates`** - Access to 21 industry-specific workflows
+- **`execute_workflow`** - End-to-end optimization for common business scenarios
+- **Pattern-Breaking Prompts** - Avoid AI training data biases
+- **Chain-of-Thought Reasoning** - Transparent decision-making process
+
+---
+
+## 🌐 **Deployment Options**
+
+### **1. SaaS Platform (Recommended)**
+- **URL**: `https://platform.dcisionai.com`
+- **Hosting**: AWS Bedrock AgentCore Runtime
+- **Access**: Web browser, no installation required
+- **Features**: Full optimization suite with modern UI
+
+### **2. MCP Server Integration**
+- **Installation**: `pip install dcisionai-mcp-server`
+- **Compatibility**: Cursor IDE, Claude Desktop, custom applications
+- **Features**: Direct tool access via MCP protocol
+
+### **3. API Integration**
+- **Endpoint**: RESTful API via Flask backend
+- **Authentication**: AWS IAM and session management
+- **Features**: Programmatic access for custom applications
+
+---
+
+## 🎯 **Use Cases**
+
+### **Manufacturing & Production**
+- Production scheduling and capacity planning
+- Supply chain optimization
+- Resource allocation and inventory management
+- Quality control and process optimization
+
+### **Financial Services**
+- Portfolio optimization and risk management
+- Trading execution and market making
+- Credit risk assessment
+- Capital allocation strategies
+
+### **Healthcare & Life Sciences**
+- Clinical trial optimization
+- Resource allocation in hospitals
+- Drug development pipeline management
+- Patient scheduling and workflow optimization
+
+### **Retail & E-commerce**
+- Inventory optimization across multiple locations
+- Pricing strategy and demand forecasting
+- Supply chain and logistics optimization
+- Customer segmentation and targeting
+
+### **Logistics & Transportation**
+- Route optimization and vehicle scheduling
+- Warehouse management and fulfillment
+- Last-mile delivery optimization
+- Fleet management and maintenance scheduling
+
+---
+
+## 🚀 **Getting Started**
+
+### **Option 1: Web Platform (Fastest)**
+1. Visit `https://platform.dcisionai.com`
+2. Describe your optimization problem
+3. Follow the guided workflow
+4. Get optimized solutions with business explanations
+
+### **Option 2: IDE Integration**
+1. Install: `pip install dcisionai-mcp-server`
+2. Configure in Cursor IDE or Claude Desktop
+3. Use tools directly in your AI conversations
+4. Access full optimization capabilities
+
+### **Option 3: API Integration**
+1. Set up AWS credentials
+2. Make API calls to backend endpoints
+3. Integrate optimization into your applications
+4. Scale with serverless infrastructure
+
+---
+
+## 📊 **Performance & Scale**
+
+### **Capabilities**
+- **Problem Size**: Up to 10,000 variables and constraints
+- **Response Time**: < 30 seconds for most optimization problems
+- **Concurrent Users**: Unlimited via serverless architecture
+- **Availability**: 99.9% uptime with AWS infrastructure
+
+### **Security**
+- **Authentication**: AWS IAM and session management
+- **Data Privacy**: End-to-end encryption and secure transmission
+- **Compliance**: SOC 2, GDPR, and industry-specific standards
+- **Isolation**: Serverless execution with resource limits
+
+---
+
+## 🔧 **Technical Specifications**
+
+### **AI Models**
+- **Primary**: Claude 3 Haiku for model building and reasoning
+- **Backup**: Qwen 30B for specialized optimization tasks
+- **Integration**: AWS Bedrock for scalable AI inference
+
+### **Optimization Solvers**
+- **Linear Programming**: OR-Tools, Gurobi, CPLEX
+- **Mixed Integer**: SCIP, Gurobi MIP
+- **Quadratic**: OSQP, Gurobi QP
+- **Constraint Programming**: OR-Tools CP-SAT
+
+### **Infrastructure**
+- **Cloud Provider**: AWS (Bedrock, Lambda, ECS)
+- **Runtime**: AgentCore for serverless execution
+- **Storage**: S3 for data persistence
+- **Monitoring**: CloudWatch for observability
+
+---
+
+## 🔮 **Roadmap**
+
+### **Q1 2025**
+- Enhanced simulation capabilities
+- Advanced visualization tools
+- Multi-language support
+
+### **Q2 2025**
+- Real-time optimization
+- Custom model templates
+- Enterprise integrations
+
+### **Q3 2025**
+- Mobile applications
+- Advanced analytics dashboard
+- API marketplace
+
+---
+
+## 📞 **Support & Resources**
+
+### **Documentation**
+- **Quick Start**: [Get started in 5 minutes](QUICK_START.md)
+- **API Reference**: [Complete API documentation](API_REFERENCE.md)
+- **Deployment**: [Production deployment guide](DEPLOYMENT_GUIDE.md)
+
+### **Community**
+- **GitHub**: [Contribute to the project](https://github.com/dcisionai/dcisionai-mcp-platform)
+- **Discord**: [Join developer discussions](https://discord.gg/dcisionai)
+- **Blog**: [Read optimization insights](https://blog.dcisionai.com)
+
+### **Support**
+- **Enterprise Support**: Enterprise support with SLA guarantees
+- **Training**: Workshops and certification programs
+- **Consulting**: Enterprise deployment consulting
+
+---
+
+## 🎉 **Start Optimizing Today**
+
+DcisionAI transforms complex business problems into optimal solutions through the power of AI and mathematical optimization. Whether you're using the web platform, IDE integration, or API, you have access to powerful optimization capabilities.
+
+**Choose your path and start optimizing:**
+
+- 🌐 **[Web Platform](QUICK_START.md#option-1-web-platform-fastest)** - No installation required
+- 💻 **[IDE Integration](QUICK_START.md#option-2-ide-integration)** - Direct tool access
+- 🔧 **[API Integration](QUICK_START.md#option-3-api-integration)** - Custom applications
+
+---
+
+*DcisionAI: Transforming complex business problems into optimal solutions through the power of AI and mathematical optimization.*

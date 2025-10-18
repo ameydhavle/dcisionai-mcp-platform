@@ -2,500 +2,377 @@
 
 ## 🏗️ **System Architecture Overview**
 
-DcisionAI is built on a modern, scalable architecture that combines AI-powered problem formulation with real mathematical optimization solvers. The system is designed for high performance, reliability, and ease of integration.
+DcisionAI is built on a modern, scalable architecture that combines AI reasoning with mathematical optimization engines, hosted on AWS infrastructure for enterprise-grade performance and reliability.
 
-## 🎯 **Core Architecture Principles**
+---
+
+## 🎯 **Architecture Principles**
 
 ### **1. AI-First Design**
-- **Claude 3 Haiku** for intelligent problem understanding and model building
-- **Natural Language Processing** for business problem translation
-- **Automated Model Generation** with mathematical rigor
+- **Claude 3 Haiku Integration**: Advanced AI reasoning for model formulation
+- **Pattern-Breaking Technology**: Avoids training data biases for fresh analysis
+- **Chain-of-Thought Reasoning**: Transparent, auditable decision-making process
 
-### **2. Real Optimization Engine**
-- **OR-Tools Integration** with 8+ professional solvers
-- **Solver Selection** based on problem characteristics
-- **Performance Optimization** for large-scale problems
+### **2. Universal Optimization**
+- **Industry-Agnostic**: Works across any domain without hardcoded templates
+- **Multi-Solver Support**: OR-Tools, Gurobi, CPLEX, and specialized solvers
+- **Automatic Solver Selection**: AI chooses optimal solver based on problem characteristics
 
-### **3. Simulation Analysis Engine**
-- **Monte Carlo Simulation** using NumPy/SciPy for risk analysis
-- **OSS Simulation Engines** (SimPy, Mesa, PySD, SALib/PyMC)
-- **Hybrid Approach** combining AI interpretation with mathematical rigor
-- **Scenario Analysis** for what-if planning and stress testing
+### **3. Enterprise Scalability**
+- **Serverless Architecture**: AWS Bedrock AgentCore Runtime for infinite scale
+- **Microservices Design**: Modular components for independent scaling
+- **API-First**: RESTful interfaces for easy integration
 
-### **4. Microservices Architecture**
-- **MCP Server** as the core optimization engine
-- **SaaS Platform** for user interface and workflow management
-- **Cloud-Native** deployment on AWS infrastructure
+### **4. Security & Compliance**
+- **AWS IAM Integration**: Enterprise-grade authentication and authorization
+- **End-to-End Encryption**: Secure data transmission and storage
+- **SOC 2 Compliance**: Enterprise security standards
 
-### **5. Developer-Friendly**
-- **MCP Protocol** for IDE integration
-- **REST APIs** for web integration
-- **Python SDK** for custom applications
+---
 
-## 🏛️ **System Components**
+## 🏛️ **High-Level Architecture**
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    DcisionAI Platform                          │
-├─────────────────────────────────────────────────────────────────┤
-│  🎯 MCP Server (Core Engine)                                   │
-│  ├── Intent Classification Engine                              │
-│  ├── Data Analysis & Preprocessing                             │
-│  ├── Solver Selection System                                   │
-│  ├── AI Model Builder                                          │
-│  ├── Optimization Engine                                       │
-│  ├── Simulation Analysis Engine (Monte Carlo + OSS)           │
-│  ├── Business Explainability Engine                            │
-│  └── Workflow Automation Engine                                │
-├─────────────────────────────────────────────────────────────────┤
-│  🌐 SaaS Platform (User Interface)                             │
-│  ├── React Frontend (Modern UI/UX)                             │
-│  ├── Flask Backend (REST API)                                  │
-│  ├── MCP Client (Server Integration)                           │
-│  └── Workflow Management System                                │
-├─────────────────────────────────────────────────────────────────┤
-│  ☁️  Cloud Infrastructure                                       │
-│  ├── AWS AgentCore Runtime                                     │
-│  ├── PyPI Distribution                                         │
-│  ├── Cursor IDE Integration                                    │
-│  └── Scalable Deployment                                       │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              Client Layer                                      │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  Web Browser    │  Cursor IDE    │  Claude Desktop  │  Custom Applications    │
+│  (React SPA)    │  (MCP Client)  │  (MCP Client)    │  (REST API Client)      │
+└─────────────────┬───────────────┬───────────────────┬─────────────────────────┘
+                  │               │                   │
+                  ▼               ▼                   ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            API Gateway Layer                                   │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                    Flask Backend Server (MCP Client)                          │
+│  • Request Routing    • Authentication    • Response Formatting               │
+│  • Rate Limiting      • Error Handling    • Caching Layer                     │
+└─────────────────────────────────┬───────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        AWS Bedrock AgentCore Runtime                           │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                    Hosted MCP Server (Serverless)                             │
+│  • Auto-scaling      • Health Monitoring    • Session Management              │
+│  • Resource Limits   • Observability        • Security Isolation              │
+└─────────────────────────────────┬───────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          DcisionAI MCP Server                                  │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  • Intent Classification    • Model Building      • Optimization Solving       │
+│  • Data Analysis           • Solver Selection    • Result Explanation          │
+│  • Simulation Engine       • Business Validation • Workflow Templates          │
+└─────────────────────────────────┬───────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        Optimization Engine Layer                               │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  OR-Tools    │  Gurobi    │  CPLEX    │  SCIP    │  OSQP    │  Custom Solvers  │
+│  (Primary)   │  (MIP)     │  (LP)     │  (MIP)   │  (QP)    │  (Specialized)   │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 🎯 **MCP Server Architecture**
+---
 
-### **Core Engine Components**
+## 🔧 **Component Architecture**
 
-#### **1. Intent Classification Engine**
-```python
-class IntentClassifier:
-    """AI-powered problem understanding using Claude 3 Haiku"""
-    
-    def classify_intent(self, problem_description: str) -> Dict[str, Any]:
-        """
-        Analyzes business problems and determines:
-        - Problem type (LP, MILP, QP, NLP)
-        - Industry context
-        - Complexity level
-        - Solver requirements
-        """
-```
+### **Frontend Layer (React SPA)**
 
-**Key Features:**
-- **Natural Language Understanding**: Processes business problem descriptions
-- **Industry Classification**: Identifies domain-specific requirements
-- **Complexity Assessment**: Determines problem difficulty
-- **Solver Recommendations**: Suggests optimal solvers
+#### **Technology Stack**
+- **Framework**: React 18 with TypeScript
+- **State Management**: Redux Toolkit
+- **UI Components**: Material-UI (MUI)
+- **Build Tool**: Vite
+- **Deployment**: Static hosting with CDN
 
-#### **2. Data Analysis Engine**
-```python
-class DataAnalyzer:
-    """Comprehensive data assessment and preprocessing"""
-    
-    def analyze_data(self, problem_description: str, intent_data: Dict) -> Dict[str, Any]:
-        """
-        Performs data quality assessment:
-        - Data readiness scoring
-        - Variable identification
-        - Constraint detection
-        - Missing data analysis
-        """
-```
-
-**Key Features:**
-- **Data Quality Scoring**: 0-100% readiness assessment
-- **Variable Extraction**: Identifies decision variables
-- **Constraint Detection**: Finds business constraints
-- **Data Validation**: Checks for completeness and consistency
-
-#### **3. AI Model Builder**
-```python
-class ModelBuilder:
-    """Claude 3 Haiku-powered mathematical model generation"""
-    
-    def build_model(self, problem_description: str, intent_data: Dict, data_analysis: Dict) -> Dict[str, Any]:
-        """
-        Generates mathematically rigorous optimization models:
-        - Variable definitions
-        - Objective functions
-        - Constraint formulations
-        - Model validation
-        """
-```
-
-**Key Features:**
-- **Mathematical Formulation**: PhD-level model generation
-- **OR-Tools Compatibility**: Ensures solver compatibility
-- **Constraint Parsing**: Robust mathematical expression handling
-- **Model Validation**: Checks for mathematical correctness
-
-#### **4. Optimization Engine**
-```python
-class OptimizationEngine:
-    """Real mathematical optimization using OR-Tools"""
-    
-    def solve_optimization(self, model_spec: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Solves optimization problems using real solvers:
-        - Solver selection
-        - Problem solving
-        - Solution validation
-        - Performance metrics
-        """
-```
-
-**Key Features:**
-- **Real Optimization**: Uses actual mathematical solvers
-- **Multiple Solvers**: 8+ professional optimization solvers
-- **Performance Optimization**: Sub-second solve times
-- **Solution Validation**: Ensures optimality and feasibility
-
-#### **5. Solver Selection System**
-```python
-class SolverSelector:
-    """Intelligent solver selection based on problem characteristics"""
-    
-    def select_solver(self, optimization_type: str, problem_size: Dict, performance_requirement: str) -> Dict[str, Any]:
-        """
-        Selects optimal solver based on:
-        - Problem type (LP, MILP, QP, NLP)
-        - Problem size (variables, constraints)
-        - Performance requirements
-        - Solver capabilities
-        """
-```
-
-**Available Solvers:**
-| Solver | Type | Best For | Performance |
-|--------|------|----------|-------------|
-| **PDLP** | LP | Large-scale problems | ⭐⭐⭐⭐⭐ |
-| **GLOP** | LP | General purpose | ⭐⭐⭐⭐ |
-| **CBC** | MILP | Mixed-integer problems | ⭐⭐⭐⭐ |
-| **SCIP** | MILP | Complex MILP | ⭐⭐⭐⭐⭐ |
-| **HiGHS** | LP/MILP | High-performance | ⭐⭐⭐⭐⭐ |
-| **OSQP** | QP | Quadratic problems | ⭐⭐⭐⭐ |
-| **SCS** | Conic | Conic optimization | ⭐⭐⭐⭐ |
-| **CVXPY** | General | Research problems | ⭐⭐⭐ |
-
-#### **6. Business Explainability Engine**
-```python
-class ExplainabilityEngine:
-    """AI-generated business communication and insights"""
-    
-    def explain_optimization(self, problem_description: str, solution_data: Dict) -> Dict[str, Any]:
-        """
-        Generates comprehensive business reports:
-        - Executive summaries
-        - Technical details
-        - Implementation guidance
-        - Risk analysis
-        """
-```
-
-**Key Features:**
-- **Executive Summaries**: C-level business communication
-- **Technical Details**: Mathematical and algorithmic insights
-- **Implementation Guidance**: Step-by-step deployment plans
-- **Risk Analysis**: Sensitivity and scenario analysis
-
-#### **7. Workflow Automation Engine**
-```python
-class WorkflowEngine:
-    """Industry-specific workflow automation"""
-    
-    def execute_workflow(self, industry: str, workflow_id: str, user_input: Dict) -> Dict[str, Any]:
-        """
-        Executes complete optimization workflows:
-        - Industry-specific templates
-        - End-to-end automation
-        - Result integration
-        - Business reporting
-        """
-```
-
-**Industry Workflows:**
-- **Manufacturing**: Production planning, inventory optimization, quality control
-- **Healthcare**: Staff scheduling, patient flow, resource allocation
-- **Retail**: Demand forecasting, pricing optimization, supply chain
-- **Marketing**: Campaign optimization, budget allocation, customer segmentation
-- **Financial**: Portfolio optimization, risk assessment, fraud detection
-- **Logistics**: Route optimization, warehouse optimization, fleet management
-- **Energy**: Grid optimization, renewable integration, demand response
-
-## 🌐 **SaaS Platform Architecture**
-
-### **Frontend (React)**
-
-#### **Component Architecture**
+#### **Key Components**
 ```
 src/
 ├── components/
-│   ├── Dashboard/           # Main dashboard
-│   ├── WorkflowBuilder/     # Workflow creation
-│   ├── ResultsViewer/       # Optimization results
-│   ├── DataUpload/          # Data management
-│   └── Settings/            # User preferences
+│   ├── OptimizationWorkflow/     # Main workflow interface
+│   ├── ProblemInput/             # Problem description input
+│   ├── ResultsDisplay/           # Solution visualization
+│   └── SimulationPanel/          # Risk analysis interface
 ├── services/
-│   ├── api.js              # API client
-│   ├── mcp.js              # MCP client
-│   └── auth.js             # Authentication
+│   ├── api.ts                    # API client
+│   └── websocket.ts              # Real-time updates
 └── utils/
-    ├── optimization.js     # Optimization utilities
-    └── visualization.js    # Chart components
+    ├── validation.ts             # Input validation
+    └── formatting.ts             # Data formatting
 ```
 
-#### **Key Features**
-- **Modern UI/UX**: Dark monochrome theme with professional design
-- **Real-time Updates**: Live optimization results and progress
-- **Responsive Design**: Works on desktop, tablet, and mobile
-- **Accessibility**: WCAG 2.1 AA compliant
+#### **Features**
+- **Responsive Design**: Mobile-first approach
+- **Real-time Updates**: WebSocket integration for live results
+- **Progressive Web App**: Offline capabilities
+- **Accessibility**: WCAG 2.1 AA compliance
 
-### **Backend (Flask)**
+### **Backend Layer (Flask API Gateway)**
 
-#### **API Architecture**
+#### **Technology Stack**
+- **Framework**: Flask with Gunicorn
+- **Authentication**: AWS IAM integration
+- **Caching**: Redis for response caching
+- **Monitoring**: CloudWatch integration
+- **Deployment**: Docker containers on ECS
+
+#### **Key Components**
+```
+backend/
+├── app.py                        # Main Flask application
+├── routes/
+│   ├── mcp_routes.py            # MCP tool endpoints
+│   ├── health_routes.py         # Health check endpoints
+│   └── auth_routes.py           # Authentication endpoints
+├── services/
+│   ├── agentcore_client.py      # AgentCore Runtime client
+│   ├── cache_service.py         # Redis caching
+│   └── monitoring_service.py    # CloudWatch metrics
+└── middleware/
+    ├── auth_middleware.py       # Authentication
+    ├── rate_limit.py            # Rate limiting
+    └── error_handler.py         # Error handling
+```
+
+#### **Features**
+- **MCP Client**: Communicates with AgentCore Runtime
+- **API Gateway**: Routes requests to appropriate services
+- **Authentication**: AWS IAM and session management
+- **Rate Limiting**: Prevents abuse and ensures fair usage
+- **Caching**: Improves response times for common requests
+
+### **AgentCore Runtime Layer**
+
+#### **Technology Stack**
+- **Platform**: AWS Bedrock AgentCore Runtime
+- **Runtime**: Python 3.10 with asyncio
+- **Deployment**: Serverless with auto-scaling
+- **Monitoring**: CloudWatch Logs and Metrics
+- **Security**: IAM roles and VPC isolation
+
+#### **Key Components**
+```
+agentcore/
+├── dcisionai_agentcore_standalone.py  # Main entry point
+├── requirements_standalone.txt        # Dependencies
+└── deployment/
+    ├── deploy_to_agentcore_noninteractive.sh
+    └── gateway_config.json
+```
+
+#### **Features**
+- **Serverless Execution**: Automatic scaling based on demand
+- **Session Management**: Persistent sessions for multi-step workflows
+- **Health Monitoring**: Automatic health checks and recovery
+- **Resource Limits**: CPU and memory limits for security
+- **Observability**: Comprehensive logging and metrics
+
+### **MCP Server Layer**
+
+#### **Technology Stack**
+- **Protocol**: Model Context Protocol (MCP)
+- **AI Models**: Claude 3 Haiku, Qwen 30B
+- **Optimization**: OR-Tools, Gurobi, CPLEX
+- **Simulation**: NumPy, SciPy, SimPy
+- **Deployment**: PyPI package distribution
+
+#### **Key Components**
+```
+dcisionai_mcp_server/
+├── tools.py                       # Core optimization tools
+├── optimization_engine.py         # Solver integration
+├── ai_reasoning.py               # AI model interactions
+├── simulation_engine.py          # Monte Carlo and other simulations
+└── business_validation.py        # Business logic validation
+```
+
+#### **Core Tools**
+1. **`classify_intent`** - Problem classification using AI reasoning
+2. **`analyze_data`** - Data quality assessment and requirements analysis
+3. **`select_solver`** - Intelligent solver selection based on problem characteristics
+4. **`build_model`** - Mathematical model formulation with AI assistance
+5. **`solve_optimization`** - Execute optimization using selected solver
+6. **`explain_optimization`** - Business-friendly result explanation
+7. **`simulate_scenarios`** - Risk analysis and scenario planning
+
+### **Optimization Engine Layer**
+
+#### **Supported Solvers**
+- **Linear Programming**: OR-Tools PDLP, Gurobi LP, CPLEX LP
+- **Mixed Integer**: OR-Tools CP-SAT, Gurobi MIP, SCIP
+- **Quadratic Programming**: OSQP, Gurobi QP
+- **Constraint Programming**: OR-Tools CP-SAT
+- **Specialized Solvers**: Custom implementations for specific problem types
+
+#### **Solver Selection Logic**
 ```python
-# REST API Endpoints
-@app.route('/api/mcp/health-check', methods=['GET'])
-@app.route('/api/mcp/classify-intent', methods=['POST'])
-@app.route('/api/mcp/analyze-data', methods=['POST'])
-@app.route('/api/mcp/build-model', methods=['POST'])
-@app.route('/api/mcp/solve-optimization', methods=['POST'])
-@app.route('/api/mcp/select-solver', methods=['POST'])
-@app.route('/api/mcp/explain-optimization', methods=['POST'])
-@app.route('/api/mcp/execute-workflow', methods=['POST'])
+def select_optimal_solver(problem_characteristics):
+    if problem_characteristics.type == "linear_programming":
+        if problem_characteristics.size == "small":
+            return "OR-Tools Simplex"
+        elif problem_characteristics.size == "large":
+            return "OR-Tools PDLP"
+    elif problem_characteristics.type == "mixed_integer":
+        return "OR-Tools CP-SAT"
+    # ... additional logic
 ```
 
-#### **Key Features**
-- **RESTful Design**: Clean, documented API endpoints
-- **MCP Integration**: Seamless connection to MCP server
-- **Authentication**: Secure user management
-- **Error Handling**: Comprehensive error management
-- **Logging**: Detailed request/response logging
-
-## ☁️ **Cloud Infrastructure**
-
-### **AWS AgentCore Runtime**
-
-#### **Deployment Architecture**
-```
-AWS AgentCore Runtime
-├── Lambda Functions
-│   ├── MCP Server Handler
-│   ├── API Gateway Integration
-│   └── CloudWatch Logging
-├── ECR Container Registry
-│   ├── MCP Server Image
-│   └── DcisionAI Tools
-├── IAM Roles & Policies
-│   ├── Bedrock Access
-│   ├── CloudWatch Logs
-│   └── ECR Access
-└── CloudWatch Monitoring
-    ├── Performance Metrics
-    ├── Error Tracking
-    └── Cost Monitoring
-```
-
-#### **Key Features**
-- **Serverless Scaling**: Automatic scaling based on demand
-- **High Availability**: 99.9% uptime SLA
-- **Cost Optimization**: Pay-per-use pricing
-- **Security**: Enterprise-grade security
-
-### **PyPI Distribution**
-
-#### **Package Structure**
-```
-dcisionai-mcp-server/
-├── dcisionai_mcp_server/
-│   ├── __init__.py
-│   ├── tools.py              # Core optimization tools
-│   ├── optimization_engine.py # OR-Tools integration
-│   ├── solver_selector.py    # Solver selection logic
-│   └── working_mcp_server.py # MCP server implementation
-├── pyproject.toml            # Package configuration
-├── README.md                 # Documentation
-└── requirements.txt          # Dependencies
-```
-
-#### **Installation Options**
-```bash
-# Standard installation
-pip install dcisionai-mcp-server
-
-# With optional solvers
-pip install dcisionai-mcp-server[all-solvers]
-
-# Development installation
-pip install -e .
-```
-
-### **Cursor IDE Integration**
-
-#### **MCP Configuration**
-```json
-{
-  "mcpServers": {
-    "dcisionai-mcp-server": {
-      "command": "uvx",
-      "args": ["dcisionai-mcp-server@latest"],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      },
-      "autoApprove": [
-        "classify_intent",
-        "analyze_data",
-        "build_model",
-        "solve_optimization",
-        "select_solver",
-        "explain_optimization",
-        "get_workflow_templates",
-        "execute_workflow"
-      ]
-    }
-  }
-}
-```
+---
 
 ## 🔄 **Data Flow Architecture**
 
-### **Optimization Pipeline**
-
+### **Request Flow**
 ```
-1. Problem Input
-   ↓
-2. Intent Classification (Claude 3 Haiku)
-   ↓
-3. Data Analysis & Preprocessing
-   ↓
-4. Model Building (AI-Powered)
-   ↓
-5. Solver Selection (ML-Based)
-   ↓
-6. Optimization Solving (OR-Tools)
-   ↓
-7. Business Explainability (AI-Generated)
-   ↓
-8. Results & Recommendations
+1. Client Request → 2. API Gateway → 3. AgentCore Runtime → 4. MCP Server → 5. Optimization Engine
+                                                                                    ↓
+6. Results ← 5. Response Processing ← 4. MCP Response ← 3. Runtime Response ← 2. API Response
 ```
 
-### **API Request Flow**
+### **Detailed Flow**
+1. **Client Request**: User submits optimization problem via web UI, IDE, or API
+2. **API Gateway**: Flask backend validates request, authenticates user, applies rate limits
+3. **AgentCore Runtime**: AWS-hosted MCP server receives request, manages session
+4. **MCP Server**: DcisionAI tools process request, classify intent, build model
+5. **Optimization Engine**: Selected solver executes optimization, returns results
+6. **Response Processing**: Results formatted, validated, and explained
+7. **Client Response**: Formatted results returned to client with business explanations
 
+### **Session Management**
 ```
-Client Request
-   ↓
-Flask Backend
-   ↓
-MCP Client
-   ↓
-MCP Server
-   ↓
-DcisionAI Tools
-   ↓
-Optimization Engine
-   ↓
-OR-Tools Solvers
-   ↓
-Results Processing
-   ↓
-Response to Client
+Client Session → API Gateway Session → AgentCore Runtime Session → MCP Server Context
 ```
+
+---
 
 ## 🛡️ **Security Architecture**
 
-### **Security Layers**
+### **Authentication & Authorization**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Client        │    │   API Gateway   │    │   AgentCore     │
+│                 │    │                 │    │   Runtime       │
+│ • AWS IAM       │───▶│ • JWT Tokens    │───▶│ • IAM Roles     │
+│ • Session Mgmt  │    │ • Rate Limiting │    │ • VPC Isolation │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
-1. **Authentication & Authorization**
-   - JWT-based authentication
-   - Role-based access control
-   - API key management
+### **Data Security**
+- **Encryption in Transit**: TLS 1.3 for all communications
+- **Encryption at Rest**: AWS KMS for data storage
+- **Input Validation**: Comprehensive validation at all layers
+- **Output Sanitization**: Safe handling of optimization results
 
-2. **Data Protection**
-   - End-to-end encryption
-   - Data anonymization
-   - Secure data transmission
+### **Network Security**
+- **VPC Isolation**: Private subnets for backend services
+- **Security Groups**: Restrictive firewall rules
+- **WAF Protection**: Web Application Firewall for API endpoints
+- **DDoS Protection**: AWS Shield for DDoS mitigation
 
-3. **Infrastructure Security**
-   - VPC isolation
-   - Security groups
-   - IAM policies
+---
 
-4. **Compliance**
-   - GDPR compliance
-   - SOC 2 Type II
-   - ISO 27001
+## 📊 **Monitoring & Observability**
 
-## 📊 **Performance Architecture**
+### **Monitoring Stack**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Application   │    │   Infrastructure│    │   Business      │
+│   Metrics       │    │   Metrics       │    │   Metrics       │
+│                 │    │                 │    │                 │
+│ • Response Time │    │ • CPU/Memory    │    │ • API Usage     │
+│ • Error Rates   │    │ • Network I/O   │    │ • User Activity │
+│ • Throughput    │    │ • Disk Usage    │    │ • Revenue       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │   CloudWatch    │
+                    │   Dashboard     │
+                    └─────────────────┘
+```
 
-### **Performance Metrics**
+### **Logging Strategy**
+- **Application Logs**: Structured JSON logging with correlation IDs
+- **Access Logs**: Request/response logging with performance metrics
+- **Error Logs**: Detailed error tracking with stack traces
+- **Audit Logs**: Security and compliance event logging
 
-- **Solve Time**: < 1 second for most problems
-- **Throughput**: 1000+ requests per minute
-- **Scalability**: Handles 1000+ variables, 1000+ constraints
-- **Availability**: 99.9% uptime SLA
+### **Alerting**
+- **Performance Alerts**: Response time and throughput thresholds
+- **Error Alerts**: Error rate and failure pattern detection
+- **Security Alerts**: Authentication failures and suspicious activity
+- **Business Alerts**: Usage anomalies and capacity planning
 
-### **Optimization Strategies**
+---
 
-1. **Caching**: Redis-based result caching
-2. **Load Balancing**: Multiple server instances
-3. **Database Optimization**: Indexed queries
-4. **CDN**: Global content delivery
+## 🚀 **Scalability Architecture**
+
+### **Horizontal Scaling**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Load Balancer │    │   API Gateway   │    │   AgentCore     │
+│                 │    │   Instances     │    │   Runtime       │
+│ • Auto-scaling  │───▶│ • Auto-scaling  │───▶│ • Serverless    │
+│ • Health Checks │    │ • Health Checks │    │ • Auto-scaling  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### **Caching Strategy**
+- **API Response Caching**: Redis for frequently requested data
+- **CDN Caching**: CloudFront for static assets
+- **Database Caching**: Query result caching
+- **Session Caching**: User session data caching
+
+### **Performance Optimization**
+- **Connection Pooling**: Database and external service connections
+- **Async Processing**: Non-blocking I/O operations
+- **Batch Processing**: Bulk operations for efficiency
+- **Resource Optimization**: CPU and memory usage optimization
+
+---
 
 ## 🔧 **Development Architecture**
 
 ### **Development Workflow**
-
 ```
-1. Local Development
-   ├── MCP Server Testing
-   ├── Unit Tests
-   └── Integration Tests
-   ↓
-2. Staging Environment
-   ├── End-to-End Testing
-   ├── Performance Testing
-   └── Security Testing
-   ↓
-3. Production Deployment
-   ├── AWS AgentCore
-   ├── PyPI Distribution
-   └── Monitoring
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Development   │    │   Testing       │    │   Production    │
+│   Environment   │    │   Environment   │    │   Environment   │
+│                 │    │                 │    │                 │
+│ • Local MCP     │───▶│ • Staging MCP   │───▶│ • AgentCore     │
+│ • Mock APIs     │    │ • Test Data     │    │ • Production    │
+│ • Hot Reload    │    │ • Integration   │    │ • Monitoring    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### **Testing Strategy**
-
-- **Unit Tests**: Individual component testing
-- **Integration Tests**: Component interaction testing
-- **End-to-End Tests**: Complete workflow testing
-- **Performance Tests**: Load and stress testing
-- **Security Tests**: Vulnerability assessment
-
-## 🚀 **Deployment Architecture**
-
-### **Deployment Options**
-
-1. **AWS AgentCore Runtime** (Recommended)
-   - Serverless deployment
-   - Automatic scaling
-   - Managed infrastructure
-
-2. **Docker Containers**
-   - Containerized deployment
-   - Kubernetes orchestration
-   - Custom infrastructure
-
-3. **Local Installation**
-   - PyPI package installation
-   - Development environment
-   - Custom configurations
-
-### **Monitoring & Observability**
-
-- **CloudWatch**: AWS-native monitoring
-- **Prometheus**: Metrics collection
-- **Grafana**: Visualization dashboards
-- **ELK Stack**: Log aggregation and analysis
+### **CI/CD Pipeline**
+1. **Code Commit**: Git push triggers CI pipeline
+2. **Automated Testing**: Unit tests, integration tests, security scans
+3. **Build & Package**: Docker images and deployment packages
+4. **Deploy to Staging**: Automated deployment to test environment
+5. **Production Deployment**: Manual approval and deployment
+6. **Monitoring**: Automated health checks and rollback if needed
 
 ---
 
-**DcisionAI Architecture**: *Scalable, Secure, and Developer-Friendly*
+## 🔮 **Future Architecture**
+
+### **Planned Enhancements**
+- **Multi-Region Deployment**: Global availability and disaster recovery
+- **Edge Computing**: CDN-based optimization for reduced latency
+- **Advanced AI Models**: Integration with latest AI models and techniques
+- **Real-time Collaboration**: Multi-user optimization sessions
+- **Custom Model Training**: User-specific model fine-tuning
+
+### **Technology Roadmap**
+- **Q1 2025**: Multi-region deployment and edge computing
+- **Q2 2025**: Advanced AI model integration and real-time collaboration
+- **Q3 2025**: Custom model training and advanced analytics
+- **Q4 2025**: Mobile applications and IoT integration
+
+---
+
+*This architecture is designed to be scalable, secure, and maintainable while providing the flexibility to adapt to changing requirements and technologies.*

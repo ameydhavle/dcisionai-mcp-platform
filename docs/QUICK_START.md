@@ -2,353 +2,220 @@
 
 ## 🚀 **Get Started in 5 Minutes**
 
-This guide will help you get up and running with DcisionAI in just 5 minutes. Choose your preferred integration method and start optimizing!
-
-## 🎯 **Integration Options**
-
-### **Option 1: Cursor IDE Integration** (Recommended for Developers)
-### **Option 2: SaaS Platform** (Recommended for Business Users)
-### **Option 3: Python SDK** (Recommended for Custom Applications)
-### **Option 4: REST API** (Recommended for Web Integration)
+This guide will help you get up and running with DcisionAI in just a few minutes, whether you want to use the web platform, integrate with your IDE, or build custom applications.
 
 ---
 
-## 🎯 **Option 1: Cursor IDE Integration**
+## 🎯 **Choose Your Path**
 
-### **Step 1: Install MCP Server**
+### **🌐 Web Platform (Recommended for Most Users)**
+Use the hosted SaaS platform at `platform.dcisionai.com` - no installation required!
+
+### **💻 IDE Integration (For Developers)**
+Integrate DcisionAI directly into Cursor IDE or Claude Desktop for seamless optimization workflows.
+
+### **🔧 API Integration (For Custom Applications)**
+Use the REST API to integrate optimization capabilities into your own applications.
+
+---
+
+## 🌐 **Option 1: Web Platform (Fastest)**
+
+### **Step 1: Visit the Platform**
+Open your browser and go to: **`https://platform.dcisionai.com`**
+
+### **Step 2: Describe Your Problem**
+In the text area, describe your optimization problem. For example:
+
+```
+I need to optimize my production schedule. I have 2 production lines that can produce 100 and 90 units per hour respectively, at costs of $50 and $60 per hour. I need to produce at least 500 units. Minimize total cost.
+```
+
+### **Step 3: Follow the Workflow**
+The platform will guide you through:
+1. **Intent Classification** - Understanding your problem type
+2. **Data Analysis** - Assessing your data requirements  
+3. **Model Building** - Creating the mathematical model
+4. **Optimization** - Finding the optimal solution
+5. **Explanation** - Understanding the results in business terms
+
+### **Step 4: Get Your Results**
+You'll receive:
+- ✅ **Optimal solution** with specific recommendations
+- 📊 **Business explanation** in plain English
+- 🔍 **Risk analysis** and sensitivity insights
+- 💡 **Implementation guidance** for your team
+
+**That's it! You're optimizing! 🎉**
+
+---
+
+## 💻 **Option 2: IDE Integration**
+
+### **For Cursor IDE Users**
+
+#### **Step 1: Install DcisionAI MCP Server**
 ```bash
-# Install using uvx (recommended)
-uvx dcisionai-mcp-server@latest
+# Install via uvx (recommended)
+uvx dcisionai-mcp-server
 
-# Or install using pip
+# Or install via pip
 pip install dcisionai-mcp-server
 ```
 
-### **Step 2: Configure Cursor**
-Add to your `~/.cursor/mcp.json`:
+#### **Step 2: Configure Cursor IDE**
+Create or update your MCP configuration file:
+
+**Location**: `~/.cursor/mcp.json` (macOS/Linux) or `%APPDATA%\Cursor\User\mcp.json` (Windows)
+
 ```json
 {
-  "mcpServers": {
-    "dcisionai-mcp-server": {
-      "command": "uvx",
-      "args": ["dcisionai-mcp-server@latest"],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      },
-      "autoApprove": [
-        "classify_intent",
-        "analyze_data",
-        "select_solver",
-        "build_model",
-        "solve_optimization",
-        "simulate_scenarios",
-        "explain_optimization",
-        "get_workflow_templates",
-        "execute_workflow"
-      ]
-    }
-  }
-}
-```
-
-### **Step 3: Restart Cursor**
-Restart Cursor IDE to load the MCP server.
-
-### **Step 4: Test Integration**
-In Cursor, you can now use the DcisionAI tools directly:
-
-```
-@dcisionai-mcp-server classify_intent "Optimize my investment portfolio for maximum returns with moderate risk"
-```
-
-**Expected Result**: The MCP server will classify your intent and provide optimization recommendations.
-
-### **Step 5: Test Simulation Analysis**
-Try the new simulation tool for risk analysis:
-
-```
-@dcisionai-mcp-server simulate_scenarios "Quantitative trading execution optimization" --simulation_type monte_carlo --num_trials 10000
-```
-
-**Expected Result**: You'll get comprehensive simulation analysis including:
-- **Risk Metrics**: Mean, standard deviation, VaR (95%)
-- **Scenario Analysis**: Multiple what-if scenarios
-- **Stress Testing**: Worst-case scenario analysis
-- **Business Recommendations**: Actionable risk mitigation strategies
-
----
-
-## 🌐 **Option 2: SaaS Platform**
-
-### **Step 1: Visit Platform**
-Go to [platform.dcisionai.com](https://platform.dcisionai.com)
-
-### **Step 2: Sign Up**
-Create a free account with your email address.
-
-### **Step 3: Choose Workflow**
-Select from 21 pre-built industry workflows:
-- **Financial**: Portfolio optimization, risk assessment
-- **Manufacturing**: Production planning, inventory optimization
-- **Healthcare**: Staff scheduling, patient flow
-- **Retail**: Demand forecasting, pricing optimization
-- **Marketing**: Campaign optimization, budget allocation
-- **Logistics**: Route optimization, warehouse management
-- **Energy**: Grid optimization, renewable integration
-
-### **Step 4: Upload Data**
-Upload your data or use sample data to get started.
-
-### **Step 5: Get Results**
-Click "Optimize" and get your results in seconds!
-
-**Expected Result**: You'll receive optimized solutions with business explanations and implementation guidance.
-
----
-
-## 🐍 **Option 3: Python SDK**
-
-### **Step 1: Install Package**
-```bash
-pip install dcisionai-mcp-server
-```
-
-### **Step 2: Basic Usage**
-```python
-from dcisionai_mcp_server.tools import DcisionAITools
-import asyncio
-
-async def optimize_portfolio():
-    tools = DcisionAITools()
-    
-    # Step 1: Classify intent
-    intent = await tools.classify_intent(
-        "Optimize my investment portfolio for maximum returns with moderate risk"
-    )
-    print(f"Intent: {intent['result']['intent']}")
-    
-    # Step 2: Analyze data
-    data = await tools.analyze_data("Portfolio optimization", intent['result'])
-    print(f"Data readiness: {data['result']['readiness_score']*100:.1f}%")
-    
-    # Step 3: Build model
-    model = await tools.build_model("Portfolio optimization", intent['result'], data['result'])
-    print("Model built successfully")
-    
-    # Step 4: Solve optimization
-    solution = await tools.solve_optimization("Portfolio optimization", intent['result'], data['result'], model['result'])
-    print(f"Solution: {solution['result']['optimal_values']}")
-    
-    # Step 5: Get explanation
-    explanation = await tools.explain_optimization("Portfolio optimization", intent['result'], data['result'], model['result'], solution['result'])
-    print(f"Business impact: {explanation['result']['executive_summary']['business_impact']}")
-
-# Run optimization
-asyncio.run(optimize_portfolio())
-```
-
-### **Step 3: Advanced Usage**
-```python
-# Execute complete workflow
-async def execute_workflow():
-    tools = DcisionAITools()
-    
-    result = await tools.execute_workflow(
-        industry="financial",
-        workflow_id="portfolio_optimization",
-        user_input={
-            "portfolio_size": 1000000,
-            "risk_tolerance": "moderate"
+    "mcpServers": {
+        "dcisionai-mcp-server": {
+            "command": "uvx",
+            "args": ["dcisionai-mcp-server"],
+            "env": {
+                "AWS_DEFAULT_REGION": "us-east-1"
+            }
         }
-    )
-    
-    print(f"Workflow result: {result['result']['final_results']}")
-
-asyncio.run(execute_workflow())
-```
-
-**Expected Result**: You'll get a complete optimization solution with business explanations.
-
----
-
-## 🌐 **Option 4: REST API**
-
-### **Step 1: Get API Access**
-1. Sign up at [platform.dcisionai.com](https://platform.dcisionai.com)
-2. Generate API key in dashboard
-3. Note your base URL: `https://platform.dcisionai.com/api`
-
-### **Step 2: Test Connection**
-```bash
-curl -X GET "https://platform.dcisionai.com/api/mcp/health-check" \
-  -H "Authorization: Bearer your-api-key"
-```
-
-### **Step 3: Classify Intent**
-```bash
-curl -X POST "https://platform.dcisionai.com/api/mcp/classify-intent" \
-  -H "Authorization: Bearer your-api-key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "problem_description": "Optimize my investment portfolio for maximum returns with moderate risk"
-  }'
-```
-
-### **Step 4: Execute Workflow**
-```bash
-curl -X POST "https://platform.dcisionai.com/api/mcp/execute-workflow" \
-  -H "Authorization: Bearer your-api-key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "industry": "financial",
-    "workflow_id": "portfolio_optimization",
-    "user_input": {
-      "portfolio_size": 1000000,
-      "risk_tolerance": "moderate"
     }
-  }'
-```
-
-**Expected Result**: You'll receive JSON responses with optimization results.
-
----
-
-## 🎯 **Common Use Cases**
-
-### **Portfolio Optimization**
-```python
-# Optimize investment portfolio
-result = await tools.execute_workflow(
-    industry="financial",
-    workflow_id="portfolio_optimization",
-    user_input={
-        "portfolio_size": 2000000,
-        "risk_tolerance": "moderate",
-        "time_horizon": "5_years"
-    }
-)
-```
-
-### **Production Planning**
-```python
-# Optimize production schedule
-result = await tools.execute_workflow(
-    industry="manufacturing",
-    workflow_id="production_planning",
-    user_input={
-        "production_capacity": 1000,
-        "demand_forecast": [100, 120, 110, 130],
-        "resource_constraints": ["labor", "materials"]
-    }
-)
-```
-
-### **Staff Scheduling**
-```python
-# Optimize healthcare staff schedule
-result = await tools.execute_workflow(
-    industry="healthcare",
-    workflow_id="staff_scheduling",
-    user_input={
-        "staff_count": 50,
-        "shift_requirements": [8, 8, 8, 8],
-        "skill_requirements": ["nurse", "doctor", "technician"]
-    }
-)
-```
-
-### **Route Optimization**
-```python
-# Optimize delivery routes
-result = await tools.execute_workflow(
-    industry="logistics",
-    workflow_id="route_optimization",
-    user_input={
-        "vehicle_count": 10,
-        "delivery_locations": 50,
-        "capacity_constraints": [1000, 1000, 1000]
-    }
-)
-```
-
----
-
-## 🔧 **Configuration**
-
-### **Environment Variables**
-```bash
-# AWS Bedrock (for AI models)
-export AWS_ACCESS_KEY_ID="your-access-key"
-export AWS_SECRET_ACCESS_KEY="your-secret-key"
-export AWS_DEFAULT_REGION="us-west-2"
-
-# API Configuration
-export DcisionAI_API_KEY="your-api-key"
-export DcisionAI_BASE_URL="https://platform.dcisionai.com/api"
-```
-
-### **Python Configuration**
-```python
-import os
-from dcisionai_mcp_server.tools import DcisionAITools
-
-# Configure AWS credentials
-os.environ['AWS_ACCESS_KEY_ID'] = 'your-access-key'
-os.environ['AWS_SECRET_ACCESS_KEY'] = 'your-secret-key'
-os.environ['AWS_DEFAULT_REGION'] = 'us-west-2'
-
-# Initialize tools
-tools = DcisionAITools()
-```
-
----
-
-## 📊 **Understanding Results**
-
-### **Optimization Results**
-```json
-{
-  "status": "optimal",
-  "objective_value": 1.22,
-  "optimal_values": {
-    "x1": 0.10,  // 10% allocation to asset 1
-    "x2": 0.20,  // 20% allocation to asset 2
-    "x3": 0.10,  // 10% allocation to asset 3
-    "x4": 0.60   // 60% allocation to asset 4
-  },
-  "solve_time": 0.0034,
-  "business_impact": {
-    "total_profit": 1.22,
-    "profit_increase": "12.2%",
-    "cost_savings": 244000
-  }
 }
 ```
 
-### **Business Explanation**
+#### **Step 3: Restart Cursor IDE**
+Close and reopen Cursor IDE to load the new MCP server.
+
+#### **Step 4: Test the Integration**
+In a new chat, try:
+```
+Classify this optimization problem: I need to optimize my production schedule. I have 2 production lines that can produce 100 and 90 units per hour respectively, at costs of $50 and $60 per hour. I need to produce at least 500 units. Minimize total cost.
+```
+
+You should see the DcisionAI tools available in the chat interface!
+
+### **For Claude Desktop Users**
+
+#### **Step 1: Install DcisionAI MCP Server**
+```bash
+uvx dcisionai-mcp-server
+```
+
+#### **Step 2: Configure Claude Desktop**
+Edit your Claude Desktop configuration:
+
+**Location**: 
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
 ```json
 {
-  "executive_summary": {
-    "problem_statement": "Optimize investment portfolio for maximum returns",
-    "solution_approach": "Linear programming optimization model",
-    "key_findings": [
-      "Current portfolio is not well-diversified",
-      "Reallocation can improve risk-return profile"
-    ],
-    "business_impact": "Expected to increase returns by 12.2%"
-  },
-  "implementation_guidance": {
-    "next_steps": [
-      "Communicate findings to investment committee",
-      "Develop implementation plan"
-    ],
-    "monitoring_metrics": [
-      "Portfolio returns",
-      "Portfolio risk"
-    ]
-  }
+    "mcpServers": {
+        "dcisionai-mcp-server": {
+            "command": "uvx",
+            "args": ["dcisionai-mcp-server"]
+        }
+    }
 }
 ```
+
+#### **Step 3: Restart Claude Desktop**
+Close and reopen Claude Desktop to load the MCP server.
+
+---
+
+## 🔧 **Option 3: API Integration**
+
+### **Step 1: Set Up AWS Credentials**
+```bash
+# Install AWS CLI
+pip install awscli
+
+# Configure credentials
+aws configure
+# Enter your AWS Access Key ID
+# Enter your AWS Secret Access Key
+# Enter default region: us-east-1
+# Enter default output format: json
+```
+
+### **Step 2: Test the API**
+```bash
+# Test health endpoint
+curl -X GET https://platform.dcisionai.com/api/health
+
+# Test intent classification
+curl -X POST https://platform.dcisionai.com/api/mcp/classify-intent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "problem_description": "I need to optimize my production schedule. I have 2 production lines that can produce 100 and 90 units per hour respectively, at costs of $50 and $60 per hour. I need to produce at least 500 units. Minimize total cost."
+  }'
+```
+
+### **Step 3: Integrate into Your Application**
+```python
+import requests
+import json
+
+# Set up client
+base_url = "https://platform.dcisionai.com/api"
+headers = {"Content-Type": "application/json"}
+
+# Classify intent
+response = requests.post(
+    f"{base_url}/mcp/classify-intent",
+    headers=headers,
+    json={
+        "problem_description": "Your optimization problem here..."
+    }
+)
+
+result = response.json()
+print(f"Problem type: {result['result']['optimization_type']}")
+```
+
+---
+
+## 🎯 **Example Workflows**
+
+### **Manufacturing Production Planning**
+```
+Problem: Optimize production schedule for 2 lines producing 100 and 90 units/hour at $50 and $60/hour. Need 500 units minimum. Minimize cost.
+
+Expected Result: Use line 1 for 5 hours, line 2 for 0 hours. Total cost: $250.
+```
+
+### **Financial Portfolio Optimization**
+```
+Problem: Allocate $100K across 3 stocks with expected returns of 8%, 12%, 15% and risks of 10%, 15%, 20%. Limit total risk to 15%.
+
+Expected Result: Optimal allocation with risk-adjusted returns and diversification strategy.
+```
+
+### **Retail Inventory Optimization**
+```
+Problem: Manage inventory for 500 stores across 3 regions. 1000 SKUs, $5M budget. Maximize profit while meeting demand.
+
+Expected Result: Optimal inventory allocation across regions and SKUs with profit maximization.
+```
+
+---
+
+## 🛠️ **Available Tools**
+
+### **Core Optimization Workflow**
+1. **`classify_intent`** - Understand your problem type and domain
+2. **`analyze_data`** - Assess data quality and requirements
+3. **`select_solver`** - Choose the best optimization algorithm
+4. **`build_model`** - Create mathematical model using AI reasoning
+5. **`solve_optimization`** - Find optimal solution
+6. **`explain_optimization`** - Get business-friendly explanations
+7. **`simulate_scenarios`** - Analyze risks and alternatives
+
+### **Advanced Features**
+- **`get_workflow_templates`** - Access 21 industry-specific workflows
+- **`execute_workflow`** - Run complete optimization workflows
+- **Pattern-Breaking AI** - Avoid biases from training data
+- **Chain-of-Thought Reasoning** - Transparent decision process
 
 ---
 
@@ -356,89 +223,63 @@ tools = DcisionAITools()
 
 ### **Common Issues**
 
-#### **1. MCP Server Not Loading**
+#### **MCP Server Not Showing in IDE**
 ```bash
-# Check if package is installed
-pip list | grep dcisionai-mcp-server
+# Check if MCP server is installed
+uvx dcisionai-mcp-server --version
 
-# Reinstall if needed
-pip install --force-reinstall dcisionai-mcp-server
+# Restart your IDE completely
+# Check configuration file syntax
 ```
 
-#### **2. AWS Credentials Error**
+#### **API Authentication Errors**
 ```bash
-# Configure AWS credentials
-aws configure
+# Verify AWS credentials
+aws sts get-caller-identity
 
-# Or set environment variables
-export AWS_ACCESS_KEY_ID="your-key"
-export AWS_SECRET_ACCESS_KEY="your-secret"
+# Check IAM permissions
+aws iam list-attached-user-policies --user-name your-username
 ```
 
-#### **3. Python Version Compatibility**
-```bash
-# Check Python version
-python --version
-
-# Use Python 3.8-3.12 (OR-Tools compatibility)
-pyenv install 3.11.0
-pyenv local 3.11.0
-```
-
-#### **4. Import Errors**
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Or install with all solvers
-pip install dcisionai-mcp-server[all-solvers]
-```
+#### **Web Platform Not Loading**
+- Check your internet connection
+- Try refreshing the page
+- Clear browser cache
+- Try a different browser
 
 ### **Getting Help**
-
-1. **Documentation**: [docs.dcisionai.com](https://docs.dcisionai.com)
-2. **Support**: [support@dcisionai.com](mailto:support@dcisionai.com)
-3. **GitHub Issues**: [github.com/dcisionai/issues](https://github.com/dcisionai/issues)
-4. **Community**: [discord.gg/dcisionai](https://discord.gg/dcisionai)
-
----
-
-## 🎯 **Next Steps**
-
-### **1. Explore Workflows**
-- Try different industry workflows
-- Experiment with various problem types
-- Learn from business explanations
-
-### **2. Integrate with Your Systems**
-- Connect to your databases
-- Build custom applications
-- Automate optimization processes
-
-### **3. Scale Your Usage**
-- Upgrade to Pro tier for higher limits
-- Deploy on your infrastructure
-- Get enterprise support
-
-### **4. Join the Community**
-- Share your use cases
-- Contribute to open source
-- Get expert support
+- **Documentation**: [Full API Reference](API_REFERENCE.md)
+- **GitHub Issues**: [Report bugs](https://github.com/dcisionai/dcisionai-mcp-platform/issues)
+- **Community**: [Join our Discord](https://discord.gg/dcisionai)
+- **Email**: support@dcisionai.com
 
 ---
 
-## 🎉 **Congratulations!**
+## 🎓 **Next Steps**
 
-You've successfully set up DcisionAI! You now have access to:
+### **Learn More**
+- 📖 [Platform Overview](PLATFORM_OVERVIEW.md) - Comprehensive platform capabilities
+- 🔧 [API Reference](API_REFERENCE.md) - Complete API documentation
+- 🚀 [Deployment Guide](DEPLOYMENT_GUIDE.md) - Advanced deployment options
 
-- ✅ **8 Core Optimization Tools**
-- ✅ **21 Industry Workflows**
-- ✅ **Real Mathematical Solvers**
-- ✅ **AI-Powered Business Explanations**
-- ✅ **Multiple Integration Options**
+### **Advanced Usage**
+- **Custom Workflows**: Create industry-specific optimization templates
+- **API Integration**: Build custom applications with optimization capabilities
+- **Enterprise Features**: Advanced security, monitoring, and support
 
-**Ready to optimize?** Start with a simple problem and watch DcisionAI transform your business challenges into optimal solutions!
+### **Community**
+- **GitHub**: [Contribute to the project](https://github.com/dcisionai/dcisionai-mcp-platform)
+- **Discord**: [Join developer discussions](https://discord.gg/dcisionai)
+- **Blog**: [Read optimization insights](https://blog.dcisionai.com)
 
 ---
 
-**DcisionAI Quick Start**: *From Zero to Optimization in 5 Minutes*
+## 🎉 **You're Ready!**
+
+Congratulations! You now have DcisionAI set up and ready to solve your optimization problems. Whether you're using the web platform, IDE integration, or API, you have access to powerful AI-driven mathematical optimization capabilities.
+
+**Start optimizing today and transform your business decisions! 🚀**
+
+---
+
+*Need help? Check our [troubleshooting guide](#troubleshooting) or contact our support team at support@dcisionai.com.*

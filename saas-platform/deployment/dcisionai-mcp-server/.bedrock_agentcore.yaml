@@ -1,0 +1,41 @@
+default_agent: mcp_server
+agents:
+  mcp_server:
+    name: mcp_server
+    entrypoint: /Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/saas-platform/deployment/dcisionai-mcp-server/mcp_server.py
+    platform: linux/arm64
+    container_runtime: none
+    source_path: /Users/ameydhavle/Documents/DcisionAI/dcisionai-mcp-platform/saas-platform/deployment/dcisionai-mcp-server
+    aws:
+      execution_role: null
+      execution_role_auto_create: true
+      account: '808953421331'
+      region: us-east-1
+      ecr_repository: null
+      ecr_auto_create: true
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: mcp_server-IkOAiK3aOz
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:808953421331:runtime/mcp_server-IkOAiK3aOz
+      agent_session_id: b25b019e-1979-4b1c-87f9-008d11b2b3ef
+    codebuild:
+      project_name: null
+      execution_role: null
+      source_bucket: null
+    memory:
+      mode: STM_ONLY
+      memory_id: null
+      memory_arn: null
+      memory_name: mcp_server_memory
+      event_expiry_days: 30
+      first_invoke_memory_check_done: false
+      was_created_by_toolkit: false
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null

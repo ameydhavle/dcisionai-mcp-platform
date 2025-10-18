@@ -1,0 +1,9 @@
+{
+  "total_examples": 500,
+  "train_examples": 450,
+  "validation_examples": 50,
+  "source_bucket": "dcisionai-slm-training-data",
+  "conversion_date": "2025-10-17",
+  "model_type": "claude-3-haiku",
+  "format": "converse-api"
+}

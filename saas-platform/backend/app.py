@@ -17,8 +17,8 @@ import os
 import asyncio
 from datetime import datetime
 
-# Import synchronous MCP client
-from sync_mcp_client import get_sync_mcp_client, initialize_sync_mcp_client
+# Import AgentCore client
+from agentcore_client import get_agentcore_client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -30,16 +30,16 @@ CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
 # MCP Server Configuration - AWS AgentCore Runtime
-MCP_SERVER_URL = os.getenv('MCP_SERVER_URL', 'https://bedrock-agentcore.us-west-2.amazonaws.com/runtimes/your-agent-arn/invocations?qualifier=DEFAULT')
+MCP_SERVER_URL = os.getenv('MCP_SERVER_URL', 'https://bedrock-agentcore.us-east-1.amazonaws.com/runtimes/mcp_server-IkOAiK3aOz/invocations?qualifier=DEFAULT')
 
 @app.route('/api/mcp/health-check', methods=['GET'])
 def mcp_health_check():
     """MCP health check endpoint for frontend."""
     try:
-        # Test MCP client connection to hosted server
+        # Test AgentCore client connection to hosted server
         try:
-            mcp_client = get_sync_mcp_client()
-            health_result = mcp_client.health_check()
+            agentcore_client = get_agentcore_client()
+            health_result = agentcore_client.health_check()
         except Exception as e:
             logger.error(f"Health check error: {e}")
             health_result = {"status": "error", "error": str(e)}
@@ -86,17 +86,26 @@ def mcp_classify_intent():
         if not problem_description:
             return jsonify({"error": "Problem description is required"}), 400
         
-        # Use MCP client to call hosted server
+        # Use AgentCore client to call hosted server
         try:
-            mcp_client = get_sync_mcp_client()
-            result = mcp_client.classify_intent(problem_description, context)
+            agentcore_client = get_agentcore_client()
+            result = agentcore_client.classify_intent(problem_description, context)
         except Exception as e:
-            logger.error(f"MCP client error: {e}")
+            logger.error(f"AgentCore client error: {e}")
             result = {"status": "error", "error": str(e)}
+        
+        # Ensure result is JSON serializable
+        try:
+            # Test if result is JSON serializable
+            json.dumps(result)
+            serializable_result = result
+        except (TypeError, ValueError) as e:
+            # If not serializable, convert to string
+            serializable_result = {"error": "Response not JSON serializable", "details": str(e)}
         
         return jsonify({
             "status": "success",
-            "result": result,
+            "result": serializable_result,
             "message": "Intent classified using hosted MCP server on AWS AgentCore"
         })
         
@@ -118,21 +127,13 @@ def mcp_analyze_data():
         if not problem_description:
             return jsonify({"error": "Problem description is required"}), 400
         
-        # Use our improved MCP server
-        from dcisionai_mcp_server.tools import DcisionAITools
-        
-        tools = DcisionAITools()
-        
-        # Run the async function in a new event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        # Use AgentCore client to call hosted server
         try:
-            result = loop.run_until_complete(tools.analyze_data(
-                problem_description=problem_description,
-                intent_data=intent_data
-            ))
-        finally:
-            loop.close()
+            agentcore_client = get_agentcore_client()
+            result = agentcore_client.analyze_data(problem_description, intent_data)
+        except Exception as e:
+            logger.error(f"AgentCore client error: {e}")
+            result = {"status": "error", "error": str(e)}
         
         return jsonify({
             "status": "success",
@@ -159,22 +160,13 @@ def mcp_build_model():
         if not problem_description:
             return jsonify({"error": "Problem description is required"}), 400
         
-        # Use our improved MCP server with Claude 3 Haiku
-        from dcisionai_mcp_server.tools import DcisionAITools
-        
-        tools = DcisionAITools()
-        
-        # Run the async function in a new event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        # Use AgentCore client to call hosted server
         try:
-            result = loop.run_until_complete(tools.build_model(
-                problem_description=problem_description,
-                intent_data=intent_data,
-                data_analysis=data_analysis
-            ))
-        finally:
-            loop.close()
+            agentcore_client = get_agentcore_client()
+            result = agentcore_client.build_model(problem_description, intent_data, data_analysis)
+        except Exception as e:
+            logger.error(f"AgentCore client error: {e}")
+            result = {"status": "error", "error": str(e)}
         
         return jsonify({
             "status": "success",
@@ -202,23 +194,13 @@ def mcp_solve_optimization():
         if not problem_description:
             return jsonify({"error": "Problem description is required"}), 400
         
-        # Use our improved MCP server with PDLP solver
-        from dcisionai_mcp_server.tools import DcisionAITools
-        
-        tools = DcisionAITools()
-        
-        # Run the async function in a new event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        # Use AgentCore client to call hosted server
         try:
-            result = loop.run_until_complete(tools.solve_optimization(
-                problem_description=problem_description,
-                intent_data=intent_data,
-                data_analysis=data_analysis,
-                model_building=model_building
-            ))
-        finally:
-            loop.close()
+            agentcore_client = get_agentcore_client()
+            result = agentcore_client.solve_optimization(problem_description, intent_data, data_analysis, model_building)
+        except Exception as e:
+            logger.error(f"AgentCore client error: {e}")
+            result = {"status": "error", "error": str(e)}
         
         return jsonify({
             "status": "success",
@@ -288,23 +270,13 @@ def mcp_explain_optimization():
         if not problem_description:
             return jsonify({"error": "Problem description is required"}), 400
         
-        from dcisionai_mcp_server.tools import DcisionAITools
-        
-        tools = DcisionAITools()
-        
-        # Run the async function in a new event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        # Use AgentCore client to call hosted server
         try:
-            result = loop.run_until_complete(tools.explain_optimization(
-                problem_description=problem_description,
-                intent_data=intent_data,
-                data_analysis=data_analysis,
-                model_building=model_building,
-                optimization_solution=optimization_solution
-            ))
-        finally:
-            loop.close()
+            agentcore_client = get_agentcore_client()
+            result = agentcore_client.explain_optimization(problem_description, intent_data, data_analysis, model_building, optimization_solution)
+        except Exception as e:
+            logger.error(f"AgentCore client error: {e}")
+            result = {"status": "error", "error": str(e)}
         
         return jsonify({
             "status": "success",
@@ -327,43 +299,32 @@ def mcp_execute_workflow():
         industry = data.get('industry', 'manufacturing')
         workflow_id = data.get('workflow_id', 'production_planning')
         
-        # Use our improved MCP server for complete workflow execution
-        from dcisionai_mcp_server.tools import DcisionAITools
-        
-        tools = DcisionAITools()
+        # Use AgentCore client for complete workflow execution
+        agentcore_client = get_agentcore_client()
         
         # Execute the complete optimization pipeline
         problem_description = f"Optimize {industry} {workflow_id} workflow"
         
-        # Run all async functions in a single event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         try:
             # Step 1: Intent Classification
-            intent_result = loop.run_until_complete(tools.classify_intent(problem_description=problem_description))
+            intent_result = agentcore_client.classify_intent(problem_description)
             
             # Step 2: Data Analysis
-            data_result = loop.run_until_complete(tools.analyze_data(
-                problem_description=problem_description,
-                intent_data=intent_result
-            ))
+            data_result = agentcore_client.analyze_data(problem_description, intent_result)
             
-            # Step 3: Model Building (Claude 3 Haiku)
-            model_result = loop.run_until_complete(tools.build_model(
-                problem_description=problem_description,
-                intent_data=intent_result,
-                data_analysis=data_result
-            ))
+            # Step 3: Model Building
+            model_result = agentcore_client.build_model(problem_description, intent_result, data_result)
             
-            # Step 4: Optimization Solution (PDLP Solver)
-            solution_result = loop.run_until_complete(tools.solve_optimization(
-                problem_description=problem_description,
-                intent_data=intent_result,
-                data_analysis=data_result,
-                model_building=model_result
-            ))
-        finally:
-            loop.close()
+            # Step 4: Optimization Solution
+            solution_result = agentcore_client.solve_optimization(
+                problem_description, intent_result, data_result, model_result
+            )
+        except Exception as e:
+            logger.error(f"AgentCore workflow execution error: {e}")
+            return jsonify({
+                "error": "Workflow execution failed",
+                "details": str(e)
+            }), 500
         
         # Format the results for the frontend
         result = {

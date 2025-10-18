@@ -1,0 +1,1290 @@
+{
+  "Archaeological Site Excavation": {
+    "problem_name": "Archaeological Site Excavation",
+    "problem_description": "\n                An archaeological team needs to optimize excavation of 7 ancient sites over 4 seasons.\n                Sites: Site A (artifacts: 150, difficulty: 3), Site B (200, 2), Site C (100, 4), Site D (300, 1), Site E (80, 5), Site F (250, 2), Site G (120, 3)\n                Seasons: Spring (weather: good, time: 90 days), Summer (excellent, 120 days), Fall (good, 80 days), Winter (poor, 60 days)\n                Team: 12 archaeologists with different specializations\n                Constraints: Each site can only be excavated in one season, each archaeologist can work on max 2 sites per season, weather affects excavation efficiency\n                Budget: $500K total, excavation costs vary by site difficulty and season\n                Objective: Maximize total artifacts discovered while staying within budget and respecting weather constraints\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T15:21:21.780275",
+      "result": {
+        "intent": "resource_allocation|production_planning|portfolio_optimization|scheduling",
+        "industry": "general",
+        "optimization_type": "mixed_integer_linear_programming",
+        "complexity": "medium",
+        "confidence": 0.9
+      },
+      "message": "Intent: resource_allocation|production_planning|portfolio_optimization|scheduling"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T15:21:23.541426",
+      "result": {
+        "readiness_score": 0.9,
+        "entities": 12,
+        "data_quality": "high",
+        "variables_identified": [
+          "site_to_excavate",
+          "season_to_excavate",
+          "archaeologist_assignment"
+        ],
+        "constraints_identified": [
+          "each_site_can_only_be_excavated_in_one_season",
+          "each_archaeologist_can_work_on_max_2_sites_per_season",
+          "weather_affects_excavation_efficiency",
+          "stay_within_budget"
+        ]
+      },
+      "message": "Ready: 90.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T15:21:23.541565",
+      "result": {
+        "selected_solver": "SCIP",
+        "optimization_type": "mixed_integer_linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "quadratic_constraints",
+          "continuous_variables",
+          "integer_variables",
+          "binary_variables"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "HIGHS",
+          "CBC"
+        ],
+        "reasoning": "Selected SCIP for mixed_integer_linear_programming problem with 28 variables and 15 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: SCIP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T15:21:35.629778",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made are: 1) Which sites to excavate in each season, 2) How to allocate the 12 archaeologists to the excavation sites in each season.",
+          "step2_constraint_analysis": "The key constraints are: 1) Each site can only be excavated in one season, 2) Each archaeologist can work on a maximum of 2 sites per season, 3) Weather conditions affect excavation efficiency, 4) Total excavation budget is $500K.",
+          "step3_objective_analysis": "The goal is to maximize the total number of artifacts discovered while staying within the budget and respecting the weather constraints.",
+          "step4_variable_design": "The decision variables are:  1) x_ij (binary) - 1 if site i is excavated in season j, 0 otherwise 2) y_ijk (binary) - 1 if archaeologist k is assigned to site i in season j, 0 otherwise",
+          "step5_constraint_formulation": "The constraints are: 1) Sum of x_ij for each site i = 1 (each site excavated in one season) 2) Sum of y_ijk for each archaeologist k <= 2 (each archaeologist max 2 sites per season) 3) Excavation cost for site i in season j <= budget 4) Excavation efficiency for site i in season j based on weather",
+          "step6_objective_formulation": "Maximize the total artifacts discovered: Objective = Sum of (artifacts_i * x_ij)",
+          "step7_validation": "All variables (x_ij and y_ijk) are used in the constraints and objective function."
+        },
+        "model_type": "mixed_integer_linear_programming",
+        "variables": [
+          {
+            "name": "x_ij",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "1 if site i is excavated in season j, 0 otherwise"
+          },
+          {
+            "name": "y_ijk",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "1 if archaeologist k is assigned to site i in season j, 0 otherwise"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "Sum(artifacts_i * x_ij for all i,j)",
+          "description": "Total artifacts discovered"
+        },
+        "constraints": [
+          {
+            "expression": "Sum(x_ij for all j) = 1 for all i",
+            "description": "Each site excavated in one season"
+          },
+          {
+            "expression": "Sum(y_ijk for all i,j) <= 2 for all k",
+            "description": "Each archaeologist max 2 sites per season"
+          },
+          {
+            "expression": "Sum(excavation_cost_ij * x_ij for all i,j) <= 500000",
+            "description": "Total excavation budget"
+          },
+          {
+            "expression": "excavation_efficiency_ij * x_ij",
+            "description": "Excavation efficiency based on weather"
+          }
+        ],
+        "model_complexity": "high",
+        "estimated_solve_time": 60,
+        "mathematical_formulation": "max Sum(artifacts_i * x_ij for all i,j) s.t. Sum(x_ij for all j) = 1 for all i Sum(y_ijk for all i,j) <= 2 for all k Sum(excavation_cost_ij * x_ij for all i,j) <= 500000 excavation_efficiency_ij * x_ij x_ij, y_ijk binary",
+        "validation_summary": {
+          "variables_defined": 2,
+          "constraints_defined": 4,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x118e72800>",
+          "variables": {
+            "x_ij": "x_ij",
+            "y_ijk": "y_ijk"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 2,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_4817"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 28,
+    "expected_constraints": 15,
+    "timestamp": "2025-10-18T15:21:35.629808",
+    "success": true,
+    "actual_variables": 2,
+    "actual_constraints": 4
+  },
+  "Space Mission Resource Allocation": {
+    "problem_name": "Space Mission Resource Allocation",
+    "problem_description": "\n                NASA needs to allocate resources for 5 space missions to different planets.\n                Missions: Mars (priority: High, fuel: 1000L, crew: 6), Venus (Medium, 800L, 4), Jupiter (Low, 2000L, 8), Saturn (Medium, 1800L, 7), Pluto (Low, 3000L, 5)\n                Resources: Fuel (5000L available), Crew (20 astronauts), Equipment (15 units), Budget ($2B)\n                Launch Windows: Mars (every 26 months), Venus (every 19 months), Jupiter (every 13 months), Saturn (every 29 months), Pluto (every 248 years)\n                Constraints: Each mission needs minimum crew size, fuel requirements must be met, equipment allocation per mission, budget limits\n                Risk Factors: Mission success probability varies by planet and crew experience\n                Objective: Maximize expected scientific return while minimizing risk and staying within resource constraints\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T15:21:39.490258",
+      "result": {
+        "raw_response": "Based on the problem description, this appears to be a resource allocation optimization problem with the following characteristics:\n\nIntent: Resource Allocation\nIndustry: Aerospace/Space\nOptimization Type: Mixed Integer Linear Programming (MILP)\nComplexity: High\n\nThe key aspects that indicate this is a MILP problem are:\n\n1. Multiple resources to allocate (fuel, crew, equipment, budget)\n2. Binary/integer decision variables (whether to allocate resources to each mission or not)\n3. Linear objective function (maximize expected scientific return) and linear constraints (resource limits)\n4. Discrete nature of the missions (can only choose to do a mission or not)\n\nThe high complexity comes from the multiple resources, multiple missions with different priorities and requirements, and the need to consider risk factors and launch windows.\n\nThis type of problem is commonly seen in project portfolio optimization, production planning, and logistics/supply chain management. The goal is to optimally allocate limited resources across a set of competing projects/missions to maximize the overall value while satisfying the various constraints.",
+        "intent": "unknown",
+        "optimization_type": "linear_programming",
+        "confidence": 0.7
+      },
+      "message": "Intent: unknown"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T15:21:46.174002",
+      "result": {
+        "raw_response": "Understood. Let's analyze this optimization problem step-by-step:\n\n**Step 1 - Decision Analysis**\n- Identify the decision variables: \n  - Which missions to select (Mars, Venus, Jupiter, Saturn, Pluto)\n  - How to allocate the limited resources (fuel, crew, equipment, budget) across the selected missions\n- Identify the objective function:\n  - Maximize the expected scientific return while minimizing risk\n- Identify the constraints:\n  - Fuel requirements must be met for each mission\n  - Minimum crew size for each mission\n  - Equipment allocation per mission\n  - Budget limit of $2B\n\n**Step 2 - Data Gathering and Preprocessing**\n- Collect the relevant data for each mission:\n  - Priority, fuel requirement, crew requirement, equipment requirement\n  - Launch windows and probabilities of mission success\n- Preprocess the data to ensure consistency and handle any missing values\n\n**Step 3 - Formulate the Optimization Model**\n- Represent the decision variables as binary variables (1 if the mission is selected, 0 otherwise)\n- Formulate the objective function as a weighted sum of the expected scientific return and the risk (e.g., 1 - probability of mission success)\n- Incorporate the constraints into the model (fuel, crew, equipment, budget)\n\n**Step 4 - Solve the Optimization Problem**\n- Choose an appropriate optimization algorithm, such as linear programming, integer programming, or mixed-integer programming, depending on the complexity of the problem\n- Implement the optimization model and solve it using a suitable software tool (e.g., Python with SciPy, CPLEX, Gurobi)\n\n**Step 5 - Analyze the Results**\n- Interpret the optimal solution, which will indicate the selected missions and the allocation of resources\n- Perform sensitivity analysis to understand the impact of changes in the input parameters on the optimal solution\n- Identify any trade-offs between the objective function and the constraints\n\n**Step 6 - Communicate the Findings**\n- Prepare a report or presentation summarizing the problem, the optimization approach, the results, and the recommendations for NASA's decision-makers.\n\nThe key aspects of this problem are the resource constraints, the varying mission priorities and success probabilities, and the need to balance scientific return and risk. The optimization model will help NASA make informed decisions on which missions to pursue and how to allocate the limited resources effectively.",
+        "readiness_score": 0.8,
+        "entities": 0
+      },
+      "message": "Ready: 80.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T15:21:46.174100",
+      "result": {
+        "selected_solver": "PDLP",
+        "optimization_type": "linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "continuous_variables",
+          "large_scale"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "SCIP",
+          "HIGHS",
+          "CVXPY",
+          "GLOP",
+          "CBC"
+        ],
+        "reasoning": "Selected PDLP for linear_programming problem with 5 variables and 8 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: PDLP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T15:22:03.991981",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made are the allocation of resources (fuel, crew, equipment, and budget) to the 5 space missions (Mars, Venus, Jupiter, Saturn, and Pluto).",
+          "step2_constraint_analysis": "The constraints include:  - Minimum crew size for each mission - Fuel requirements for each mission - Equipment allocation per mission - Budget limit of $2B - Launch window constraints for each mission",
+          "step3_objective_analysis": "The objective is to maximize the expected scientific return while minimizing risk and staying within the resource constraints.",
+          "step4_variable_design": "The decision variables are: - x1: Allocation to Mars mission (0 to 1) - x2: Allocation to Venus mission (0 to 1)  - x3: Allocation to Jupiter mission (0 to 1) - x4: Allocation to Saturn mission (0 to 1) - x5: Allocation to Pluto mission (0 to 1) These variables represent the fraction of resources allocated to each mission.",
+          "step5_constraint_formulation": "The constraints are: 1. Fuel constraint: 1000*x1 + 800*x2 + 2000*x3 + 1800*x4 + 3000*x5 <= 5000 2. Crew constraint: 6*x1 + 4*x2 + 8*x3 + 7*x4 + 5*x5 <= 20 3. Equipment constraint: 1*x1 + 1*x2 + 1*x3 + 1*x4 + 1*x5 <= 15 4. Budget constraint: 1*x1 + 1*x2 + 1*x3 + 1*x4 + 1*x5 <= 2 5. Mission priority constraint: x1 >= x3, x2 >= x5, x4 >= x5 6. Sum of allocations constraint: x1 + x2 + x3 + x4 + x5 = 1",
+          "step6_objective_formulation": "The objective function is to maximize the expected scientific return, which can be represented as: Maximize: 0.8*x1 + 0.6*x2 + 0.4*x3 + 0.5*x4 + 0.3*x5 where the coefficients represent the relative scientific return for each mission.",
+          "step7_validation": "All variables (x1, x2, x3, x4, x5) are used in at least one constraint or the objective function. The model is feasible and can enforce all stated constraints."
+        },
+        "model_type": "linear_programming",
+        "variables": [
+          {
+            "name": "x1",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Mars mission (fraction)"
+          },
+          {
+            "name": "x2",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Venus mission (fraction)"
+          },
+          {
+            "name": "x3",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Jupiter mission (fraction)"
+          },
+          {
+            "name": "x4",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Saturn mission (fraction)"
+          },
+          {
+            "name": "x5",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Pluto mission (fraction)"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "0.8*x1 + 0.6*x2 + 0.4*x3 + 0.5*x4 + 0.3*x5",
+          "description": "Expected scientific return"
+        },
+        "constraints": [
+          {
+            "expression": "1000*x1 + 800*x2 + 2000*x3 + 1800*x4 + 3000*x5 <= 5000",
+            "description": "Fuel constraint"
+          },
+          {
+            "expression": "6*x1 + 4*x2 + 8*x3 + 7*x4 + 5*x5 <= 20",
+            "description": "Crew constraint"
+          },
+          {
+            "expression": "1*x1 + 1*x2 + 1*x3 + 1*x4 + 1*x5 <= 15",
+            "description": "Equipment constraint"
+          },
+          {
+            "expression": "1*x1 + 1*x2 + 1*x3 + 1*x4 + 1*x5 <= 2",
+            "description": "Budget constraint"
+          },
+          {
+            "expression": "x1 >= x3, x2 >= x5, x4 >= x5",
+            "description": "Mission priority constraint"
+          },
+          {
+            "expression": "x1 + x2 + x3 + x4 + x5 = 1",
+            "description": "Sum of allocations constraint"
+          }
+        ],
+        "model_complexity": "medium",
+        "estimated_solve_time": 0.5,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Maximize: 0.8*x1 + 0.6*x2 + 0.4*x3 + 0.5*x4 + 0.3*x5  Subject to: 1. Fuel constraint: 1000*x1 + 800*x2 + 2000*x3 + 1800*x4 + 3000*x5 <= 5000 2. Crew constraint: 6*x1 + 4*x2 + 8*x3 + 7*x4 + 5*x5 <= 20 3. Equipment constraint: 1*x1 + 1*x2 + 1*x3 + 1*x4 + 1*x5 <= 15 4. Budget constraint: 1*x1 + 1*x2 + 1*x3 + 1*x4 + 1*x5 <= 2 5. Mission priority constraint: x1 >= x3, x2 >= x5, x4 >= x5 6. Sum of allocations constraint: x1 + x2 + x3 + x4 + x5 = 1  Where: x1, x2, x3, x4, x5 are the decision variables representing the fraction of resources allocated to each mission (Mars, Venus, Jupiter, Saturn, Pluto).",
+        "validation_summary": {
+          "variables_defined": 5,
+          "constraints_defined": 6,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x118f95090>",
+          "variables": {
+            "x1": "x1",
+            "x2": "x2",
+            "x3": "x3",
+            "x4": "x4",
+            "x5": "x5"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 5,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_7084"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 5,
+    "expected_constraints": 8,
+    "timestamp": "2025-10-18T15:22:03.992002",
+    "success": true,
+    "actual_variables": 5,
+    "actual_constraints": 6
+  },
+  "Underwater Cable Network": {
+    "problem_name": "Underwater Cable Network",
+    "problem_description": "\n                A telecommunications company needs to lay underwater cables connecting 8 coastal cities.\n                Cities: A, B, C, D, E, F, G, H (populations: 2M, 1.5M, 3M, 800K, 1.2M, 2.5M, 900K, 1.8M)\n                Cable Routes: 12 possible routes with different distances and depths\n                Cable Types: Standard (cost: $100K/km, capacity: 10Gbps), Premium ($150K/km, 50Gbps), Ultra ($200K/km, 100Gbps)\n                Constraints: Each city must be connected, maximum 2 cable types per route, depth affects cable type selection, capacity must meet demand\n                Environmental: Some routes pass through protected marine areas (restrictions apply)\n                Objective: Minimize total cost while ensuring all cities are connected and capacity requirements are met\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T15:22:07.986194",
+      "result": {
+        "intent": "resource_allocation|production_planning|portfolio_optimization|scheduling",
+        "industry": "telecommunications|logistics",
+        "optimization_type": "mixed_integer_linear_programming",
+        "complexity": "high",
+        "confidence": 0.9
+      },
+      "message": "Intent: resource_allocation|production_planning|portfolio_optimization|scheduling"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T15:22:16.278384",
+      "result": {
+        "readiness_score": 0.85,
+        "entities": 10,
+        "data_quality": "high",
+        "variables_identified": [
+          "cable_type",
+          "cable_length",
+          "cable_route"
+        ],
+        "constraints_identified": [
+          "capacity",
+          "demand",
+          "depth",
+          "protected_areas",
+          "cable_type_per_route"
+        ]
+      },
+      "message": "Ready: 85.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T15:22:16.278516",
+      "result": {
+        "selected_solver": "SCIP",
+        "optimization_type": "mixed_integer_linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "quadratic_constraints",
+          "continuous_variables",
+          "integer_variables",
+          "binary_variables"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "HIGHS",
+          "CBC"
+        ],
+        "reasoning": "Selected SCIP for mixed_integer_linear_programming problem with 36 variables and 20 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: SCIP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T15:22:31.418733",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made are: 1. Which cable routes to select from the 12 possible routes 2. Which cable type (standard, premium, or ultra) to use for each selected route ",
+          "step2_constraint_analysis": "The key constraints are: 1. Each city must be connected to the network 2. Maximum of 2 cable types can be used per route 3. Cable type selection is affected by the depth of the route 4. Total capacity of the network must meet the demand 5. Some routes pass through protected marine areas and have restrictions ",
+          "step3_objective_analysis": "The goal is to minimize the total cost of the cable network while ensuring all cities are connected and the capacity requirements are met.",
+          "step4_variable_design": "The decision variables are: 1. Binary variables x_ij to represent whether route i is selected and cable type j is used (i = 1 to 12, j = 1 to 3 for standard, premium, ultra) 2. Continuous variables y_i to represent the capacity allocated to route i (i = 1 to 12) ",
+          "step5_constraint_formulation": "The constraints can be formulated as: 1. Each city must be connected: Sum of x_ij for all routes i and cable types j connected to city k >= 1, for all cities k 2. Maximum 2 cable types per route: Sum of x_ij for all cable types j on route i <= 2, for all routes i 3. Depth affects cable type: x_ij = 0 if depth of route i is greater than the maximum depth for cable type j 4. Capacity meets demand: Sum of y_i for all routes i >= total demand 5. Protected marine area restrictions: x_ij = 0 if route i passes through a protected area and uses cable type j ",
+          "step6_objective_formulation": "The objective function is to minimize the total cost of the cable network: Minimize Sum of (x_ij * cost_j * distance_i) for all routes i and cable types j where cost_j is the cost per km for cable type j (100K, 150K, 200K) and distance_i is the length of route i.",
+          "step7_validation": "All variables (x_ij and y_i) are used in at least one constraint or the objective function. The model can enforce all stated constraints and the objective function matches the goal of minimizing total cost."
+        },
+        "model_type": "mixed_integer_linear_programming",
+        "variables": [
+          {
+            "name": "x_ij",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether route i uses cable type j (i = 1 to 12, j = 1 to 3 for standard, premium, ultra)"
+          },
+          {
+            "name": "y_i",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Capacity allocated to route i (i = 1 to 12)"
+          }
+        ],
+        "objective": {
+          "type": "minimize",
+          "expression": "Sum of (x_ij * cost_j * distance_i) for all routes i and cable types j",
+          "description": "Total cost of the cable network"
+        },
+        "constraints": [
+          {
+            "expression": "Sum of x_ij for all routes i and cable types j connected to city k >= 1, for all cities k",
+            "description": "Each city must be connected"
+          },
+          {
+            "expression": "Sum of x_ij for all cable types j on route i <= 2, for all routes i",
+            "description": "Maximum 2 cable types per route"
+          },
+          {
+            "expression": "x_ij = 0 if depth of route i is greater than the maximum depth for cable type j",
+            "description": "Depth affects cable type selection"
+          },
+          {
+            "expression": "Sum of y_i for all routes i >= total demand",
+            "description": "Total capacity meets demand"
+          },
+          {
+            "expression": "x_ij = 0 if route i passes through a protected area and uses cable type j",
+            "description": "Protected marine area restrictions"
+          }
+        ],
+        "model_complexity": "high",
+        "estimated_solve_time": 60,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Minimize: Sum of (x_ij * cost_j * distance_i) for all routes i and cable types j  Subject to: 1. Each city must be connected:    Sum of x_ij for all routes i and cable types j connected to city k >= 1, for all cities k  2. Maximum 2 cable types per route:    Sum of x_ij for all cable types j on route i <= 2, for all routes i  3. Depth affects cable type:    x_ij = 0 if depth of route i is greater than the maximum depth for cable type j  4. Capacity meets demand:    Sum of y_i for all routes i >= total demand  5. Protected marine area restrictions:    x_ij = 0 if route i passes through a protected area and uses cable type j  Where: x_ij is a binary variable indicating whether route i uses cable type j (i = 1 to 12, j = 1 to 3 for standard, premium, ultra) y_i is a continuous variable representing the capacity allocated to route i (i = 1 to 12) cost_j is the cost per km for cable type j (100K, 150K, 200K) distance_i is the length of route i",
+        "validation_summary": {
+          "variables_defined": 24,
+          "constraints_defined": 5,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x1191c80d0>",
+          "variables": {
+            "x_ij": "x_ij",
+            "y_i": "y_i"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 2,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_4936"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 36,
+    "expected_constraints": 20,
+    "timestamp": "2025-10-18T15:22:31.418761",
+    "success": true,
+    "actual_variables": 2,
+    "actual_constraints": 5
+  },
+  "Quantum Computing Resource Scheduling": {
+    "problem_name": "Quantum Computing Resource Scheduling",
+    "problem_description": "\n                A quantum computing lab needs to schedule 6 quantum algorithms on 3 quantum computers.\n                Algorithms: Shor (qubits: 20, time: 4h, priority: High), Grover (15, 2h, Medium), VQE (25, 6h, High), QAOA (18, 3h, Medium), HHL (30, 8h, Low), VQC (12, 1h, High)\n                Computers: Q1 (qubits: 50, reliability: 95%), Q2 (40, 90%), Q3 (35, 85%)\n                Constraints: Each algorithm can only run on one computer, qubit requirements must be met, algorithms cannot be interrupted, priority affects scheduling order\n                Maintenance: Each computer needs 2h maintenance every 24h, maintenance windows are fixed\n                Objective: Minimize total completion time while respecting all constraints and maximizing priority-weighted completion\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T15:22:35.662038",
+      "result": {
+        "intent": "scheduling",
+        "industry": "manufacturing",
+        "optimization_type": "mixed_integer_linear_programming",
+        "complexity": "medium",
+        "confidence": 0.9
+      },
+      "message": "Intent: scheduling"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T15:22:42.290775",
+      "result": {
+        "readiness_score": 0.9,
+        "entities": 9,
+        "data_quality": "high",
+        "variables_identified": [
+          "algorithm_schedule",
+          "computer_utilization"
+        ],
+        "constraints_identified": [
+          "qubit_requirements",
+          "algorithm_runtime",
+          "priority",
+          "maintenance_schedule"
+        ]
+      },
+      "message": "Ready: 90.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T15:22:42.290876",
+      "result": {
+        "selected_solver": "SCIP",
+        "optimization_type": "mixed_integer_linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "quadratic_constraints",
+          "continuous_variables",
+          "integer_variables",
+          "binary_variables"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "HIGHS",
+          "CBC"
+        ],
+        "reasoning": "Selected SCIP for mixed_integer_linear_programming problem with 18 variables and 12 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: SCIP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T15:22:56.525009",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are: 1. Assign each quantum algorithm to a specific quantum computer. 2. Determine the start time for each algorithm on its assigned computer.",
+          "step2_constraint_analysis": "The key constraints in this problem are: 1. Each algorithm can only run on one computer. 2. The qubit requirements of each algorithm must be met by the assigned computer. 3. Algorithms cannot be interrupted once started. 4. Algorithm priority affects the scheduling order. 5. Each computer requires 2 hours of maintenance every 24 hours, with fixed maintenance windows.",
+          "step3_objective_analysis": "The objective is to minimize the total completion time while respecting all constraints and maximizing the priority-weighted completion of the algorithms.",
+          "step4_variable_design": "The decision variables in this problem are: 1. x_ij: A binary variable indicating whether algorithm i is assigned to computer j (1 if assigned, 0 otherwise). 2. s_i: The start time of algorithm i.",
+          "step5_constraint_formulation": "The constraints can be formulated as follows: 1. Assignment constraint: Sum of x_ij for all j = 1 for each i (each algorithm is assigned to exactly one computer). 2. Qubit requirement constraint: Sum of qubit requirements of algorithms assigned to computer j <= capacity of computer j. 3. Non-preemption constraint: s_i + duration_i <= s_j for any pair of algorithms i and j assigned to the same computer, where i is scheduled before j. 4. Maintenance constraint: Each computer j is unavailable for 2 hours every 24 hours, with fixed maintenance windows.",
+          "step6_objective_formulation": "The objective function can be formulated as: Minimize: Max_i (s_i + duration_i) - Min_i (s_i) This minimizes the total completion time while prioritizing the completion of higher-priority algorithms.",
+          "step7_validation": "All variables (x_ij and s_i) are used in at least one constraint or the objective function. The model can enforce all stated constraints and achieve the desired objective."
+        },
+        "model_type": "mixed_integer_linear_programming",
+        "variables": [
+          {
+            "name": "x_ij",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether algorithm i is assigned to computer j"
+          },
+          {
+            "name": "s_i",
+            "type": "continuous",
+            "bounds": "non-negative",
+            "description": "Start time of algorithm i"
+          }
+        ],
+        "objective": {
+          "type": "minimize",
+          "expression": "Max_i (s_i + duration_i) - Min_i (s_i)",
+          "description": "Minimize total completion time while prioritizing higher-priority algorithms"
+        },
+        "constraints": [
+          {
+            "expression": "Sum(x_ij for j) = 1 for all i",
+            "description": "Each algorithm is assigned to exactly one computer"
+          },
+          {
+            "expression": "Sum(qubit_requirement_i * x_ij for i) <= capacity_j for all j",
+            "description": "Qubit requirements of assigned algorithms must not exceed computer capacity"
+          },
+          {
+            "expression": "s_i + duration_i <= s_j for all i, j where x_ij = 1 and x_ji = 1",
+            "description": "Algorithms assigned to the same computer cannot be interrupted"
+          },
+          {
+            "expression": "s_i + 2 <= s_i + 24 for all i, j where x_ij = 1",
+            "description": "Each computer is unavailable for 2 hours every 24 hours due to maintenance"
+          }
+        ],
+        "model_complexity": "high",
+        "estimated_solve_time": 60,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Minimize: Max_i (s_i + duration_i) - Min_i (s_i)  Subject to: 1. Sum(x_ij for j) = 1 for all i 2. Sum(qubit_requirement_i * x_ij for i) <= capacity_j for all j 3. s_i + duration_i <= s_j for all i, j where x_ij = 1 and x_ji = 1 4. s_i + 2 <= s_i + 24 for all i, j where x_ij = 1  Where: x_ij is a binary variable indicating whether algorithm i is assigned to computer j s_i is the start time of algorithm i duration_i is the duration of algorithm i qubit_requirement_i is the qubit requirement of algorithm i capacity_j is the qubit capacity of computer j",
+        "validation_summary": {
+          "variables_defined": 2,
+          "constraints_defined": 4,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x11905b310>",
+          "variables": {
+            "x_ij": "x_ij",
+            "s_i": "s_i"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 2,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_8557"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 18,
+    "expected_constraints": 12,
+    "timestamp": "2025-10-18T15:22:56.525044",
+    "success": true,
+    "actual_variables": 2,
+    "actual_constraints": 4
+  },
+  "Biodiversity Conservation Planning": {
+    "problem_name": "Biodiversity Conservation Planning",
+    "problem_description": "\n                A conservation organization needs to protect 10 endangered species across 6 protected areas.\n                Species: Tiger (population: 50, habitat: forest, threat: High), Elephant (200, grassland, Medium), Rhino (30, savanna, High), Panda (100, bamboo, Medium), Eagle (80, mountain, Low), Dolphin (150, ocean, Medium), Whale (40, ocean, High), Bear (60, forest, Medium), Wolf (90, forest, Low), Lion (70, savanna, Medium)\n                Areas: Forest Reserve (capacity: 300, cost: $2M), Grassland Park (250, $1.5M), Savanna Sanctuary (200, $1.8M), Mountain Preserve (150, $2.5M), Ocean Marine Park (400, $3M), Bamboo Grove (100, $1M)\n                Constraints: Each species can only be placed in compatible habitat, area capacity limits, budget of $15M, minimum population thresholds for viability\n                Migration: Some species need migration corridors between areas\n                Objective: Maximize total protected population while minimizing cost and ensuring species viability\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T15:22:59.733041",
+      "result": {
+        "raw_response": "Based on the problem description, this appears to be a resource allocation optimization problem with the following characteristics:\n\n\"intent\": \"resource_allocation\"\nThis is a problem of allocating limited resources (protected areas) to maximize the total protected population of endangered species.\n\n\"optimization_type\": \"mixed_integer_linear_programming\"\nThe problem involves discrete decisions (which species to allocate to which protected area) as well as continuous variables (population sizes), making it a mixed-integer linear programming problem.\n\n\"complexity\": \"high\"\nThe problem has multiple constraints (habitat compatibility, capacity limits, budget, population thresholds) and a complex objective function (maximize total protected population while minimizing cost and ensuring viability), indicating a high level of complexity.\n\n\"industry\": \"general\"\nThis is a general conservation and wildlife management problem, not specific to a particular industry.\n\n\"confidence\": 0.85\nI'm fairly confident in this assessment, as the problem description provides sufficient detail to classify it as a resource allocation optimization problem with the characteristics mentioned above.",
+        "intent": "unknown",
+        "optimization_type": "linear_programming",
+        "confidence": 0.7
+      },
+      "message": "Intent: unknown"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T15:23:06.147731",
+      "result": {
+        "readiness_score": 0.9,
+        "entities": 10,
+        "data_quality": "high",
+        "variables_identified": [
+          "population_protected",
+          "cost"
+        ],
+        "constraints_identified": [
+          "habitat_compatibility",
+          "area_capacity",
+          "budget",
+          "minimum_population_threshold",
+          "migration_corridors"
+        ]
+      },
+      "message": "Ready: 90.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T15:23:06.147891",
+      "result": {
+        "selected_solver": "PDLP",
+        "optimization_type": "linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "continuous_variables",
+          "large_scale"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "SCIP",
+          "HIGHS",
+          "CVXPY",
+          "GLOP",
+          "CBC"
+        ],
+        "reasoning": "Selected PDLP for linear_programming problem with 60 variables and 16 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: PDLP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T15:23:18.336604",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are: 1. Which endangered species to allocate to each of the 6 protected areas 2. The population size of each species to be protected in each area",
+          "step2_constraint_analysis": "The key constraints in this problem are: 1. Each species can only be placed in compatible habitat 2. The capacity limits of each protected area 3. A budget limit of $15M 4. Minimum population thresholds for species viability 5. Migration corridors required between some areas",
+          "step3_objective_analysis": "The goal is to maximize the total protected population of the 10 endangered species while minimizing the cost and ensuring species viability.",
+          "step4_variable_design": "The decision variables in this problem are: 1. x_ij - The population size of species i to be protected in area j, where i = 1 to 10 (species) and j = 1 to 6 (areas) These are continuous variables bounded by 0 and the maximum capacity of each area.",
+          "step5_constraint_formulation": "The constraints can be formulated as follows: 1. Habitat compatibility: x_ij = 0 if species i is not compatible with the habitat in area j 2. Area capacity: Sum of x_ij for all i <= capacity of area j 3. Budget limit: Sum of cost of each area j * Sum of x_ij for all i <= $15M 4. Viability thresholds: Sum of x_ij for all j >= minimum viable population for species i",
+          "step6_objective_formulation": "The objective function is to maximize the total protected population, which can be expressed as: Maximize Sum of x_ij for all i and j",
+          "step7_validation": "All decision variables x_ij are used in at least one constraint or the objective function. The model can enforce all stated constraints and achieve the goal of maximizing total protected population while considering the budget and viability requirements."
+        },
+        "model_type": "linear_programming",
+        "variables": [
+          {
+            "name": "x_ij",
+            "type": "continuous",
+            "bounds": "0 to max capacity of area j",
+            "description": "Population size of species i to be protected in area j"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "Sum of x_ij for all i and j",
+          "description": "Total protected population"
+        },
+        "constraints": [
+          {
+            "expression": "x_ij = 0 if species i is not compatible with habitat in area j",
+            "description": "Habitat compatibility"
+          },
+          {
+            "expression": "Sum of x_ij for all i <= capacity of area j",
+            "description": "Area capacity limits"
+          },
+          {
+            "expression": "Sum of cost of area j * Sum of x_ij for all i <= $15M",
+            "description": "Budget limit"
+          },
+          {
+            "expression": "Sum of x_ij for all j >= minimum viable population for species i",
+            "description": "Species viability thresholds"
+          },
+          {
+            "expression": "x_ij >= 0 for all i and j",
+            "description": "Non-negativity of decision variables"
+          }
+        ],
+        "model_complexity": "high",
+        "estimated_solve_time": 1,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Maximize: Sum of x_ij for all i and j  Subject to: 1. Habitat compatibility: x_ij = 0 if species i is not compatible with the habitat in area j 2. Area capacity limits: Sum of x_ij for all i <= capacity of area j, for all j 3. Budget limit: Sum of cost of area j * Sum of x_ij for all i <= $15M 4. Species viability thresholds: Sum of x_ij for all j >= minimum viable population for species i, for all i 5. Non-negativity: x_ij >= 0 for all i and j  Where: x_ij = Population size of species i to be protected in area j i = 1 to 10 (number of species) j = 1 to 6 (number of protected areas)",
+        "validation_summary": {
+          "variables_defined": 60,
+          "constraints_defined": 16,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x11a207c10>",
+          "variables": {
+            "x_ij": "x_ij"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 1,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_2554"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 60,
+    "expected_constraints": 16,
+    "timestamp": "2025-10-18T15:23:18.336640",
+    "success": true,
+    "actual_variables": 1,
+    "actual_constraints": 5
+  },
+  "Cryptocurrency Mining Optimization": {
+    "problem_name": "Cryptocurrency Mining Optimization",
+    "problem_description": "\n                A crypto mining operation needs to optimize mining across 5 different cryptocurrencies.\n                Cryptocurrencies: Bitcoin (difficulty: High, reward: 6.25 BTC, power: 2000W), Ethereum (Medium, 2 ETH, 1500W), Litecoin (Low, 12.5 LTC, 800W), Monero (Medium, 0.6 XMR, 1200W), Dogecoin (Low, 10000 DOGE, 600W)\n                Mining Rigs: 20 rigs with different hash rates and power consumption\n                Power: 50kW total available, electricity cost $0.12/kWh\n                Pool Fees: Bitcoin (2%), Ethereum (1%), Litecoin (1.5%), Monero (1%), Dogecoin (0.5%)\n                Constraints: Power consumption cannot exceed available power, each rig can mine one currency at a time, pool fees reduce profits\n                Market: Cryptocurrency prices fluctuate, need to consider price volatility\n                Objective: Maximize daily profit while respecting power constraints and considering market volatility\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T15:23:21.921600",
+      "result": {
+        "raw_response": "Based on the problem description, this optimization problem can be classified as follows:\n\n1. **Optimization Type**: This is a mixed-integer linear programming (MILP) problem. The decision variables include the number of mining rigs allocated to each cryptocurrency, which are integer variables. The objective function and constraints are linear.\n\n2. **Industry**: This problem is in the cryptocurrency/blockchain industry, specifically related to crypto mining operations.\n\n3. **Optimization Objective**: The objective is to maximize the daily profit from crypto mining, while considering power constraints and market volatility.\n\n4. **Constraints**: The key constraints are:\n   - Power consumption cannot exceed the available power (50kW)\n   - Each mining rig can only mine one cryptocurrency at a time\n   - Pool fees reduce the profits\n\n5. **Complexity**: The problem can be considered of medium complexity. It involves multiple decision variables (rig allocations), multiple cryptocurrencies, and constraints related to power, pool fees, and market volatility.\n\n6. **Similar Problems**: This problem is similar to portfolio optimization problems, where the goal is to allocate resources (in this case, mining rigs) across multiple assets (cryptocurrencies) to maximize the overall return while considering constraints and risks (power, pool fees, market volatility).\n\nIn summary, this is a mixed-integer linear programming problem in the cryptocurrency industry, with the objective of maximizing daily mining profits while respecting power constraints and considering market volatility. The complexity of the problem is medium.",
+        "intent": "unknown",
+        "optimization_type": "linear_programming",
+        "confidence": 0.7
+      },
+      "message": "Intent: unknown"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T15:23:27.855791",
+      "result": {
+        "readiness_score": 0.9,
+        "entities": 11,
+        "data_quality": "high",
+        "variables_identified": [
+          "number of rigs allocated to each cryptocurrency",
+          "power consumption of each rig",
+          "daily profit from each cryptocurrency"
+        ],
+        "constraints_identified": [
+          "total power consumption cannot exceed 50kW",
+          "each rig can only mine one cryptocurrency at a time",
+          "pool fees reduce profits"
+        ]
+      },
+      "message": "Ready: 90.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T15:23:27.855936",
+      "result": {
+        "selected_solver": "PDLP",
+        "optimization_type": "linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "continuous_variables",
+          "large_scale"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "SCIP",
+          "HIGHS",
+          "CVXPY",
+          "GLOP",
+          "CBC"
+        ],
+        "reasoning": "Selected PDLP for linear_programming problem with 100 variables and 25 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: PDLP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T15:23:39.233577",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are: 1. Allocation of mining rigs to different cryptocurrencies 2. Power allocation to the mining rigs",
+          "step2_constraint_analysis": "The limitations and requirements in this problem are: 1. Total power consumption cannot exceed 50kW 2. Each mining rig can only mine one cryptocurrency at a time 3. Pool fees reduce the profits for each cryptocurrency",
+          "step3_objective_analysis": "The goal is to maximize the daily profit from the crypto mining operation, while respecting the power constraints and considering the market volatility of cryptocurrency prices.",
+          "step4_variable_design": "The decisions in this problem can be translated to the following mathematical variables: 1. x_ij: Fraction of mining rig i allocated to cryptocurrency j 2. p_i: Power allocated to mining rig i The variables are continuous, with the following bounds: 0 <= x_ij <= 1 for all i and j 0 <= p_i <= 50 for all i",
+          "step5_constraint_formulation": "The limitations and requirements can be translated to the following mathematical constraints: 1. Power constraint: Sum of power allocated to all mining rigs cannot exceed 50kW    Sum(p_i) <= 50 2. Rig allocation constraint: Each mining rig can only be allocated to one cryptocurrency    Sum(x_ij) = 1 for all i 3. Pool fee constraint: Pool fees reduce the profits for each cryptocurrency    Profit_j = (Reward_j - Pool_Fee_j) * Sum(x_ij * Hash_Rate_i)",
+          "step6_objective_formulation": "The objective function is to maximize the total daily profit from the crypto mining operation, which can be expressed as: Maximize Sum(Profit_j)",
+          "step7_validation": "All variables (x_ij and p_i) are used in at least one constraint or the objective function. The model can enforce all the stated constraints and the objective function matches the goal of maximizing daily profit."
+        },
+        "model_type": "linear_programming",
+        "variables": [
+          {
+            "name": "x_ij",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Fraction of mining rig i allocated to cryptocurrency j"
+          },
+          {
+            "name": "p_i",
+            "type": "continuous",
+            "bounds": "0 to 50",
+            "description": "Power allocated to mining rig i"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "Sum(Profit_j)",
+          "description": "Total daily profit from crypto mining"
+        },
+        "constraints": [
+          {
+            "expression": "Sum(p_i) <= 50",
+            "description": "Total power consumption cannot exceed 50kW"
+          },
+          {
+            "expression": "Sum(x_ij) = 1 for all i",
+            "description": "Each mining rig can only be allocated to one cryptocurrency"
+          },
+          {
+            "expression": "Profit_j = (Reward_j - Pool_Fee_j) * Sum(x_ij * Hash_Rate_i) for all j",
+            "description": "Pool fees reduce the profits for each cryptocurrency"
+          }
+        ],
+        "model_complexity": "medium",
+        "estimated_solve_time": 0.5,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Maximize: Sum(Profit_j)  Subject to: 1. Power constraint: Sum(p_i) <= 50 2. Rig allocation constraint: Sum(x_ij) = 1 for all i 3. Pool fee constraint: Profit_j = (Reward_j - Pool_Fee_j) * Sum(x_ij * Hash_Rate_i) for all j  Where: x_ij: Fraction of mining rig i allocated to cryptocurrency j p_i: Power allocated to mining rig i Profit_j: Profit from mining cryptocurrency j Reward_j: Reward for mining cryptocurrency j Pool_Fee_j: Pool fee for cryptocurrency j Hash_Rate_i: Hash rate of mining rig i  The objective is to maximize the total daily profit from the crypto mining operation, while respecting the power constraints and considering the pool fees.",
+        "validation_summary": {
+          "variables_defined": 2,
+          "constraints_defined": 3,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x11704b400>",
+          "variables": {
+            "x_ij": "x_ij",
+            "p_i": "p_i"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 2,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_7992"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 100,
+    "expected_constraints": 25,
+    "timestamp": "2025-10-18T15:23:39.233600",
+    "success": true,
+    "actual_variables": 2,
+    "actual_constraints": 3
+  },
+  "Autonomous Vehicle Fleet Management": {
+    "problem_name": "Autonomous Vehicle Fleet Management",
+    "problem_description": "\n                A ride-sharing company needs to optimize its fleet of 15 autonomous vehicles across 8 city zones.\n                Vehicles: AV1-AV15 (capacity: 4, battery: 100%, efficiency: 5mi/kWh), different models with varying characteristics\n                Zones: Downtown (demand: High, distance: 2mi avg), Suburb (Medium, 8mi), Airport (High, 15mi), University (Medium, 5mi), Mall (Low, 3mi), Hospital (High, 4mi), Stadium (Variable, 6mi), Business (Medium, 7mi)\n                Time Periods: Morning (6-10AM), Afternoon (10AM-2PM), Evening (2-6PM), Night (6-10PM)\n                Constraints: Each vehicle can only be in one zone at a time, battery must be above 20% for operation, demand must be met, charging stations available in 3 zones\n                Dynamic: Demand varies by time and events, vehicles need repositioning between zones\n                Objective: Maximize revenue while minimizing empty miles and ensuring adequate coverage\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T15:23:43.422435",
+      "result": {
+        "intent": "resource_allocation",
+        "industry": "logistics",
+        "optimization_type": "mixed_integer_linear_programming",
+        "complexity": "high",
+        "confidence": 0.9
+      },
+      "message": "Intent: resource_allocation"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T15:23:52.227379",
+      "result": {
+        "readiness_score": 0.85,
+        "entities": 10,
+        "data_quality": "high",
+        "variables_identified": [
+          "vehicle_allocation",
+          "battery_level",
+          "demand_met"
+        ],
+        "constraints_identified": [
+          "vehicle_capacity",
+          "battery_level",
+          "demand"
+        ]
+      },
+      "message": "Ready: 85.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T15:23:52.227514",
+      "result": {
+        "selected_solver": "SCIP",
+        "optimization_type": "mixed_integer_linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "quadratic_constraints",
+          "continuous_variables",
+          "integer_variables",
+          "binary_variables"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "HIGHS",
+          "CBC"
+        ],
+        "reasoning": "Selected SCIP for mixed_integer_linear_programming problem with 480 variables and 60 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: SCIP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T15:24:07.809647",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are: 1. Allocation of the 15 autonomous vehicles to the 8 city zones. 2. Scheduling of the vehicles across the 4 time periods (morning, afternoon, evening, night). 3. Repositioning of vehicles between zones to meet dynamic demand.",
+          "step2_constraint_analysis": "The key constraints in this problem are: 1. Each vehicle can only be in one zone at a time. 2. The battery level of each vehicle must be above 20% for operation. 3. The demand in each zone must be met. 4. Charging stations are only available in 3 of the 8 zones.",
+          "step3_objective_analysis": "The goal is to maximize revenue while minimizing empty miles and ensuring adequate coverage across the 8 city zones.",
+          "step4_variable_design": "The decision variables in this problem are: 1. x_ijt: Binary variable indicating whether vehicle i is assigned to zone j during time period t. 2. y_it: Continuous variable representing the battery level of vehicle i at the end of time period t. 3. z_jt: Continuous variable representing the unmet demand in zone j during time period t.",
+          "step5_constraint_formulation": "The mathematical constraints are: 1. Sum of x_ijt for all j = 1 for each i and t (each vehicle is assigned to exactly one zone per time period) 2. y_it >= 0.2 for all i and t (battery level must be above 20%) 3. Sum of x_ijt * demand_jt = z_jt for all j and t (demand must be met) 4. x_ijt = 0 for zones without charging stations during certain time periods",
+          "step6_objective_formulation": "The objective function is to: Maximize: Sum of revenue_jt * x_ijt - cost_empty * sum of empty_miles_it Where: - revenue_jt is the revenue generated in zone j during time period t - empty_miles_it is the distance traveled by vehicle i during time period t without passengers",
+          "step7_validation": "All variables (x_ijt, y_it, z_jt) are used in at least one constraint or the objective function. The model can enforce all stated constraints and achieve the stated optimization goal."
+        },
+        "model_type": "mixed_integer_linear_programming",
+        "variables": [
+          {
+            "name": "x_ijt",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether vehicle i is assigned to zone j during time period t"
+          },
+          {
+            "name": "y_it",
+            "type": "continuous",
+            "bounds": "0.2 to 1",
+            "description": "Continuous variable representing the battery level of vehicle i at the end of time period t"
+          },
+          {
+            "name": "z_jt",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Continuous variable representing the unmet demand in zone j during time period t"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "Sum of revenue_jt * x_ijt - cost_empty * sum of empty_miles_it",
+          "description": "Maximize revenue while minimizing empty miles"
+        },
+        "constraints": [
+          {
+            "expression": "Sum of x_ijt for all j = 1 for each i and t",
+            "description": "Each vehicle is assigned to exactly one zone per time period"
+          },
+          {
+            "expression": "y_it >= 0.2 for all i and t",
+            "description": "Battery level must be above 20% for operation"
+          },
+          {
+            "expression": "Sum of x_ijt * demand_jt = z_jt for all j and t",
+            "description": "Demand must be met in each zone and time period"
+          },
+          {
+            "expression": "x_ijt = 0 for zones without charging stations during certain time periods",
+            "description": "Vehicles cannot be assigned to zones without charging stations during certain time periods"
+          }
+        ],
+        "model_complexity": "high",
+        "estimated_solve_time": 60,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Maximize: Sum of revenue_jt * x_ijt - cost_empty * sum of empty_miles_it  Subject to: 1. Sum of x_ijt for all j = 1 for each i and t 2. y_it >= 0.2 for all i and t 3. Sum of x_ijt * demand_jt = z_jt for all j and t 4. x_ijt = 0 for zones without charging stations during certain time periods  Where: x_ijt is a binary variable indicating whether vehicle i is assigned to zone j during time period t y_it is a continuous variable representing the battery level of vehicle i at the end of time period t z_jt is a continuous variable representing the unmet demand in zone j during time period t revenue_jt is the revenue generated in zone j during time period t empty_miles_it is the distance traveled by vehicle i during time period t without passengers cost_empty is the cost per empty mile  The objective is to maximize the total revenue while minimizing the cost of empty miles, subject to the constraints on vehicle assignment, battery level, and demand coverage.",
+        "validation_summary": {
+          "variables_defined": 3,
+          "constraints_defined": 4,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x11a206a10>",
+          "variables": {
+            "x_ijt": "x_ijt",
+            "y_it": "y_it",
+            "z_jt": "z_jt"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 3,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_6532"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 480,
+    "expected_constraints": 60,
+    "timestamp": "2025-10-18T15:24:07.809671",
+    "success": true,
+    "actual_variables": 3,
+    "actual_constraints": 4
+  },
+  "Renewable Energy Grid Optimization": {
+    "problem_name": "Renewable Energy Grid Optimization",
+    "problem_description": "\n                A utility company needs to optimize renewable energy sources across 12 grid nodes.\n                Sources: Solar (capacity: 100MW, cost: $50/MWh, reliability: 80%), Wind (150MW, $40/MWh, 70%), Hydro (80MW, $30/MWh, 95%), Geothermal (60MW, $60/MWh, 90%), Biomass (40MW, $70/MWh, 85%)\n                Nodes: N1-N12 (demand: 20-50MW each, distance: 5-25km from sources)\n                Storage: Battery systems (capacity: 200MWh, efficiency: 90%, cost: $100/MWh)\n                Constraints: Each source can supply multiple nodes, transmission losses (2% per 10km), storage capacity limits, demand must be met 24/7\n                Weather: Solar and wind generation varies with weather conditions\n                Objective: Minimize total cost while ensuring reliable power supply and maximizing renewable energy usage\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T15:24:11.479363",
+      "result": {
+        "raw_response": "Based on the problem description, this appears to be a resource allocation and production planning optimization problem with the following characteristics:\n\nIntent: Resource Allocation, Production Planning, Portfolio Optimization\nIndustry: Utilities, Energy\nOptimization Type: Mixed Integer Linear Programming (MILP)\nComplexity: High\n\nThe key aspects that indicate this:\n\n1. Optimizing renewable energy sources across multiple grid nodes with different capacities, costs, and reliability.\n2. Considering multiple energy sources (solar, wind, hydro, geothermal, biomass) with varying characteristics.\n3. Incorporating transmission losses, storage capacity, and demand constraints.\n4. Dealing with weather-dependent renewable generation.\n5. Objective of minimizing total cost while ensuring reliable power supply and maximizing renewable energy usage.\n\nThe combination of discrete decisions (which energy sources to allocate to which nodes), continuous variables (power generation levels), and complex constraints (transmission losses, storage, demand) suggests this is a Mixed Integer Linear Programming (MILP) problem, which is a common approach for such resource allocation and production planning optimization problems in the utilities/energy sector.\n\nThe high number of decision variables, constraints, and the need to model weather-dependent renewable generation makes this a high complexity optimization problem.",
+        "intent": "unknown",
+        "optimization_type": "linear_programming",
+        "confidence": 0.7
+      },
+      "message": "Intent: unknown"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T15:24:18.444355",
+      "result": {
+        "readiness_score": 0.9,
+        "entities": 12,
+        "data_quality": "high",
+        "variables_identified": [
+          "solar_capacity",
+          "wind_capacity",
+          "hydro_capacity",
+          "geothermal_capacity",
+          "biomass_capacity",
+          "battery_capacity",
+          "power_transmission"
+        ],
+        "constraints_identified": [
+          "source_capacity_limits",
+          "demand_requirements",
+          "transmission_losses",
+          "storage_capacity_limits"
+        ]
+      },
+      "message": "Ready: 90.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T15:24:18.444482",
+      "result": {
+        "selected_solver": "PDLP",
+        "optimization_type": "linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "continuous_variables",
+          "large_scale"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "SCIP",
+          "HIGHS",
+          "CVXPY",
+          "GLOP",
+          "CBC"
+        ],
+        "reasoning": "Selected PDLP for linear_programming problem with 60 variables and 17 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: PDLP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T15:24:41.178461",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are: 1. How much capacity to allocate to each renewable energy source (solar, wind, hydro, geothermal, biomass) at each grid node (N1-N12). 2. How much energy storage capacity to allocate to the battery systems.",
+          "step2_constraint_analysis": "The key limitations and requirements are: 1. Each renewable energy source has a limited capacity. 2. Each renewable energy source has a different cost and reliability. 3. There are transmission losses between the energy sources and the grid nodes. 4. The battery systems have limited storage capacity and efficiency. 5. The total energy demand at each grid node must be met 24/7. 6. Solar and wind generation varies with weather conditions.",
+          "step3_objective_analysis": "The goal is to minimize the total cost while ensuring reliable power supply and maximizing renewable energy usage.",
+          "step4_variable_design": "The decision variables are: 1. Allocation of capacity for each renewable energy source at each grid node (e.g., x_solar_n1, x_wind_n1, x_hydro_n1, x_geothermal_n1, x_biomass_n1) 2. Allocation of battery storage capacity (e.g., x_battery) The variables will be continuous, with appropriate bounds based on the given capacities.",
+          "step5_constraint_formulation": "The constraints can be formulated as follows: 1. Capacity constraints for each renewable energy source at each grid node:    x_solar_n1 <= 100, x_wind_n1 <= 150, x_hydro_n1 <= 80, x_geothermal_n1 <= 60, x_biomass_n1 <= 40 2. Transmission loss constraints:    Transmitted energy = Generated energy * (1 - 0.02 * distance/10) 3. Battery storage capacity constraint:    x_battery <= 200 4. Demand satisfaction constraint:    Sum of energy from all sources at each node >= Demand at that node 5. Weather-dependent generation constraints:    Solar and wind generation will be modeled as stochastic variables with appropriate probability distributions.",
+          "step6_objective_formulation": "The objective function can be formulated as: Minimize: Total cost = Sum of (x_source_n * cost_source) for all sources and nodes + x_battery * 100 Where cost_source is the cost per MWh for each renewable energy source.",
+          "step7_validation": "All decision variables (capacity allocations for each renewable energy source at each node, and battery storage capacity) are used in the constraints and the objective function. The model can enforce all the stated limitations and requirements."
+        },
+        "model_type": "linear_programming",
+        "variables": [
+          {
+            "name": "x_solar_n1",
+            "type": "continuous",
+            "bounds": "0 to 100",
+            "description": "Allocation of solar capacity at node N1 (MW)"
+          },
+          {
+            "name": "x_wind_n1",
+            "type": "continuous",
+            "bounds": "0 to 150",
+            "description": "Allocation of wind capacity at node N1 (MW)"
+          },
+          {
+            "name": "x_hydro_n1",
+            "type": "continuous",
+            "bounds": "0 to 80",
+            "description": "Allocation of hydro capacity at node N1 (MW)"
+          },
+          {
+            "name": "x_geothermal_n1",
+            "type": "continuous",
+            "bounds": "0 to 60",
+            "description": "Allocation of geothermal capacity at node N1 (MW)"
+          },
+          {
+            "name": "x_biomass_n1",
+            "type": "continuous",
+            "bounds": "0 to 40",
+            "description": "Allocation of biomass capacity at node N1 (MW)"
+          },
+          {
+            "name": "x_battery",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Allocation of battery storage capacity (MWh)"
+          }
+        ],
+        "objective": {
+          "type": "minimize",
+          "expression": "Sum(x_solar_n1 * 50 + x_wind_n1 * 40 + x_hydro_n1 * 30 + x_geothermal_n1 * 60 + x_biomass_n1 * 70) + x_battery * 100",
+          "description": "Total cost of energy generation and storage"
+        },
+        "constraints": [
+          {
+            "expression": "x_solar_n1 <= 100",
+            "description": "Solar capacity constraint at node N1"
+          },
+          {
+            "expression": "x_wind_n1 <= 150",
+            "description": "Wind capacity constraint at node N1"
+          },
+          {
+            "expression": "x_hydro_n1 <= 80",
+            "description": "Hydro capacity constraint at node N1"
+          },
+          {
+            "expression": "x_geothermal_n1 <= 60",
+            "description": "Geothermal capacity constraint at node N1"
+          },
+          {
+            "expression": "x_biomass_n1 <= 40",
+            "description": "Biomass capacity constraint at node N1"
+          },
+          {
+            "expression": "x_battery <= 200",
+            "description": "Battery storage capacity constraint"
+          },
+          {
+            "expression": "x_solar_n1 * 0.8 + x_wind_n1 * 0.7 + x_hydro_n1 * 0.95 + x_geothermal_n1 * 0.9 + x_biomass_n1 * 0.85 - 0.02 * (distance_n1/10) >= demand_n1",
+            "description": "Demand satisfaction constraint at node N1"
+          }
+        ],
+        "model_complexity": "high",
+        "estimated_solve_time": 5,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Minimize: Z = Sum(x_solar_n1 * 50 + x_wind_n1 * 40 + x_hydro_n1 * 30 + x_geothermal_n1 * 60 + x_biomass_n1 * 70) + x_battery * 100  Subject to: x_solar_n1 <= 100 x_wind_n1 <= 150 x_hydro_n1 <= 80 x_geothermal_n1 <= 60 x_biomass_n1 <= 40 x_battery <= 200 x_solar_n1 * 0.8 + x_wind_n1 * 0.7 + x_hydro_n1 * 0.95 + x_geothermal_n1 * 0.9 + x_biomass_n1 * 0.85 - 0.02 * (distance_n1/10) >= demand_n1  Where: x_solar_n1, x_wind_n1, x_hydro_n1, x_geothermal_n1, x_biomass_n1 are the decision variables representing the allocation of capacity for each renewable energy source at node N1. x_battery is the decision variable representing the allocation of battery storage capacity. distance_n1 is the distance between node N1 and the energy sources. demand_n1 is the energy demand at node N1.  The objective is to minimize the total cost of energy generation and storage, while satisfying the demand at each node and respecting the capacity and transmission loss constraints.",
+        "validation_summary": {
+          "variables_defined": 6,
+          "constraints_defined": 7,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x11a207b50>",
+          "variables": {
+            "x_solar_n1": "x_solar_n1",
+            "x_wind_n1": "x_wind_n1",
+            "x_hydro_n1": "x_hydro_n1",
+            "x_geothermal_n1": "x_geothermal_n1",
+            "x_biomass_n1": "x_biomass_n1",
+            "x_battery": "x_battery"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 6,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_1929"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 60,
+    "expected_constraints": 17,
+    "timestamp": "2025-10-18T15:24:41.178492",
+    "success": true,
+    "actual_variables": 6,
+    "actual_constraints": 7
+  }
+}

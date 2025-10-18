@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "dcisionai-mcp-server": {
+      "command": "uvx",
+      "args": [
+        "--with", "httpcore>=0.18.0",
+        "--with", "httpx>=0.24.0", 
+        "--with", "boto3>=1.26.0",
+        "--with", "numpy>=1.21.0",
+        "--with", "scipy>=1.10.0",
+        "dcisionai-mcp-server@1.8.7"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "classify_intent",
+        "analyze_data",
+        "select_solver",
+        "build_model",
+        "solve_optimization",
+        "simulate_scenarios",
+        "get_workflow_templates",
+        "explain_optimization",
+        "execute_workflow"
+      ]
+    }
+  }
+}

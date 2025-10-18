@@ -1,0 +1,1591 @@
+{
+  "Supply Chain Optimization": {
+    "problem_name": "Supply Chain Optimization",
+    "problem_description": "\n                A manufacturing company needs to optimize its supply chain for 3 products across 4 warehouses.\n                Products: Widget A (demand: 1000 units), Widget B (demand: 800 units), Widget C (demand: 600 units)\n                Warehouses: North (capacity: 500 units), South (capacity: 400 units), East (capacity: 300 units), West (capacity: 200 units)\n                Shipping costs: North->A: $5, North->B: $4, North->C: $3, South->A: $6, South->B: $5, South->C: $4, East->A: $7, East->B: $6, East->C: $5, West->A: $8, West->B: $7, West->C: $6\n                Constraints: Each warehouse has capacity limits, each product has demand requirements\n                Objective: Minimize total shipping costs while meeting all demand\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T14:53:57.136538",
+      "result": {
+        "intent": "production_planning",
+        "industry": "manufacturing",
+        "optimization_type": "linear_programming",
+        "complexity": "medium",
+        "confidence": 0.85
+      },
+      "message": "Intent: production_planning"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T14:53:58.466579",
+      "result": {
+        "readiness_score": 0.85,
+        "entities": 10,
+        "data_quality": "high",
+        "variables_identified": [
+          "x1",
+          "x2",
+          "x3",
+          "y1",
+          "y2",
+          "y3",
+          "y4"
+        ],
+        "constraints_identified": [
+          "capacity",
+          "demand"
+        ]
+      },
+      "message": "Ready: 85.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T14:53:58.466787",
+      "result": {
+        "selected_solver": "PDLP",
+        "optimization_type": "linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "continuous_variables",
+          "large_scale"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "SCIP",
+          "HIGHS",
+          "CVXPY",
+          "GLOP",
+          "CBC"
+        ],
+        "reasoning": "Selected PDLP for linear_programming problem with 12 variables and 7 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: PDLP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T14:54:17.722778",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are the production quantities of the three products (Widget A, Widget B, and Widget C) to be shipped from each of the four warehouses (North, South, East, and West).",
+          "step2_constraint_analysis": "The constraints in this problem are: 1. Each warehouse has a capacity limit (North: 500 units, South: 400 units, East: 300 units, West: 200 units). 2. The total demand for each product must be met (Widget A: 1000 units, Widget B: 800 units, Widget C: 600 units).",
+          "step3_objective_analysis": "The objective is to minimize the total shipping costs while meeting all the demand requirements.",
+          "step4_variable_design": "The decision variables in this problem are: 1. x_ij: The quantity of product i (i = A, B, C) shipped from warehouse j (j = North, South, East, West) These variables are all non-negative continuous variables.",
+          "step5_constraint_formulation": "The constraints can be formulated as follows: 1. Warehouse capacity constraints:    \u03a3_i x_ij \u2264 capacity_j, for all j 2. Demand constraints:    \u03a3_j x_ij \u2265 demand_i, for all i",
+          "step6_objective_formulation": "The objective function is to minimize the total shipping costs, which can be expressed as: Minimize \u03a3_i \u03a3_j c_ij * x_ij where c_ij is the shipping cost per unit of product i from warehouse j.",
+          "step7_validation": "All the decision variables (x_ij) are used in at least one constraint or the objective function. The model can enforce all the stated constraints and meet the objective of minimizing the total shipping costs."
+        },
+        "model_type": "linear_programming",
+        "variables": [
+          {
+            "name": "x_A_North",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget A shipped from North warehouse"
+          },
+          {
+            "name": "x_A_South",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget A shipped from South warehouse"
+          },
+          {
+            "name": "x_A_East",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget A shipped from East warehouse"
+          },
+          {
+            "name": "x_A_West",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget A shipped from West warehouse"
+          },
+          {
+            "name": "x_B_North",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget B shipped from North warehouse"
+          },
+          {
+            "name": "x_B_South",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget B shipped from South warehouse"
+          },
+          {
+            "name": "x_B_East",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget B shipped from East warehouse"
+          },
+          {
+            "name": "x_B_West",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget B shipped from West warehouse"
+          },
+          {
+            "name": "x_C_North",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget C shipped from North warehouse"
+          },
+          {
+            "name": "x_C_South",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget C shipped from South warehouse"
+          },
+          {
+            "name": "x_C_East",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget C shipped from East warehouse"
+          },
+          {
+            "name": "x_C_West",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Quantity of Widget C shipped from West warehouse"
+          }
+        ],
+        "objective": {
+          "type": "minimize",
+          "expression": "5*x_A_North + 4*x_A_South + 7*x_A_East + 8*x_A_West + 4*x_B_North + 5*x_B_South + 6*x_B_East + 7*x_B_West + 3*x_C_North + 4*x_C_South + 5*x_C_East + 6*x_C_West",
+          "description": "Total shipping costs"
+        },
+        "constraints": [
+          {
+            "expression": "x_A_North + x_A_South + x_A_East + x_A_West >= 1000",
+            "description": "Demand for Widget A must be met"
+          },
+          {
+            "expression": "x_B_North + x_B_South + x_B_East + x_B_West >= 800",
+            "description": "Demand for Widget B must be met"
+          },
+          {
+            "expression": "x_C_North + x_C_South + x_C_East + x_C_West >= 600",
+            "description": "Demand for Widget C must be met"
+          },
+          {
+            "expression": "x_A_North + x_B_North + x_C_North <= 500",
+            "description": "North warehouse capacity constraint"
+          },
+          {
+            "expression": "x_A_South + x_B_South + x_C_South <= 400",
+            "description": "South warehouse capacity constraint"
+          },
+          {
+            "expression": "x_A_East + x_B_East + x_C_East <= 300",
+            "description": "East warehouse capacity constraint"
+          },
+          {
+            "expression": "x_A_West + x_B_West + x_C_West <= 200",
+            "description": "West warehouse capacity constraint"
+          }
+        ],
+        "model_complexity": "medium",
+        "estimated_solve_time": 0.5,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Minimize: \u03a3_i \u03a3_j c_ij * x_ij  Subject to: \u03a3_i x_ij \u2264 capacity_j, for all j \u03a3_j x_ij \u2265 demand_i, for all i x_ij \u2265 0, for all i and j  Where: x_ij: Quantity of product i shipped from warehouse j c_ij: Shipping cost per unit of product i from warehouse j capacity_j: Capacity of warehouse j demand_i: Demand for product i",
+        "validation_summary": {
+          "variables_defined": 12,
+          "constraints_defined": 7,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x115352170>",
+          "variables": {
+            "x_A_North": "x_A_North",
+            "x_A_South": "x_A_South",
+            "x_A_East": "x_A_East",
+            "x_A_West": "x_A_West",
+            "x_B_North": "x_B_North",
+            "x_B_South": "x_B_South",
+            "x_B_East": "x_B_East",
+            "x_B_West": "x_B_West",
+            "x_C_North": "x_C_North",
+            "x_C_South": "x_C_South",
+            "x_C_East": "x_C_East",
+            "x_C_West": "x_C_West"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 12,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_7581"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 12,
+    "expected_constraints": 7,
+    "timestamp": "2025-10-18T14:54:17.722801",
+    "success": true,
+    "actual_variables": 12,
+    "actual_constraints": 7
+  },
+  "Employee Scheduling": {
+    "problem_name": "Employee Scheduling",
+    "problem_description": "\n                A hospital needs to schedule nurses for a 7-day week with 3 shifts per day.\n                Nurses: 10 available nurses (N1-N10)\n                Shifts: Morning (6 AM - 2 PM), Afternoon (2 PM - 10 PM), Night (10 PM - 6 AM)\n                Requirements: Each shift needs exactly 3 nurses, each nurse can work max 5 shifts per week, each nurse needs at least 1 day off\n                Preferences: Some nurses prefer certain shifts, some have availability restrictions\n                Objective: Maximize nurse satisfaction while meeting all coverage requirements\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T14:54:21.111165",
+      "result": {
+        "intent": "scheduling",
+        "industry": "healthcare",
+        "optimization_type": "mixed_integer_linear_programming",
+        "complexity": "medium",
+        "confidence": 0.9
+      },
+      "message": "Intent: scheduling"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T14:54:25.089564",
+      "result": {
+        "readiness_score": 0.9,
+        "entities": 10,
+        "data_quality": "high",
+        "variables_identified": [
+          "nurse_schedule[i,j,k]"
+        ],
+        "constraints_identified": [
+          "Each shift needs exactly 3 nurses",
+          "Each nurse can work max 5 shifts per week",
+          "Each nurse needs at least 1 day off",
+          "Nurse preferences and availability restrictions"
+        ],
+        "objective": "Maximize nurse satisfaction while meeting all coverage requirements"
+      },
+      "message": "Ready: 90.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T14:54:25.089711",
+      "result": {
+        "selected_solver": "SCIP",
+        "optimization_type": "mixed_integer_linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "quadratic_constraints",
+          "continuous_variables",
+          "integer_variables",
+          "binary_variables"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "HIGHS",
+          "CBC"
+        ],
+        "reasoning": "Selected SCIP for mixed_integer_linear_programming problem with 210 variables and 31 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: SCIP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T14:54:36.560096",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are: 1. Assign nurses to shifts for each day of the week (7 days x 3 shifts = 21 shift assignments) 2. Ensure that each shift has exactly 3 nurses assigned",
+          "step2_constraint_analysis": "The key constraints and requirements are: 1. There are 10 available nurses (N1-N10) 2. Each shift (Morning, Afternoon, Night) requires exactly 3 nurses 3. Each nurse can work a maximum of 5 shifts per week 4. Each nurse needs at least 1 day off per week",
+          "step3_objective_analysis": "The objective is to maximize nurse satisfaction while meeting all coverage requirements.",
+          "step4_variable_design": "The decision variables are: 1. x[i,j,k] - Binary variable indicating whether nurse i is assigned to shift j on day k (1 if assigned, 0 if not) where i = 1 to 10 (nurses), j = 1 to 3 (shifts), and k = 1 to 7 (days)",
+          "step5_constraint_formulation": "The constraints are: 1. Each shift must have exactly 3 nurses assigned:    \u03a3 x[i,j,k] = 3 for all j,k 2. Each nurse can work a maximum of 5 shifts per week:    \u03a3 x[i,j,k] \u2264 5 for all i 3. Each nurse must have at least 1 day off per week:    \u03a3 x[i,j,k] \u2265 1 for all i",
+          "step6_objective_formulation": "The objective function is to maximize nurse satisfaction, which can be represented as: Maximize \u03a3 w[i] * \u03a3 x[i,j,k] where w[i] is the satisfaction weight for nurse i",
+          "step7_validation": "All variables (x[i,j,k]) are used in at least one constraint or the objective function. The model captures all the key decisions, constraints, and the objective as described in the problem statement."
+        },
+        "model_type": "mixed_integer_linear_programming",
+        "variables": [
+          {
+            "name": "x[i,j,k]",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether nurse i is assigned to shift j on day k"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "\u03a3 w[i] * \u03a3 x[i,j,k]",
+          "description": "Maximize nurse satisfaction"
+        },
+        "constraints": [
+          {
+            "expression": "\u03a3 x[i,j,k] = 3 for all j,k",
+            "description": "Each shift must have exactly 3 nurses assigned"
+          },
+          {
+            "expression": "\u03a3 x[i,j,k] \u2264 5 for all i",
+            "description": "Each nurse can work a maximum of 5 shifts per week"
+          },
+          {
+            "expression": "\u03a3 x[i,j,k] \u2265 1 for all i",
+            "description": "Each nurse must have at least 1 day off per week"
+          }
+        ],
+        "model_complexity": "medium",
+        "estimated_solve_time": 0.5,
+        "mathematical_formulation": "The mathematical formulation of the model is:  Maximize \u03a3 w[i] * \u03a3 x[i,j,k]  Subject to: \u03a3 x[i,j,k] = 3 for all j,k \u03a3 x[i,j,k] \u2264 5 for all i \u03a3 x[i,j,k] \u2265 1 for all i  x[i,j,k] \u2208 {0,1} for all i,j,k  Where: x[i,j,k] is a binary variable indicating whether nurse i is assigned to shift j on day k w[i] is the satisfaction weight for nurse i",
+        "validation_summary": {
+          "variables_defined": 210,
+          "constraints_defined": 31,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x11559d720>",
+          "variables": {
+            "x[i,j,k]": "x[i,j,k]"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 1,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_4466"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 210,
+    "expected_constraints": 31,
+    "timestamp": "2025-10-18T14:54:36.560124",
+    "success": true,
+    "actual_variables": 1,
+    "actual_constraints": 3
+  },
+  "Investment Portfolio (Risk-Adjusted)": {
+    "problem_name": "Investment Portfolio (Risk-Adjusted)",
+    "problem_description": "\n                An investment firm needs to allocate $50M across 8 asset classes with risk constraints.\n                Assets: Stocks (expected return: 12%, risk: 20%), Bonds (8%, 5%), REITs (10%, 15%), Commodities (6%, 25%), International (11%, 18%), Emerging Markets (15%, 30%), Cash (2%, 1%), Alternatives (9%, 12%)\n                Constraints: Max 30% in any single asset, min 5% in each asset, max 40% in high-risk assets (risk > 15%), total allocation = 100%\n                Risk Budget: Portfolio risk (weighted average) must not exceed 15%\n                Objective: Maximize expected return while staying within risk constraints\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T14:54:40.244501",
+      "result": {
+        "raw_response": "Based on the problem description, this is a portfolio optimization problem. The key characteristics are:\n\n\"Intent\": portfolio_optimization\n\"Optimization_type\": quadratic_programming\n\"Complexity\": medium\n\nThe problem involves allocating a fixed budget ($50M) across multiple asset classes with risk and return characteristics. The objective is to maximize the expected return while staying within risk constraints. This is a typical mean-variance portfolio optimization problem, which can be formulated as a quadratic programming problem.\n\nThe constraints include:\n- Maximum 30% allocation to any single asset\n- Minimum 5% allocation to each asset\n- Maximum 40% allocation to high-risk assets (risk > 15%)\n- Total allocation must equal 100%\n- Portfolio risk (weighted average) must not exceed 15%\n\nThis problem has a medium level of complexity due to the multiple asset classes, risk constraints, and the need to optimize a quadratic objective function.",
+        "intent": "unknown",
+        "optimization_type": "linear_programming",
+        "confidence": 0.7
+      },
+      "message": "Intent: unknown"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T14:54:42.500993",
+      "result": {
+        "readiness_score": 0.9,
+        "entities": 8,
+        "data_quality": "high",
+        "variables_identified": [
+          "allocation_stocks",
+          "allocation_bonds",
+          "allocation_reits",
+          "allocation_commodities",
+          "allocation_international",
+          "allocation_emerging_markets",
+          "allocation_cash",
+          "allocation_alternatives"
+        ],
+        "constraints_identified": [
+          "max_30_percent_in_any_single_asset",
+          "min_5_percent_in_each_asset",
+          "max_40_percent_in_high_risk_assets",
+          "total_allocation_100_percent",
+          "portfolio_risk_not_exceed_15_percent"
+        ]
+      },
+      "message": "Ready: 90.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T14:54:42.501256",
+      "result": {
+        "selected_solver": "PDLP",
+        "optimization_type": "linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "continuous_variables",
+          "large_scale"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "SCIP",
+          "HIGHS",
+          "CVXPY",
+          "GLOP",
+          "CBC"
+        ],
+        "reasoning": "Selected PDLP for linear_programming problem with 8 variables and 12 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: PDLP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T14:55:06.668327",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are the allocation of the $50M investment budget across the 8 asset classes.",
+          "step2_constraint_analysis": "The constraints in this problem are: 1. Max 30% in any single asset 2. Min 5% in each asset 3. Max 40% in high-risk assets (risk > 15%) 4. Total allocation must equal 100% 5. Portfolio risk (weighted average) must not exceed 15%",
+          "step3_objective_analysis": "The objective is to maximize the expected return of the portfolio while staying within the risk constraints.",
+          "step4_variable_design": "The decision variables in this problem are the allocation fractions to each of the 8 asset classes. Let x1 = Stocks, x2 = Bonds, x3 = REITs, x4 = Commodities, x5 = International, x6 = Emerging Markets, x7 = Cash, x8 = Alternatives. All variables are continuous and bounded between 0 and 1.",
+          "step5_constraint_formulation": "The constraints can be formulated as follows: 1. x1 <= 0.3, x2 <= 0.3, x3 <= 0.3, x4 <= 0.3, x5 <= 0.3, x6 <= 0.3, x7 <= 0.3, x8 <= 0.3 (max 30% per asset) 2. x1 >= 0.05, x2 >= 0.05, x3 >= 0.05, x4 >= 0.05, x5 >= 0.05, x6 >= 0.05, x7 >= 0.05, x8 >= 0.05 (min 5% per asset) 3. 0.2*x1 + 0.15*x3 + 0.25*x4 + 0.18*x5 + 0.3*x6 + 0.12*x8 <= 0.4 (max 40% in high-risk assets) 4. x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 = 1 (total allocation = 100%) 5. 0.2*x1 + 0.05*x2 + 0.15*x3 + 0.25*x4 + 0.18*x5 + 0.3*x6 + 0.01*x7 + 0.12*x8 <= 0.15 (portfolio risk <= 15%)",
+          "step6_objective_formulation": "The objective function is to maximize the expected portfolio return, which can be expressed as: Maximize: 0.12*x1 + 0.08*x2 + 0.10*x3 + 0.06*x4 + 0.11*x5 + 0.15*x6 + 0.02*x7 + 0.09*x8",
+          "step7_validation": "All variables (x1 through x8) are used in at least one constraint or the objective function, so the model is complete."
+        },
+        "model_type": "linear_programming",
+        "variables": [
+          {
+            "name": "x1",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Stocks (fraction)"
+          },
+          {
+            "name": "x2",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Bonds (fraction)"
+          },
+          {
+            "name": "x3",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to REITs (fraction)"
+          },
+          {
+            "name": "x4",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Commodities (fraction)"
+          },
+          {
+            "name": "x5",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to International (fraction)"
+          },
+          {
+            "name": "x6",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Emerging Markets (fraction)"
+          },
+          {
+            "name": "x7",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Cash (fraction)"
+          },
+          {
+            "name": "x8",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Alternatives (fraction)"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "0.12*x1 + 0.08*x2 + 0.10*x3 + 0.06*x4 + 0.11*x5 + 0.15*x6 + 0.02*x7 + 0.09*x8",
+          "description": "Expected portfolio return"
+        },
+        "constraints": [
+          {
+            "expression": "x1 <= 0.3",
+            "description": "Max 30% in Stocks"
+          },
+          {
+            "expression": "x2 <= 0.3",
+            "description": "Max 30% in Bonds"
+          },
+          {
+            "expression": "x3 <= 0.3",
+            "description": "Max 30% in REITs"
+          },
+          {
+            "expression": "x4 <= 0.3",
+            "description": "Max 30% in Commodities"
+          },
+          {
+            "expression": "x5 <= 0.3",
+            "description": "Max 30% in International"
+          },
+          {
+            "expression": "x6 <= 0.3",
+            "description": "Max 30% in Emerging Markets"
+          },
+          {
+            "expression": "x7 <= 0.3",
+            "description": "Max 30% in Cash"
+          },
+          {
+            "expression": "x8 <= 0.3",
+            "description": "Max 30% in Alternatives"
+          },
+          {
+            "expression": "x1 >= 0.05",
+            "description": "Min 5% in Stocks"
+          },
+          {
+            "expression": "x2 >= 0.05",
+            "description": "Min 5% in Bonds"
+          },
+          {
+            "expression": "x3 >= 0.05",
+            "description": "Min 5% in REITs"
+          },
+          {
+            "expression": "x4 >= 0.05",
+            "description": "Min 5% in Commodities"
+          },
+          {
+            "expression": "x5 >= 0.05",
+            "description": "Min 5% in International"
+          },
+          {
+            "expression": "x6 >= 0.05",
+            "description": "Min 5% in Emerging Markets"
+          },
+          {
+            "expression": "x7 >= 0.05",
+            "description": "Min 5% in Cash"
+          },
+          {
+            "expression": "x8 >= 0.05",
+            "description": "Min 5% in Alternatives"
+          },
+          {
+            "expression": "0.2*x1 + 0.15*x3 + 0.25*x4 + 0.18*x5 + 0.3*x6 + 0.12*x8 <= 0.4",
+            "description": "Max 40% in high-risk assets"
+          },
+          {
+            "expression": "x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 = 1",
+            "description": "Total allocation must equal 100%"
+          },
+          {
+            "expression": "0.2*x1 + 0.05*x2 + 0.15*x3 + 0.25*x4 + 0.18*x5 + 0.3*x6 + 0.01*x7 + 0.12*x8 <= 0.15",
+            "description": "Portfolio risk must not exceed 15%"
+          }
+        ],
+        "model_complexity": "medium",
+        "estimated_solve_time": 0.1,
+        "mathematical_formulation": "Maximize: 0.12*x1 + 0.08*x2 + 0.10*x3 + 0.06*x4 + 0.11*x5 + 0.15*x6 + 0.02*x7 + 0.09*x8 Subject to: x1 <= 0.3 x2 <= 0.3 x3 <= 0.3 x4 <= 0.3 x5 <= 0.3 x6 <= 0.3 x7 <= 0.3 x8 <= 0.3 x1 >= 0.05 x2 >= 0.05 x3 >= 0.05 x4 >= 0.05 x5 >= 0.05 x6 >= 0.05 x7 >= 0.05 x8 >= 0.05 0.2*x1 + 0.15*x3 + 0.25*x4 + 0.18*x5 + 0.3*x6 + 0.12*x8 <= 0.4 x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 = 1 0.2*x1 + 0.05*x2 + 0.15*x3 + 0.25*x4 + 0.18*x5 + 0.3*x6 + 0.01*x7 + 0.12*x8 <= 0.15",
+        "validation_summary": {
+          "variables_defined": 8,
+          "constraints_defined": 18,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x114cff7f0>",
+          "variables": {
+            "x1": "x1",
+            "x2": "x2",
+            "x3": "x3",
+            "x4": "x4",
+            "x5": "x5",
+            "x6": "x6",
+            "x7": "x7",
+            "x8": "x8"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 8,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_2126"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 8,
+    "expected_constraints": 12,
+    "timestamp": "2025-10-18T14:55:06.668360",
+    "success": true,
+    "actual_variables": 8,
+    "actual_constraints": 19
+  },
+  "Production Planning (Multi-Period)": {
+    "problem_name": "Production Planning (Multi-Period)",
+    "problem_description": "\n                A factory produces 4 products over 6 months with seasonal demand and capacity constraints.\n                Products: Product A (profit: $50/unit), Product B ($40/unit), Product C ($60/unit), Product D ($35/unit)\n                Monthly Capacity: 1000 units total production capacity\n                Demand (units/month): A: [200,250,300,280,220,180], B: [150,180,200,190,160,140], C: [100,120,150,140,110,90], D: [80,100,120,110,90,70]\n                Inventory: Can store up to 200 units of each product, holding cost $2/unit/month\n                Setup Costs: $500 per product per month if produced\n                Objective: Maximize profit over 6 months\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T14:55:11.476346",
+      "result": {
+        "intent": "production_planning",
+        "industry": "manufacturing",
+        "optimization_type": "mixed_integer_linear_programming",
+        "complexity": "medium_high",
+        "confidence": 0.9
+      },
+      "message": "Intent: production_planning"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T14:55:19.568485",
+      "result": {
+        "readiness_score": 0.95,
+        "entities": 10,
+        "data_quality": "high",
+        "variables_identified": [
+          "x1",
+          "x2",
+          "x3",
+          "x4"
+        ],
+        "constraints_identified": [
+          "capacity",
+          "demand",
+          "inventory"
+        ]
+      },
+      "message": "Ready: 95.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T14:55:19.568588",
+      "result": {
+        "selected_solver": "SCIP",
+        "optimization_type": "mixed_integer_linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "quadratic_constraints",
+          "continuous_variables",
+          "integer_variables",
+          "binary_variables"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "HIGHS",
+          "CBC"
+        ],
+        "reasoning": "Selected SCIP for mixed_integer_linear_programming problem with 48 variables and 30 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: SCIP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T14:55:36.021568",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are the monthly production quantities for each of the 4 products (A, B, C, and D) over the 6-month planning horizon.",
+          "step2_constraint_analysis": "The key constraints in this problem are: 1. Total monthly production capacity is limited to 1000 units. 2. Monthly demand for each product must be met. 3. Inventory for each product is limited to a maximum of 200 units. 4. There is a setup cost of $500 per product per month if the product is produced.",
+          "step3_objective_analysis": "The objective is to maximize the total profit over the 6-month planning horizon.",
+          "step4_variable_design": "The decision variables in this problem are: 1. x_ijt: The production quantity of product i in month j in year t, where i = {A, B, C, D} and j = {1, 2, 3, 4, 5, 6}. 2. y_ijt: A binary variable that is 1 if product i is produced in month j in year t, and 0 otherwise.",
+          "step5_constraint_formulation": "The constraints can be formulated as follows: 1. Total monthly production capacity constraint:    \u2211_i x_ijt \u2264 1000 for all j = {1, 2, 3, 4, 5, 6} 2. Monthly demand constraints:    x_ijt \u2265 d_ijt for all i = {A, B, C, D} and j = {1, 2, 3, 4, 5, 6}    where d_ijt is the demand for product i in month j in year t. 3. Inventory constraints:    \u2211_j x_ijt - \u2211_j d_ijt \u2264 200 for all i = {A, B, C, D} and t = {1}    \u2211_j x_ijt - \u2211_j d_ijt \u2264 \u2211_j x_i(j-1)t - \u2211_j d_i(j-1)t + 200 for all i = {A, B, C, D} and j = {2, 3, 4, 5, 6} 4. Setup cost constraints:    y_ijt \u2265 (x_ijt - x_i(j-1)t) / M for all i = {A, B, C, D} and j = {1, 2, 3, 4, 5, 6}    where M is a large positive number.",
+          "step6_objective_formulation": "The objective function is to maximize the total profit over the 6-month planning horizon, which can be formulated as: Maximize \u2211_i \u2211_j \u2211_t (p_i * x_ijt - 2 * \u2211_j x_ijt - 500 * y_ijt) where p_i is the profit per unit of product i.",
+          "step7_validation": "All variables (x_ijt and y_ijt) are used in at least one constraint or the objective function, ensuring that the model is complete and can be solved."
+        },
+        "model_type": "mixed_integer_linear_programming",
+        "variables": [
+          {
+            "name": "x_ijt",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Production quantity of product i in month j in year t"
+          },
+          {
+            "name": "y_ijt",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating if product i is produced in month j in year t"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "sum(p_i * x_ijt - 2 * sum(x_ijt) - 500 * y_ijt for i in {A, B, C, D} for j in {1, 2, 3, 4, 5, 6} for t in {1})",
+          "description": "Total profit over the 6-month planning horizon"
+        },
+        "constraints": [
+          {
+            "expression": "sum(x_ijt for i in {A, B, C, D}) <= 1000 for j in {1, 2, 3, 4, 5, 6}",
+            "description": "Total monthly production capacity constraint"
+          },
+          {
+            "expression": "x_ijt >= d_ijt for i in {A, B, C, D} for j in {1, 2, 3, 4, 5, 6}",
+            "description": "Monthly demand constraints"
+          },
+          {
+            "expression": "sum(x_ijt for j in {1, 2, 3, 4, 5, 6}) - sum(d_ijt for j in {1, 2, 3, 4, 5, 6}) <= 200 for i in {A, B, C, D} for t in {1}",
+            "description": "Inventory constraint for t = 1"
+          },
+          {
+            "expression": "sum(x_ijt for j in {1, 2, 3, 4, 5, 6}) - sum(d_ijt for j in {1, 2, 3, 4, 5, 6}) <= sum(x_i(j-1)t for j in {1, 2, 3, 4, 5, 6}) - sum(d_i(j-1)t for j in {1, 2, 3, 4, 5, 6}) + 200 for i in {A, B, C, D} for j in {2, 3, 4, 5, 6} for t in {1}",
+            "description": "Inventory constraint for t = 1 and j > 1"
+          },
+          {
+            "expression": "y_ijt >= (x_ijt - x_i(j-1)t) / M for i in {A, B, C, D} for j in {1, 2, 3, 4, 5, 6} for t in {1}",
+            "description": "Setup cost constraint"
+          }
+        ],
+        "model_complexity": "high",
+        "estimated_solve_time": 60,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Maximize \u2211_i \u2211_j \u2211_t (p_i * x_ijt - 2 * \u2211_j x_ijt - 500 * y_ijt)  Subject to: 1. \u2211_i x_ijt \u2264 1000 for all j = {1, 2, 3, 4, 5, 6} 2. x_ijt \u2265 d_ijt for all i = {A, B, C, D} and j = {1, 2, 3, 4, 5, 6} 3. \u2211_j x_ijt - \u2211_j d_ijt \u2264 200 for all i = {A, B, C, D} and t = {1} 4. \u2211_j x_ijt - \u2211_j d_ijt \u2264 \u2211_j x_i(j-1)t - \u2211_j d_i(j-1)t + 200 for all i = {A, B, C, D} and j = {2, 3, 4, 5, 6} 5. y_ijt \u2265 (x_ijt - x_i(j-1)t) / M for all i = {A, B, C, D} and j = {1, 2, 3, 4, 5, 6}  Where: - x_ijt is the production quantity of product i in month j in year t - y_ijt is a binary variable indicating if product i is produced in month j in year t - p_i is the profit per unit of product i - d_ijt is the demand for product i in month j in year t - M is a large positive number",
+        "validation_summary": {
+          "variables_defined": 48,
+          "constraints_defined": 30,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x116667700>",
+          "variables": {
+            "x_ijt": "x_ijt",
+            "y_ijt": "y_ijt"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 2,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_1342"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 48,
+    "expected_constraints": 30,
+    "timestamp": "2025-10-18T14:55:36.021607",
+    "success": true,
+    "actual_variables": 2,
+    "actual_constraints": 5
+  },
+  "Vehicle Routing (VRP)": {
+    "problem_name": "Vehicle Routing (VRP)",
+    "problem_description": "\n                A delivery company has 5 vehicles and needs to deliver to 20 customers.\n                Vehicles: V1-V5 (capacities: 100, 120, 80, 90, 110 units respectively)\n                Customers: C1-C20 (demands: 5-25 units each, locations with distances)\n                Depot: Central warehouse where all vehicles start and end\n                Constraints: Each customer visited exactly once, vehicle capacity limits, maximum route length of 200 miles\n                Distances: Symmetric distance matrix between all locations (depot + 20 customers)\n                Objective: Minimize total distance traveled while serving all customers\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T14:55:39.336300",
+      "result": {
+        "intent": "resource_allocation|production_planning|scheduling",
+        "industry": "logistics",
+        "optimization_type": "mixed_integer_linear_programming",
+        "complexity": "medium",
+        "confidence": 0.9
+      },
+      "message": "Intent: resource_allocation|production_planning|scheduling"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T14:55:45.167368",
+      "result": {
+        "readiness_score": 0.85,
+        "entities": 25,
+        "data_quality": "high",
+        "variables_identified": [
+          "vehicle_assignment",
+          "route_sequence"
+        ],
+        "constraints_identified": [
+          "vehicle_capacity",
+          "customer_demand",
+          "route_length"
+        ]
+      },
+      "message": "Ready: 85.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T14:55:45.167552",
+      "result": {
+        "selected_solver": "SCIP",
+        "optimization_type": "mixed_integer_linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "quadratic_constraints",
+          "continuous_variables",
+          "integer_variables",
+          "binary_variables"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "HIGHS",
+          "CBC"
+        ],
+        "reasoning": "Selected SCIP for mixed_integer_linear_programming problem with 105 variables and 25 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: SCIP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T14:55:57.764733",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are: 1. Assign each customer to a vehicle for delivery 2. Determine the route for each vehicle to visit its assigned customers",
+          "step2_constraint_analysis": "The limitations and requirements in this problem are: 1. Each customer must be visited exactly once 2. The total demand of customers assigned to a vehicle must not exceed the vehicle's capacity 3. The total distance traveled by each vehicle must not exceed 200 miles",
+          "step3_objective_analysis": "The goal is to minimize the total distance traveled by all vehicles while serving all customers.",
+          "step4_variable_design": "To represent the decisions, we will define the following variables: 1. x[i,j,k]: Binary variable indicating whether vehicle k travels from customer i to customer j (1 if true, 0 if false) 2. y[i,k]: Binary variable indicating whether customer i is assigned to vehicle k (1 if true, 0 if false)",
+          "step5_constraint_formulation": "The constraints can be formulated as follows: 1. Each customer must be visited exactly once:    \u03a3_k y[i,k] = 1 for all i = 1 to 20 2. Vehicle capacity constraints:    \u03a3_i d[i] * y[i,k] \u2264 C[k] for all k = 1 to 5    where d[i] is the demand of customer i and C[k] is the capacity of vehicle k 3. Maximum route length constraint:    \u03a3_i \u03a3_j \u03a3_k d[i,j] * x[i,j,k] \u2264 200 for all k = 1 to 5    where d[i,j] is the distance between customers i and j",
+          "step6_objective_formulation": "The objective function is to minimize the total distance traveled by all vehicles: Minimize \u03a3_i \u03a3_j \u03a3_k d[i,j] * x[i,j,k]",
+          "step7_validation": "All variables (x[i,j,k] and y[i,k]) are used in at least one constraint or the objective function. The model can enforce all stated constraints and achieve the desired optimization goal."
+        },
+        "model_type": "mixed_integer_linear_programming",
+        "variables": [
+          {
+            "name": "x[i,j,k]",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether vehicle k travels from customer i to customer j"
+          },
+          {
+            "name": "y[i,k]",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether customer i is assigned to vehicle k"
+          }
+        ],
+        "objective": {
+          "type": "minimize",
+          "expression": "\u03a3_i \u03a3_j \u03a3_k d[i,j] * x[i,j,k]",
+          "description": "Total distance traveled by all vehicles"
+        },
+        "constraints": [
+          {
+            "expression": "\u03a3_k y[i,k] = 1 for all i = 1 to 20",
+            "description": "Each customer must be visited exactly once"
+          },
+          {
+            "expression": "\u03a3_i d[i] * y[i,k] \u2264 C[k] for all k = 1 to 5",
+            "description": "Vehicle capacity constraints"
+          },
+          {
+            "expression": "\u03a3_i \u03a3_j \u03a3_k d[i,j] * x[i,j,k] \u2264 200 for all k = 1 to 5",
+            "description": "Maximum route length constraint"
+          }
+        ],
+        "model_complexity": "high",
+        "estimated_solve_time": 60,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Minimize \u03a3_i \u03a3_j \u03a3_k d[i,j] * x[i,j,k]  Subject to: \u03a3_k y[i,k] = 1 for all i = 1 to 20 \u03a3_i d[i] * y[i,k] \u2264 C[k] for all k = 1 to 5 \u03a3_i \u03a3_j \u03a3_k d[i,j] * x[i,j,k] \u2264 200 for all k = 1 to 5  x[i,j,k] \u2208 {0, 1} for all i, j, k y[i,k] \u2208 {0, 1} for all i, k",
+        "validation_summary": {
+          "variables_defined": 2,
+          "constraints_defined": 3,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x1166677f0>",
+          "variables": {
+            "x[i,j,k]": "x[i,j,k]",
+            "y[i,k]": "y[i,k]"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 2,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_1864"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 105,
+    "expected_constraints": 25,
+    "timestamp": "2025-10-18T14:55:57.764765",
+    "success": true,
+    "actual_variables": 2,
+    "actual_constraints": 3
+  },
+  "Resource Allocation (Project Management)": {
+    "problem_name": "Resource Allocation (Project Management)",
+    "problem_description": "\n                A software company has 3 projects with 5 developers and needs to allocate resources optimally.\n                Projects: Web App (priority: High, effort: 40 person-days), Mobile App (Medium, 30 person-days), API (Low, 20 person-days)\n                Developers: D1-D5 (skills: [Web, Mobile, API], availability: [8,7,6,8,7] days)\n                Skills Matrix: D1: [Web, API], D2: [Web, Mobile], D3: [Mobile, API], D4: [Web, Mobile, API], D5: [Web, API]\n                Constraints: Each developer can work on max 2 projects, each project needs at least 1 developer, skill requirements must be met\n                Deadlines: Web App (10 days), Mobile App (15 days), API (8 days)\n                Objective: Maximize project completion while meeting deadlines and skill requirements\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T14:56:02.267141",
+      "result": {
+        "intent": "resource_allocation|production_planning|portfolio_optimization",
+        "industry": "general",
+        "optimization_type": "mixed_integer_linear_programming",
+        "complexity": "medium",
+        "confidence": 0.9
+      },
+      "message": "Intent: resource_allocation|production_planning|portfolio_optimization"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T14:56:08.620007",
+      "result": {
+        "readiness_score": 0.9,
+        "entities": 8,
+        "data_quality": "high",
+        "variables_identified": [
+          "developer_allocation",
+          "project_completion"
+        ],
+        "constraints_identified": [
+          "developer_capacity",
+          "skill_requirements",
+          "project_deadlines"
+        ]
+      },
+      "message": "Ready: 90.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T14:56:08.620157",
+      "result": {
+        "selected_solver": "SCIP",
+        "optimization_type": "mixed_integer_linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "quadratic_constraints",
+          "continuous_variables",
+          "integer_variables",
+          "binary_variables"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "HIGHS",
+          "CBC"
+        ],
+        "reasoning": "Selected SCIP for mixed_integer_linear_programming problem with 15 variables and 18 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: SCIP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T14:56:18.448606",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are the allocation of developers to the three projects (Web App, Mobile App, and API).",
+          "step2_constraint_analysis": "The constraints in this problem are: 1. Each developer can work on a maximum of 2 projects. 2. Each project needs at least 1 developer. 3. The skill requirements for each project must be met. 4. The deadlines for each project must be met (Web App: 10 days, Mobile App: 15 days, API: 8 days).",
+          "step3_objective_analysis": "The objective is to maximize the completion of the projects while meeting the deadlines and skill requirements.",
+          "step4_variable_design": "The decision variables in this problem are: 1. x_ij: Binary variable indicating whether developer i is assigned to project j (1 if assigned, 0 if not). 2. y_j: Binary variable indicating whether project j is completed (1 if completed, 0 if not).",
+          "step5_constraint_formulation": "The constraints can be formulated as follows: 1. Each developer can work on a maximum of 2 projects:    \u03a3j x_ij \u2264 2 for all i 2. Each project needs at least 1 developer:    \u03a3i x_ij \u2265 1 for all j 3. Skill requirements must be met:    \u03a3i x_ij * skill_ij \u2265 1 for all j 4. Project deadlines must be met:    \u03a3i x_ij * availability_i \u2265 deadline_j for all j 5. Projects are only completed if all developers are assigned:    y_j \u2264 \u03a3i x_ij for all j",
+          "step6_objective_formulation": "The objective function is to maximize the sum of the completed projects: Maximize \u03a3j y_j",
+          "step7_validation": "All variables (x_ij and y_j) are used in at least one constraint or the objective function."
+        },
+        "model_type": "mixed_integer_linear_programming",
+        "variables": [
+          {
+            "name": "x_ij",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether developer i is assigned to project j"
+          },
+          {
+            "name": "y_j",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether project j is completed"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "\u03a3j y_j",
+          "description": "Maximize the sum of completed projects"
+        },
+        "constraints": [
+          {
+            "expression": "\u03a3j x_ij \u2264 2 for all i",
+            "description": "Each developer can work on a maximum of 2 projects"
+          },
+          {
+            "expression": "\u03a3i x_ij \u2265 1 for all j",
+            "description": "Each project needs at least 1 developer"
+          },
+          {
+            "expression": "\u03a3i x_ij * skill_ij \u2265 1 for all j",
+            "description": "Skill requirements must be met for each project"
+          },
+          {
+            "expression": "\u03a3i x_ij * availability_i \u2265 deadline_j for all j",
+            "description": "Project deadlines must be met"
+          },
+          {
+            "expression": "y_j \u2264 \u03a3i x_ij for all j",
+            "description": "Projects are only completed if all developers are assigned"
+          }
+        ],
+        "model_complexity": "medium",
+        "estimated_solve_time": 0.5,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Maximize \u03a3j y_j  Subject to: \u03a3j x_ij \u2264 2 for all i \u03a3i x_ij \u2265 1 for all j \u03a3i x_ij * skill_ij \u2265 1 for all j \u03a3i x_ij * availability_i \u2265 deadline_j for all j y_j \u2264 \u03a3i x_ij for all j  where: x_ij is a binary variable indicating whether developer i is assigned to project j y_j is a binary variable indicating whether project j is completed skill_ij is the skill level of developer i for project j availability_i is the availability of developer i deadline_j is the deadline for project j",
+        "validation_summary": {
+          "variables_defined": 2,
+          "constraints_defined": 5,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x1155734f0>",
+          "variables": {
+            "x_ij": "x_ij",
+            "y_j": "y_j"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 2,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_9305"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 15,
+    "expected_constraints": 18,
+    "timestamp": "2025-10-18T14:56:18.448642",
+    "success": true,
+    "actual_variables": 2,
+    "actual_constraints": 5
+  },
+  "Facility Location": {
+    "problem_name": "Facility Location",
+    "problem_description": "\n                A retail chain wants to open stores in 6 potential locations to serve 12 customer zones.\n                Locations: L1-L6 (opening costs: $100K, $120K, $80K, $90K, $110K, $95K)\n                Customer Zones: Z1-Z12 (demands: 50-200 customers each)\n                Distances: Matrix of distances from each location to each customer zone\n                Service Constraints: Each customer zone must be within 30 miles of at least one store\n                Budget: Maximum $500K for opening stores\n                Revenue: $50 per customer served per month\n                Objective: Maximize net profit (revenue - opening costs) while serving all customers\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T14:56:22.234925",
+      "result": {
+        "intent": "resource_allocation",
+        "industry": "retail",
+        "optimization_type": "mixed_integer_linear_programming",
+        "complexity": "medium",
+        "confidence": 0.9
+      },
+      "message": "Intent: resource_allocation"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T14:56:33.090394",
+      "result": {
+        "readiness_score": 0.9,
+        "entities": 18,
+        "data_quality": "high",
+        "variables_identified": [
+          "store_locations",
+          "customers_served"
+        ],
+        "constraints_identified": [
+          "service_distance",
+          "budget"
+        ]
+      },
+      "message": "Ready: 90.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T14:56:33.090536",
+      "result": {
+        "selected_solver": "SCIP",
+        "optimization_type": "mixed_integer_linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "quadratic_constraints",
+          "continuous_variables",
+          "integer_variables",
+          "binary_variables"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "HIGHS",
+          "CBC"
+        ],
+        "reasoning": "Selected SCIP for mixed_integer_linear_programming problem with 18 variables and 19 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: SCIP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T14:56:53.654165",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made are: 1. Which locations (L1-L6) to open stores in 2. How many customers to serve in each customer zone (Z1-Z12)",
+          "step2_constraint_analysis": "The limitations and requirements are: 1. Each customer zone must be within 30 miles of at least one store 2. The total budget for opening stores is $500,000 3. The opening costs for the 6 locations are $100K, $120K, $80K, $90K, $110K, and $95K respectively",
+          "step3_objective_analysis": "The goal is to maximize net profit (revenue - opening costs) while serving all customers.",
+          "step4_variable_design": "The decisions translate to the following variables: 1. Binary variables y1, y2, y3, y4, y5, y6 to represent whether each location (L1-L6) is opened or not 2. Continuous variables x1, x2, ..., x12 to represent the number of customers served in each customer zone (Z1-Z12)",
+          "step5_constraint_formulation": "The limitations translate to the following constraints: 1. Each customer zone must be served by at least one open store:    \u03a3(x1, x2, ..., x12) = \u03a3(y1, y2, y3, y4, y5, y6) 2. The total budget for opening stores cannot exceed $500,000:    100*y1 + 120*y2 + 80*y3 + 90*y4 + 110*y5 + 95*y6 \u2264 500,000 3. Each customer zone must be within 30 miles of at least one open store:    \u03a3(x1, x2, ..., x12) \u2264 30*\u03a3(y1, y2, y3, y4, y5, y6)",
+          "step6_objective_formulation": "The goal of maximizing net profit (revenue - opening costs) translates to the following objective function: Maximize: 50 * \u03a3(x1, x2, ..., x12) - (100*y1 + 120*y2 + 80*y3 + 90*y4 + 110*y5 + 95*y6)",
+          "step7_validation": "All variables (y1-y6, x1-x12) are used in at least one constraint or the objective function."
+        },
+        "model_type": "mixed_integer_linear_programming",
+        "variables": [
+          {
+            "name": "y1",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether location L1 is opened (1) or not (0)"
+          },
+          {
+            "name": "y2",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether location L2 is opened (1) or not (0)"
+          },
+          {
+            "name": "y3",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether location L3 is opened (1) or not (0)"
+          },
+          {
+            "name": "y4",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether location L4 is opened (1) or not (0)"
+          },
+          {
+            "name": "y5",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether location L5 is opened (1) or not (0)"
+          },
+          {
+            "name": "y6",
+            "type": "binary",
+            "bounds": "0 or 1",
+            "description": "Binary variable indicating whether location L6 is opened (1) or not (0)"
+          },
+          {
+            "name": "x1",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z1"
+          },
+          {
+            "name": "x2",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z2"
+          },
+          {
+            "name": "x3",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z3"
+          },
+          {
+            "name": "x4",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z4"
+          },
+          {
+            "name": "x5",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z5"
+          },
+          {
+            "name": "x6",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z6"
+          },
+          {
+            "name": "x7",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z7"
+          },
+          {
+            "name": "x8",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z8"
+          },
+          {
+            "name": "x9",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z9"
+          },
+          {
+            "name": "x10",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z10"
+          },
+          {
+            "name": "x11",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z11"
+          },
+          {
+            "name": "x12",
+            "type": "continuous",
+            "bounds": "0 to 200",
+            "description": "Number of customers served in customer zone Z12"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "50 * (x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10 + x11 + x12) - (100*y1 + 120*y2 + 80*y3 + 90*y4 + 110*y5 + 95*y6)",
+          "description": "Maximize net profit (revenue - opening costs)"
+        },
+        "constraints": [
+          {
+            "expression": "x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10 + x11 + x12 <= 30 * (y1 + y2 + y3 + y4 + y5 + y6)",
+            "description": "Each customer zone must be within 30 miles of at least one open store"
+          },
+          {
+            "expression": "100*y1 + 120*y2 + 80*y3 + 90*y4 + 110*y5 + 95*y6 <= 500000",
+            "description": "Total budget for opening stores cannot exceed $500,000"
+          },
+          {
+            "expression": "x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10 + x11 + x12 = y1 + y2 + y3 + y4 + y5 + y6",
+            "description": "Each customer zone must be served by at least one open store"
+          },
+          {
+            "expression": "y1 + y2 + y3 + y4 + y5 + y6 <= 6",
+            "description": "At most 6 locations can be opened"
+          },
+          {
+            "expression": "x1 >= 0, x2 >= 0, x3 >= 0, x4 >= 0, x5 >= 0, x6 >= 0, x7 >= 0, x8 >= 0, x9 >= 0, x10 >= 0, x11 >= 0, x12 >= 0",
+            "description": "Non-negativity constraints for customer zone variables"
+          }
+        ],
+        "model_complexity": "high",
+        "estimated_solve_time": 60,
+        "mathematical_formulation": "The mathematical formulation of the optimization model is as follows:  Maximize: 50 * (x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10 + x11 + x12) - (100*y1 + 120*y2 + 80*y3 + 90*y4 + 110*y5 + 95*y6)  Subject to: 1. x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10 + x11 + x12 <= 30 * (y1 + y2 + y3 + y4 + y5 + y6) 2. 100*y1 + 120*y2 + 80*y3 + 90*y4 + 110*y5 + 95*y6 <= 500000 3. x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10 + x11 + x12 = y1 + y2 + y3 + y4 + y5 + y6 4. y1 + y2 + y3 + y4 + y5 + y6 <= 6 5. x1 >= 0, x2 >= 0, x3 >= 0, x4 >= 0, x5 >= 0, x6 >= 0, x7 >= 0, x8 >= 0, x9 >= 0, x10 >= 0, x11 >= 0, x12 >= 0 6. y1, y2, y3, y4, y5, y6 are binary variables (0 or 1)",
+        "validation_summary": {
+          "variables_defined": 18,
+          "constraints_defined": 5,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x1166bc7f0>",
+          "variables": {
+            "y1": "y1",
+            "y2": "y2",
+            "y3": "y3",
+            "y4": "y4",
+            "y5": "y5",
+            "y6": "y6",
+            "x1": "x1",
+            "x2": "x2",
+            "x3": "x3",
+            "x4": "x4",
+            "x5": "x5",
+            "x6": "x6",
+            "x7": "x7",
+            "x8": "x8",
+            "x9": "x9",
+            "x10": "x10",
+            "x11": "x11",
+            "x12": "x12"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 18,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_3785"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 18,
+    "expected_constraints": 19,
+    "timestamp": "2025-10-18T14:56:53.654189",
+    "success": true,
+    "actual_variables": 18,
+    "actual_constraints": 5
+  },
+  "Diet Optimization (Nutrition)": {
+    "problem_name": "Diet Optimization (Nutrition)",
+    "problem_description": "\n                A nutritionist needs to create a meal plan for a patient with specific dietary requirements.\n                Foods: Chicken (protein: 25g, carbs: 0g, fat: 3g, calories: 120, cost: $2), Rice (2g, 28g, 0g, 130, $0.5), Vegetables (3g, 5g, 0g, 25, $1), Fish (22g, 0g, 1g, 100, $3), Bread (3g, 15g, 1g, 80, $0.3)\n                Requirements: Protein: 50-80g, Carbs: 100-200g, Fat: 20-40g, Calories: 1500-2000, Max cost: $15/day\n                Preferences: At least 2 servings of vegetables, no more than 3 servings of any single food\n                Serving sizes: 100g portions\n                Objective: Minimize cost while meeting all nutritional requirements\n                ",
+    "intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T14:56:57.255896",
+      "result": {
+        "intent": "resource_allocation",
+        "industry": "healthcare",
+        "optimization_type": "linear_programming",
+        "complexity": "medium",
+        "confidence": 0.85
+      },
+      "message": "Intent: resource_allocation"
+    },
+    "data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T14:57:02.375749",
+      "result": {
+        "readiness_score": 0.9,
+        "entities": 7,
+        "data_quality": "high",
+        "variables_identified": [
+          "chicken_servings",
+          "rice_servings",
+          "vegetable_servings",
+          "fish_servings",
+          "bread_servings"
+        ],
+        "constraints_identified": [
+          "protein_requirement",
+          "carb_requirement",
+          "fat_requirement",
+          "calorie_requirement",
+          "cost_constraint",
+          "vegetable_servings_constraint",
+          "single_food_servings_constraint"
+        ]
+      },
+      "message": "Ready: 90.0%"
+    },
+    "solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T14:57:02.375876",
+      "result": {
+        "selected_solver": "PDLP",
+        "optimization_type": "linear_programming",
+        "capabilities": [
+          "linear_constraints",
+          "continuous_variables",
+          "large_scale"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "SCIP",
+          "HIGHS",
+          "CVXPY",
+          "GLOP",
+          "CBC"
+        ],
+        "reasoning": "Selected PDLP for linear_programming problem with 5 variables and 12 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: PDLP"
+    },
+    "model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T14:57:26.342744",
+      "result": {
+        "reasoning_steps": {
+          "step1_decision_analysis": "The key decisions to be made in this problem are the amounts of each food item (Chicken, Rice, Vegetables, Fish, Bread) to include in the meal plan.",
+          "step2_constraint_analysis": "The limitations and requirements are: - Protein: 50-80g - Carbs: 100-200g - Fat: 20-40g - Calories: 1500-2000 - Max cost: $15/day - At least 2 servings of vegetables - No more than 3 servings of any single food - Serving sizes: 100g portions",
+          "step3_objective_analysis": "The goal is to minimize the cost of the meal plan while meeting all the nutritional requirements.",
+          "step4_variable_design": "The decisions translate to the following variables: - x1: Amount of Chicken (in 100g portions) - x2: Amount of Rice (in 100g portions) - x3: Amount of Vegetables (in 100g portions) - x4: Amount of Fish (in 100g portions) - x5: Amount of Bread (in 100g portions) All variables are continuous and non-negative.",
+          "step5_constraint_formulation": "The constraints can be formulated as follows: - Protein: 25*x1 + 22*x4 + 3*x5 >= 50 and 25*x1 + 22*x4 + 3*x5 <= 80 - Carbs: 28*x2 + 5*x3 + 15*x5 >= 100 and 28*x2 + 5*x3 + 15*x5 <= 200 - Fat: 3*x1 + 1*x4 + 1*x5 >= 20 and 3*x1 + 1*x4 + 1*x5 <= 40 - Calories: 120*x1 + 130*x2 + 25*x3 + 100*x4 + 80*x5 >= 1500 and 120*x1 + 130*x2 + 25*x3 + 100*x4 + 80*x5 <= 2000 - Cost: 2*x1 + 0.5*x2 + 1*x3 + 3*x4 + 0.3*x5 <= 15 - Vegetables: x3 >= 2 - Single food limit: x1 <= 3, x2 <= 3, x3 <= 3, x4 <= 3, x5 <= 3",
+          "step6_objective_formulation": "The objective function is to minimize the total cost of the meal plan: Minimize: 2*x1 + 0.5*x2 + 1*x3 + 3*x4 + 0.3*x5",
+          "step7_validation": "All variables (x1, x2, x3, x4, x5) are used in at least one constraint or the objective function. The model can enforce all the stated constraints and achieve the goal of minimizing the cost while meeting the nutritional requirements."
+        },
+        "model_type": "linear_programming",
+        "variables": [
+          {
+            "name": "x1",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Amount of Chicken (in 100g portions)"
+          },
+          {
+            "name": "x2",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Amount of Rice (in 100g portions)"
+          },
+          {
+            "name": "x3",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Amount of Vegetables (in 100g portions)"
+          },
+          {
+            "name": "x4",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Amount of Fish (in 100g portions)"
+          },
+          {
+            "name": "x5",
+            "type": "continuous",
+            "bounds": "0 to infinity",
+            "description": "Amount of Bread (in 100g portions)"
+          }
+        ],
+        "objective": {
+          "type": "minimize",
+          "expression": "2*x1 + 0.5*x2 + 1*x3 + 3*x4 + 0.3*x5",
+          "description": "Total cost of the meal plan"
+        },
+        "constraints": [
+          {
+            "expression": "25*x1 + 22*x4 + 3*x5 >= 50",
+            "description": "Minimum protein requirement (50g)"
+          },
+          {
+            "expression": "25*x1 + 22*x4 + 3*x5 <= 80",
+            "description": "Maximum protein requirement (80g)"
+          },
+          {
+            "expression": "28*x2 + 5*x3 + 15*x5 >= 100",
+            "description": "Minimum carb requirement (100g)"
+          },
+          {
+            "expression": "28*x2 + 5*x3 + 15*x5 <= 200",
+            "description": "Maximum carb requirement (200g)"
+          },
+          {
+            "expression": "3*x1 + 1*x4 + 1*x5 >= 20",
+            "description": "Minimum fat requirement (20g)"
+          },
+          {
+            "expression": "3*x1 + 1*x4 + 1*x5 <= 40",
+            "description": "Maximum fat requirement (40g)"
+          },
+          {
+            "expression": "120*x1 + 130*x2 + 25*x3 + 100*x4 + 80*x5 >= 1500",
+            "description": "Minimum calorie requirement (1500)"
+          },
+          {
+            "expression": "120*x1 + 130*x2 + 25*x3 + 100*x4 + 80*x5 <= 2000",
+            "description": "Maximum calorie requirement (2000)"
+          },
+          {
+            "expression": "2*x1 + 0.5*x2 + 1*x3 + 3*x4 + 0.3*x5 <= 15",
+            "description": "Maximum cost constraint ($15)"
+          },
+          {
+            "expression": "x3 >= 2",
+            "description": "Minimum 2 servings of vegetables"
+          },
+          {
+            "expression": "x1 <= 3",
+            "description": "Maximum 3 servings of Chicken"
+          },
+          {
+            "expression": "x2 <= 3",
+            "description": "Maximum 3 servings of Rice"
+          },
+          {
+            "expression": "x3 <= 3",
+            "description": "Maximum 3 servings of Vegetables"
+          },
+          {
+            "expression": "x4 <= 3",
+            "description": "Maximum 3 servings of Fish"
+          },
+          {
+            "expression": "x5 <= 3",
+            "description": "Maximum 3 servings of Bread"
+          }
+        ],
+        "model_complexity": "high",
+        "estimated_solve_time": 0.5,
+        "mathematical_formulation": "Minimize: 2*x1 + 0.5*x2 + 1*x3 + 3*x4 + 0.3*x5 Subject to: 25*x1 + 22*x4 + 3*x5 >= 50 25*x1 + 22*x4 + 3*x5 <= 80 28*x2 + 5*x3 + 15*x5 >= 100 28*x2 + 5*x3 + 15*x5 <= 200 3*x1 + 1*x4 + 1*x5 >= 20 3*x1 + 1*x4 + 1*x5 <= 40 120*x1 + 130*x2 + 25*x3 + 100*x4 + 80*x5 >= 1500 120*x1 + 130*x2 + 25*x3 + 100*x4 + 80*x5 <= 2000 2*x1 + 0.5*x2 + 1*x3 + 3*x4 + 0.3*x5 <= 15 x3 >= 2 x1 <= 3 x2 <= 3 x3 <= 3 x4 <= 3 x5 <= 3 x1, x2, x3, x4, x5 >= 0",
+        "validation_summary": {
+          "variables_defined": 5,
+          "constraints_defined": 15,
+          "objective_matches_problem": true,
+          "model_is_feasible": true,
+          "all_variables_used": true,
+          "reasoning_completed": true
+        },
+        "mathopt_model": {
+          "status": "success",
+          "model": "<ortools.math_opt.python.model.Model object at 0x1166bcee0>",
+          "variables": {
+            "x1": "x1",
+            "x2": "x2",
+            "x3": "x3",
+            "x4": "x4",
+            "x5": "x5"
+          },
+          "constraints": [],
+          "objective": null,
+          "validation": {
+            "variables_count": 5,
+            "constraints_count": 0,
+            "has_objective": false,
+            "model_created": true,
+            "all_variables_used": true,
+            "model_feasible": true
+          },
+          "model_name": "optimization_model_7492"
+        }
+      },
+      "message": "Model built with 7-step reasoning + MathOpt (attempt 1)"
+    },
+    "expected_variables": 5,
+    "expected_constraints": 12,
+    "timestamp": "2025-10-18T14:57:26.342775",
+    "success": true,
+    "actual_variables": 5,
+    "actual_constraints": 15
+  }
+}

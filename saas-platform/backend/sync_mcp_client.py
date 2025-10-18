@@ -1,30 +1,50 @@
 #!/usr/bin/env python3
 """
-Synchronous MCP Client for DcisionAI SaaS Platform
-=================================================
+Enhanced MCP Client for DcisionAI SaaS Platform
+==============================================
 
-Synchronous MCP client that avoids async event loop conflicts in Flask.
+Direct integration with DcisionAI MCP Server v1.7.3 with pattern-breaking strategies.
+Uses the MCP server directly for best AgentCore compatibility.
 """
 
 import json
 import logging
 import os
-import subprocess
 import sys
-import tempfile
+import asyncio
 from typing import Dict, Any, Optional
+from datetime import datetime
+
+# Add the MCP server path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+mcp_server_root = os.path.abspath(os.path.join(current_dir, '../../../mcp-server'))
+if mcp_server_root not in sys.path:
+    sys.path.insert(0, mcp_server_root)
+
+# Import our enhanced DcisionAI tools directly
+try:
+    from dcisionai_mcp_server.tools import DcisionAITools
+    logger = logging.getLogger(__name__)
+    logger.info("✅ Enhanced DcisionAI MCP tools imported successfully (v1.7.3)")
+except Exception as e:
+    logger.error(f"❌ Failed to import DcisionAITools: {e}")
+    sys.exit(1)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class SyncDcisionAIMCPClient:
-    """Synchronous MCP client for connecting to DcisionAI MCP server."""
+    """Enhanced MCP client using DcisionAI tools directly for best AgentCore compatibility."""
     
     def __init__(self, mcp_url: str = None, bearer_token: str = None):
-        """Initialize the synchronous MCP client."""
-        self.mcp_url = mcp_url or os.getenv('MCP_SERVER_URL', 'http://localhost:8000/mcp')
+        """Initialize the enhanced MCP client with direct tool integration."""
+        self.mcp_url = mcp_url or os.getenv('MCP_SERVER_URL', 'direct_integration')
         self.bearer_token = bearer_token or os.getenv('BEARER_TOKEN')
+        
+        # Initialize DcisionAI tools directly
+        self.dcisionai_tools = DcisionAITools()
+        logger.info("🚀 Enhanced DcisionAI MCP client initialized with pattern-breaking strategies")
         
     def _call_mcp_tool(self, tool_name: str, arguments: Dict[str, Any] = None) -> Dict[str, Any]:
         """Call MCP tool using subprocess to avoid async conflicts."""

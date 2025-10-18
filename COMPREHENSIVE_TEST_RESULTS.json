@@ -1,0 +1,167 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-10-18T14:18:03.926535",
+    "version": "1.8.6",
+    "test_type": "portfolio_optimization",
+    "problem_description": "Portfolio optimization for $10M across 4 sectors with risk constraints.\n    Maximize returns: Tech 12%, Financial 8%, Healthcare 10%, Energy 6%."
+  },
+  "steps": {
+    "step_1_intent_classification": {
+      "status": "success",
+      "step": "intent_classification",
+      "timestamp": "2025-10-18T14:18:06.740551",
+      "result": {
+        "intent": "portfolio_optimization",
+        "industry": "finance",
+        "optimization_type": "quadratic_programming",
+        "complexity": "medium",
+        "confidence": 0.9
+      },
+      "message": "Intent: portfolio_optimization"
+    },
+    "step_2_data_analysis": {
+      "status": "success",
+      "step": "data_analysis",
+      "timestamp": "2025-10-18T14:18:11.039988",
+      "result": {
+        "raw_response": "Here is a JSON response analyzing the portfolio optimization problem:\n\n{\n  \"readiness_score\": 0.9,\n  \"entities\": 4, \n  \"data_quality\": \"high\",\n  \"variables_identified\": [\"x1\", \"x2\", \"x3\", \"x4\"],\n  \"constraints_identified\": [\n    \"total_investment_constraint: x1 + x2 + x3 + x4 = 10000000\",\n    \"return_constraints: \n      0.12*x1 + 0.08*x2 + 0.10*x3 + 0.06*x4 >= target_return\"\n  ]\n}\n\nExplanation:\n- Readiness score is 0.9, indicating the problem is well-defined and can be optimized.\n- There are 4 entities/sectors to optimize: Tech, Financial, Healthcare, Energy.\n- The data quality is high, with clear return targets for each sector.\n- The key decision variables are the investment amounts x1, x2, x3, x4 for each sector.\n- The key constraints are:\n  1. Total investment must equal $10 million.\n  2. The weighted average return across the 4 sectors must meet or exceed the target return.\n\nThis is a standard portfolio optimization problem that can be solved using techniques like linear programming or quadratic programming, depending on the specific objective function and constraints.",
+        "readiness_score": 0.8,
+        "entities": 0
+      },
+      "message": "Ready: 80.0%"
+    },
+    "step_3_solver_selection": {
+      "status": "success",
+      "step": "solver_selection",
+      "timestamp": "2025-10-18T14:18:11.040078",
+      "result": {
+        "selected_solver": "CVXPY",
+        "optimization_type": "quadratic_programming",
+        "capabilities": [
+          "linear_constraints",
+          "quadratic_constraints",
+          "continuous_variables",
+          "convex_optimization",
+          "socp",
+          "sdp",
+          "disciplined_convex_programming"
+        ],
+        "performance_rating": 9,
+        "fallback_solvers": [
+          "OSQP",
+          "SCS"
+        ],
+        "reasoning": "Selected CVXPY for quadratic_programming problem with 4 variables and 5 constraints (Performance rating: 9/10)"
+      },
+      "message": "Selected: CVXPY"
+    },
+    "step_4_model_building": {
+      "status": "success",
+      "step": "model_building",
+      "timestamp": "2025-10-18T14:18:16.774959",
+      "result": {
+        "variables": [
+          {
+            "name": "x1",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Tech sector"
+          },
+          {
+            "name": "x2",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Financial sector"
+          },
+          {
+            "name": "x3",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Healthcare sector"
+          },
+          {
+            "name": "x4",
+            "type": "continuous",
+            "bounds": "0 to 1",
+            "description": "Allocation to Energy sector"
+          }
+        ],
+        "constraints": [
+          {
+            "expression": "x1 + x2 + x3 + x4 = 1",
+            "description": "Total allocation must be 100%"
+          },
+          {
+            "expression": "0.12*x1 + 0.08*x2 + 0.10*x3 + 0.06*x4 >= 0.10",
+            "description": "Minimum expected return of 10%"
+          }
+        ],
+        "objective": {
+          "type": "maximize",
+          "expression": "0.12*x1 + 0.08*x2 + 0.10*x3 + 0.06*x4",
+          "description": "Maximize expected portfolio return"
+        },
+        "model_type": "quadratic_programming"
+      },
+      "message": "Model built (attempt 1)"
+    },
+    "step_5_optimization_solution": {
+      "status": "error",
+      "step": "optimization_solution",
+      "timestamp": "2025-10-18T14:18:16.781019",
+      "result": {
+        "status": "optimal",
+        "objective_value": 1.2,
+        "optimal_values": {
+          "x1": 0.0,
+          "x2": 0.0,
+          "x3": 1.0,
+          "x4": 0.0
+        },
+        "solve_time": 0.0009946823120117188,
+        "solution_quality": "optimal",
+        "constraints_satisfied": true,
+        "business_impact": {
+          "total_profit": 1.2,
+          "profit_increase": "5.0%",
+          "cost_savings": 1000,
+          "capacity_utilization": "78.0%"
+        },
+        "recommendations": [
+          "Focus on x3 with optimal value 1.00",
+          "Monitor key performance indicators regularly",
+          "Consider capacity expansion for high-demand products",
+          "Optimize resource allocation based on current solution"
+        ],
+        "sensitivity_analysis": {
+          "demand_sensitivity": "Solution is moderately sensitive to demand changes",
+          "cost_sensitivity": "Solution is robust to cost variations up to 10%",
+          "capacity_sensitivity": "Solution can handle capacity changes within 15%"
+        },
+        "validation": {
+          "is_valid": false,
+          "errors": [
+            "Objective mismatch: calc=0.1000, reported=1.2000"
+          ],
+          "warnings": [
+            "Could not check x1 + x2 + x3 + x4 = 1: Expression evaluation failed: unexpected indent (<unknown>, line 1)",
+            "Could not check 0.12*x1 + 0.08*x2 + 0.10*x3 + 0.06*x4 >= 0.10: Expression evaluation failed: unexpected indent (<unknown>, line 1)"
+          ]
+        }
+      },
+      "message": "Solved: optimal"
+    },
+    "step_6_business_explanation": {
+      "status": "error",
+      "step": "explainability",
+      "error": "Cannot explain optimization results: No successful optimization found",
+      "message": "Optimization must be completed successfully before explanation can be generated"
+    },
+    "step_7_risk_simulation": {
+      "status": "error",
+      "step": "simulation_analysis",
+      "error": "Cannot simulate scenarios: No successful optimization found",
+      "message": "Optimization must be completed successfully before simulation can be performed"
+    }
+  }
+}

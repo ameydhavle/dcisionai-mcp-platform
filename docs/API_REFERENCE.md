@@ -1,1031 +1,639 @@
 # DcisionAI API Reference
 
-## 🚀 **Complete API Documentation**
+## 🚀 **Overview**
 
-This document provides comprehensive API reference for the DcisionAI platform, including MCP server tools, REST API endpoints, and integration examples.
-
-## 🎯 **MCP Server Tools**
-
-The DcisionAI MCP server provides 9 core tools for mathematical optimization. Each tool is designed to work independently or as part of a complete optimization workflow.
-
-### **Tool 1: classify_intent**
-
-**Purpose**: Classify user intent for optimization requests using Claude 3 Haiku
-
-**Input Schema**:
-```json
-{
-  "type": "object",
-  "properties": {
-    "problem_description": {
-      "type": "string",
-      "description": "The user's optimization request or problem description"
-    },
-    "context": {
-      "type": "string",
-      "description": "Optional context about the business domain"
-    }
-  },
-  "required": ["problem_description"]
-}
-```
-
-**Example Request**:
-```json
-{
-  "problem_description": "Optimize my investment portfolio for maximum returns with moderate risk",
-  "context": "Financial services, $2M portfolio"
-}
-```
-
-**Example Response**:
-```json
-{
-  "status": "success",
-  "step": "intent_classification",
-  "timestamp": "2025-10-17T07:34:47.400Z",
-  "result": {
-    "intent": "portfolio_optimization",
-    "industry": "finance",
-    "complexity": "medium",
-    "confidence": 0.8,
-    "entities": ["investment_portfolio", "returns", "risk"],
-    "optimization_type": "linear_programming",
-    "time_horizon": "medium_term",
-    "solver_requirements": {
-      "primary": ["PDLP", "GLOP"],
-      "fallback": ["GLOP"],
-      "capabilities": ["linear_constraints", "continuous_variables"]
-    }
-  },
-  "message": "Intent classified using Claude 3 Haiku with optimization type detection"
-}
-```
-
-### **Tool 2: analyze_data**
-
-**Purpose**: Analyze and preprocess data for optimization
-
-**Input Schema**:
-```json
-{
-  "type": "object",
-  "properties": {
-    "problem_description": {
-      "type": "string",
-      "description": "Description of the optimization problem"
-    },
-    "intent_data": {
-      "type": "object",
-      "description": "Intent classification results from classify_intent"
-    }
-  },
-  "required": ["problem_description"]
-}
-```
-
-**Example Response**:
-```json
-{
-  "status": "success",
-  "step": "data_analysis",
-  "timestamp": "2025-10-17T07:34:47.400Z",
-  "result": {
-    "readiness_score": 0.92,
-    "entities": 15,
-    "data_quality": "high",
-    "missing_data": [],
-    "data_sources": ["ERP_system", "production_logs", "demand_forecast", "capacity_planning"],
-    "variables_identified": ["x1", "x2", "x3", "x4", "x5", "y1", "y2", "y3", "z1", "z2", "z3", "z4"],
-    "constraints_identified": ["capacity", "demand", "labor", "material", "quality"],
-    "recommendations": [
-      "Ensure all production capacity data is up-to-date",
-      "Validate demand forecast accuracy",
-      "Include setup costs in optimization model"
-    ]
-  },
-  "message": "Data analysis completed successfully"
-}
-```
-
-### **Tool 3: build_model**
-
-**Purpose**: Build mathematical optimization model using Claude 3 Haiku
-
-**Input Schema**:
-```json
-{
-  "type": "object",
-  "properties": {
-    "problem_description": {
-      "type": "string",
-      "description": "Detailed problem description"
-    },
-    "intent_data": {
-      "type": "object",
-      "description": "Intent classification results"
-    },
-    "data_analysis": {
-      "type": "object",
-      "description": "Results from data analysis step"
-    }
-  },
-  "required": ["problem_description"]
-}
-```
-
-**Example Response**:
-```json
-{
-  "status": "success",
-  "step": "model_building",
-  "timestamp": "2025-10-17T07:34:47.400Z",
-  "result": {
-    "raw_response": "{\n  \"model_type\": \"linear_programming\",\n  \"variables\": [\n    {\n      \"name\": \"w1\",\n      \"type\": \"continuous\",\n      \"bounds\": \"0 to 1\",\n      \"description\": \"Allocation weight for asset 1\"\n    }\n  ],\n  \"objective\": {\n    \"type\": \"maximize\",\n    \"expression\": \"w1 * r1 + w2 * r2 + w3 * r3\",\n    \"description\": \"Maximize portfolio expected return\"\n  },\n  \"constraints\": [\n    {\n      \"expression\": \"w1 + w2 + w3 = 1\",\n      \"description\": \"Sum of allocation weights must be 1\"\n    }\n  ]\n}"
-  },
-  "message": "Model built using Claude 3 Haiku"
-}
-```
-
-### **Tool 4: solve_optimization**
-
-**Purpose**: Solve the optimization problem and generate results
-
-**Input Schema**:
-```json
-{
-  "type": "object",
-  "properties": {
-    "problem_description": {
-      "type": "string",
-      "description": "Problem description"
-    },
-    "intent_data": {
-      "type": "object",
-      "description": "Intent classification results"
-    },
-    "data_analysis": {
-      "type": "object",
-      "description": "Data analysis results"
-    },
-    "model_building": {
-      "type": "object",
-      "description": "Model building results"
-    }
-  },
-  "required": ["problem_description"]
-}
-```
-
-**Example Response**:
-```json
-{
-  "status": "success",
-  "step": "optimization_solution",
-  "timestamp": "2025-10-17T07:34:47.400Z",
-  "result": {
-    "status": "optimal",
-    "objective_value": 1.22,
-    "optimal_values": {
-      "x1": 0.10,
-      "x2": 0.20,
-      "x3": 0.10,
-      "x4": 0.60
-    },
-    "solve_time": 0.0034,
-    "solution_quality": "optimal",
-    "constraints_satisfied": true,
-    "business_impact": {
-      "total_profit": 1.22,
-      "profit_increase": "12.2%",
-      "cost_savings": 244000,
-      "capacity_utilization": "85.0%"
-    },
-    "recommendations": [
-      "Focus on x4 with optimal value 0.60",
-      "Monitor key performance indicators regularly",
-      "Consider capacity expansion for high-demand products"
-    ],
-    "sensitivity_analysis": {
-      "demand_sensitivity": "Solution is moderately sensitive to demand changes",
-      "cost_sensitivity": "Solution is robust to cost variations up to 10%",
-      "capacity_sensitivity": "Solution can handle capacity changes within 15%"
-    }
-  },
-  "message": "Optimization solved successfully using OR-Tools"
-}
-```
-
-### **Tool 5: select_solver**
-
-**Purpose**: Select the best available solver for optimization problems
-
-**Input Schema**:
-```json
-{
-  "type": "object",
-  "properties": {
-    "optimization_type": {
-      "type": "string",
-      "description": "Type of optimization problem (linear_programming, quadratic_programming, mixed_integer_linear_programming, etc.)"
-    },
-    "problem_size": {
-      "type": "object",
-      "description": "Problem size information (num_variables, num_constraints, etc.)",
-      "default": {}
-    },
-    "performance_requirement": {
-      "type": "string",
-      "description": "Performance requirement: speed, accuracy, or balanced",
-      "default": "balanced"
-    }
-  },
-  "required": ["optimization_type"]
-}
-```
-
-**Example Response**:
-```json
-{
-  "status": "success",
-  "step": "solver_selection",
-  "timestamp": "2025-10-17T07:34:47.400Z",
-  "result": {
-    "selected_solver": "PDLP",
-    "performance_rating": "9/10",
-    "reasoning": "PDLP selected for large-scale linear programming problems",
-    "available_solvers": ["GLOP", "PDLP", "CBC", "SCIP", "HIGHS", "OSQP", "SCS", "CVXPY"],
-    "solver_capabilities": {
-      "linear_constraints": true,
-      "continuous_variables": true,
-      "large_scale": true,
-      "performance": "high"
-    }
-  },
-  "message": "Solver selected based on problem characteristics"
-}
-```
-
-### **Tool 6: simulate_scenarios**
-
-**Purpose**: Run simulation analysis on optimization scenarios using Monte Carlo and OSS simulation engines
-
-**Input Schema**:
-```json
-{
-  "type": "object",
-  "properties": {
-    "problem_description": {
-      "type": "string",
-      "description": "Original problem description"
-    },
-    "optimization_solution": {
-      "type": "object",
-      "description": "Results from optimization solving"
-    },
-    "scenario_parameters": {
-      "type": "object",
-      "description": "Parameters for scenario analysis"
-    },
-    "simulation_type": {
-      "type": "string",
-      "description": "Type of simulation (monte_carlo, sensitivity, what_if)",
-      "default": "monte_carlo"
-    },
-    "num_trials": {
-      "type": "integer",
-      "description": "Number of simulation trials",
-      "default": 10000
-    }
-  },
-  "required": ["problem_description"]
-}
-```
-
-**Example Request**:
-```json
-{
-  "problem_description": "Quantitative trading execution optimization",
-  "optimization_solution": {
-    "status": "optimal",
-    "objective_value": 5000,
-    "optimal_values": {"x1": 100000, "x2": 200000}
-  },
-  "simulation_type": "monte_carlo",
-  "num_trials": 10000
-}
-```
-
-**Example Response**:
-```json
-{
-  "status": "success",
-  "step": "simulation_analysis",
-  "timestamp": "2025-10-17T12:43:00.442019",
-  "result": {
-    "simulation_summary": {
-      "analysis_type": "risk_assessment",
-      "simulation_type": "monte_carlo",
-      "num_trials": 10000,
-      "status": "completed",
-      "execution_time": "2.3 seconds"
-    },
-    "scenario_analysis": {
-      "scenarios_tested": [
-        {
-          "scenario_name": "Scenario A: Relax Volume Limit",
-          "parameter_changes": {"volume_limit": "5% to 7%"},
-          "feasibility": "feasible",
-          "expected_outcome": 5250,
-          "risk_metrics": {
-            "mean": 5250,
-            "std_dev": 420,
-            "percentile_5": 4600,
-            "percentile_95": 6100,
-            "var_95": 4600
-          }
-        }
-      ]
-    },
-    "risk_analysis": {
-      "uncertainty_factors": [
-        {
-          "factor": "Market Impact",
-          "contribution_to_variance": 0.45,
-          "sensitivity": "High",
-          "recommendation": "Monitor volume carefully"
-        }
-      ],
-      "stress_testing": {
-        "worst_case_scenario": {
-          "description": "High volatility + market impact",
-          "probability": 0.05,
-          "outcome": 6100,
-          "mitigation": "Implement circuit breakers"
-        }
-      }
-    },
-    "recommendations": {
-      "primary_recommendation": {
-        "scenario": "Scenario B: Extend Deadline",
-        "expected_benefit": 450,
-        "risk_reduction": 0.23,
-        "confidence": 0.92
-      },
-      "implementation_guidance": [
-        "Extend trading deadline to 2:00pm",
-        "Maintain 5% volume limit for market stability"
-      ]
-    },
-    "mathematical_simulation": {
-      "simulation_type": "monte_carlo",
-      "num_trials": 10000,
-      "risk_metrics": {
-        "mean": 1006.44,
-        "std_dev": 153.12,
-        "percentile_5": 749.71,
-        "percentile_95": 1273.33,
-        "var_95": 749.71
-      },
-      "convergence": true
-    }
-  },
-  "message": "Simulation analysis completed using monte_carlo with 10000 trials",
-  "simulation_engine": "hybrid"
-}
-```
-
-**Supported Simulation Types**:
-- **monte_carlo**: Risk analysis using NumPy/SciPy
-- **discrete_event**: Process simulation using SimPy
-- **agent_based**: Complex systems using Mesa
-- **system_dynamics**: Causal modeling using PySD
-- **stochastic_optimization**: Parameter sensitivity using SALib/PyMC
-
-### **Tool 7: explain_optimization**
-
-**Purpose**: Provide business-facing explainability for optimization results
-
-**Input Schema**:
-```json
-{
-  "type": "object",
-  "properties": {
-    "problem_description": {
-      "type": "string",
-      "description": "Original problem description"
-    },
-    "intent_data": {
-      "type": "object",
-      "description": "Results from intent classification",
-      "default": {}
-      },
-      "data_analysis": {
-      "type": "object",
-      "description": "Results from data analysis",
-      "default": {}
-      },
-      "model_building": {
-      "type": "object",
-      "description": "Results from model building",
-      "default": {}
-      },
-      "optimization_solution": {
-      "type": "object",
-      "description": "Results from optimization solving",
-      "default": {}
-    }
-  },
-  "required": ["problem_description"]
-}
-```
-
-**Example Response**:
-```json
-{
-  "status": "success",
-  "step": "explainability",
-  "timestamp": "2025-10-17T07:34:47.400Z",
-  "result": {
-    "executive_summary": {
-      "problem_statement": "The business is looking to optimize its investment portfolio to maximize returns while minimizing risk.",
-      "solution_approach": "We used a linear programming optimization model to analyze the company's investment data and identify the most efficient portfolio allocation.",
-      "key_findings": [
-        "The current portfolio is not well-diversified, with a heavy concentration in a few high-risk investments.",
-        "Reallocating a portion of the funds to lower-risk, more stable investments can significantly improve the overall risk-return profile of the portfolio."
-      ],
-      "business_impact": "Implementing the recommended portfolio optimization will help the company achieve its financial goals more effectively. It is expected to increase returns by 12.2% while reducing the overall portfolio risk."
-    },
-    "analysis_breakdown": {
-      "data_assessment": {
-        "data_quality": "The available investment data is generally of good quality, with some minor gaps in historical performance information for certain asset classes.",
-        "missing_data": ["Detailed historical returns for emerging market investments"],
-        "assumptions_made": ["Future market conditions will be similar to historical trends"]
-      },
-      "model_design": {
-        "approach_justification": "Linear programming is a well-established optimization technique that is particularly well-suited for portfolio optimization problems.",
-        "trade_offs": ["Increasing exposure to higher-risk, higher-return investments can improve overall portfolio performance but also raises the level of risk."]
-      }
-    },
-    "implementation_guidance": {
-      "next_steps": [
-        "Communicate the optimization findings and recommendations to the investment committee for review and approval.",
-        "Develop a detailed implementation plan to gradually transition the current portfolio to the recommended allocation."
-      ],
-      "monitoring_metrics": ["Portfolio returns (absolute and risk-adjusted)", "Portfolio risk (e.g., standard deviation, Value-at-Risk)"],
-      "risk_considerations": ["Potential market volatility and its impact on the portfolio's performance"]
-    },
-    "technical_details": {
-      "optimization_type": "linear_programming",
-      "solver_used": "PDLP",
-      "computational_efficiency": "The optimization model was able to find the optimal solution in a matter of seconds, demonstrating its computational efficiency.",
-      "scalability": "The linear programming approach used in this analysis is highly scalable and can handle large-scale portfolio optimization problems with a large number of assets and constraints."
-    }
-  },
-  "message": "Business explainability generated successfully"
-}
-```
-
-### **Tool 8: get_workflow_templates**
-
-**Purpose**: Get available industry workflow templates
-
-**Input Schema**:
-```json
-{
-  "type": "object",
-  "properties": {},
-  "required": []
-}
-```
-
-**Example Response**:
-```json
-{
-  "status": "success",
-  "workflow_templates": {
-    "industries": ["manufacturing", "healthcare", "retail", "marketing", "financial", "logistics", "energy"],
-    "workflows": {
-      "manufacturing": {
-        "production_planning": {
-          "name": "Production Planning Optimization",
-          "description": "Optimize production schedules, resource allocation, and capacity planning",
-          "complexity": "high",
-          "estimated_time": "15-30 minutes",
-          "workflows": 3
-        },
-        "inventory_optimization": {
-          "name": "Inventory Optimization",
-          "description": "Minimize inventory costs while maintaining service levels",
-          "complexity": "medium",
-          "estimated_time": "10-20 minutes",
-          "workflows": 3
-        }
-      },
-      "financial": {
-        "portfolio_optimization": {
-          "name": "Portfolio Optimization",
-          "description": "Optimize investment portfolio allocation and risk management",
-          "complexity": "high",
-          "estimated_time": "20-40 minutes",
-          "workflows": 3
-        }
-      }
-    },
-    "total_workflows": 21,
-    "total_industries": 7
-  },
-  "total_workflows": 21,
-  "industries": 7
-}
-```
-
-### **Tool 9: execute_workflow**
-
-**Purpose**: Execute a complete optimization workflow
-
-**Input Schema**:
-```json
-{
-  "type": "object",
-  "properties": {
-    "industry": {
-      "type": "string",
-      "description": "Target industry (manufacturing, healthcare, retail, marketing, financial, logistics, energy)"
-    },
-    "workflow_id": {
-      "type": "string",
-      "description": "Specific workflow to execute"
-    },
-    "user_input": {
-      "type": "object",
-      "description": "User input parameters"
-    }
-  },
-  "required": ["industry", "workflow_id"]
-}
-```
-
-**Example Response**:
-```json
-{
-  "status": "success",
-  "step": "workflow_execution",
-  "timestamp": "2025-10-17T07:34:47.400Z",
-  "result": {
-    "workflow_id": "portfolio_optimization",
-    "industry": "financial",
-    "execution_time": 45.2,
-    "steps_completed": [
-    "intent_classification",
-    "data_analysis", 
-    "model_building",
-      "solver_selection",
-      "optimization_solving",
-      "explainability"
-    ],
-    "final_results": {
-      "objective_value": 1.22,
-      "optimal_allocation": {
-        "stocks": 0.10,
-        "bonds": 0.20,
-        "real_estate": 0.10,
-        "commodities": 0.60
-      },
-      "business_impact": "$244,000 annual return on $2M investment"
-    },
-    "recommendations": [
-      "Implement the recommended allocation gradually over 3 months",
-      "Monitor performance monthly and rebalance quarterly",
-      "Consider tax implications of rebalancing"
-    ]
-  },
-  "message": "Workflow executed successfully"
-}
-```
-
-## 🌐 **REST API Endpoints**
-
-The DcisionAI SaaS platform provides REST API endpoints for web integration.
-
-### **Base URL**
-```
-https://platform.dcisionai.com/api
-```
-
-### **Authentication**
-All API requests require authentication using JWT tokens:
-```http
-Authorization: Bearer <your-jwt-token>
-```
-
-### **Health Check**
-
-**Endpoint**: `GET /api/mcp/health-check`
-
-**Response**:
-```json
-{
-  "status": "healthy",
-  "message": "DcisionAI MCP server (v1.4.3) is running on AWS AgentCore",
-  "mcp_server_url": "https://agentcore.dcisionai.com",
-  "health_status": "healthy",
-  "features": [
-    "Claude 3 Haiku model building",
-    "OR-Tools optimization with 8+ solvers",
-    "Business explainability",
-    "21 industry workflows",
-    "AWS AgentCore hosting"
-  ],
-  "timestamp": "2025-10-17T07:34:47.400Z",
-  "endpoints": {
-    "classify_intent": "/api/mcp/classify-intent",
-    "analyze_data": "/api/mcp/analyze-data",
-    "build_model": "/api/mcp/build-model",
-    "solve_optimization": "/api/mcp/solve-optimization",
-    "select_solver": "/api/mcp/select-solver",
-    "explain_optimization": "/api/mcp/explain-optimization",
-    "execute_workflow": "/api/mcp/execute-workflow"
-  }
-}
-```
-
-### **Intent Classification**
-
-**Endpoint**: `POST /api/mcp/classify-intent`
-
-**Request Body**:
-```json
-{
-  "problem_description": "Optimize my investment portfolio for maximum returns with moderate risk",
-  "context": "Financial services, $2M portfolio"
-}
-```
-
-**Response**: Same as MCP tool response
-
-### **Data Analysis**
-
-**Endpoint**: `POST /api/mcp/analyze-data`
-
-**Request Body**:
-```json
-{
-  "problem_description": "Portfolio optimization problem",
-  "intent_data": {
-    "intent": "portfolio_optimization",
-    "industry": "finance"
-  }
-}
-```
-
-**Response**: Same as MCP tool response
-
-### **Model Building**
-
-**Endpoint**: `POST /api/mcp/build-model`
-
-**Request Body**:
-```json
-{
-  "problem_description": "Portfolio optimization",
-  "intent_data": {
-    "intent": "portfolio_optimization",
-    "industry": "finance"
-  },
-  "data_analysis": {
-    "readiness_score": 0.92,
-    "variables_identified": ["x1", "x2", "x3", "x4"]
-  }
-}
-```
-
-**Response**: Same as MCP tool response
-
-### **Optimization Solving**
-
-**Endpoint**: `POST /api/mcp/solve-optimization`
-
-**Request Body**:
-```json
-{
-  "problem_description": "Portfolio optimization",
-  "intent_data": {
-    "intent": "portfolio_optimization"
-  },
-  "data_analysis": {
-    "readiness_score": 0.92
-  },
-  "model_building": {
-    "model_type": "linear_programming"
-  }
-}
-```
-
-**Response**: Same as MCP tool response
-
-### **Solver Selection**
-
-**Endpoint**: `POST /api/mcp/select-solver`
-
-**Request Body**:
-```json
-{
-  "optimization_type": "linear_programming",
-  "problem_size": {
-    "num_variables": 4,
-    "num_constraints": 6
-  },
-  "performance_requirement": "balanced"
-}
-```
-
-**Response**: Same as MCP tool response
-
-### **Explain Optimization**
-
-**Endpoint**: `POST /api/mcp/explain-optimization`
-
-**Request Body**:
-```json
-{
-  "problem_description": "Portfolio optimization",
-  "intent_data": {
-    "intent": "portfolio_optimization"
-  },
-  "data_analysis": {
-    "readiness_score": 0.92
-  },
-    "model_building": {
-    "model_type": "linear_programming"
-    },
-    "optimization_solution": {
-    "objective_value": 1.22,
-    "optimal_values": {
-      "x1": 0.10,
-      "x2": 0.20,
-      "x3": 0.10,
-      "x4": 0.60
-    }
-  }
-}
-```
-
-**Response**: Same as MCP tool response
-
-### **Execute Workflow**
-
-**Endpoint**: `POST /api/mcp/execute-workflow`
-
-**Request Body**:
-```json
-{
-  "industry": "financial",
-  "workflow_id": "portfolio_optimization",
-  "user_input": {
-    "portfolio_size": 1000000,
-    "risk_tolerance": "moderate"
-  }
-}
-```
-
-**Response**: Same as MCP tool response
-
-## 🔧 **Integration Examples**
-
-### **Python SDK**
-
-```python
-from dcisionai_mcp_server.tools import DcisionAITools
-import asyncio
-
-async def optimize_portfolio():
-    tools = DcisionAITools()
-    
-    # Step 1: Classify intent
-    intent_result = await tools.classify_intent(
-        "Optimize my investment portfolio for maximum returns with moderate risk"
-    )
-    
-    # Step 2: Analyze data
-    data_result = await tools.analyze_data(
-        "Portfolio optimization", 
-        intent_result['result']
-    )
-    
-    # Step 3: Build model
-    model_result = await tools.build_model(
-        "Portfolio optimization",
-        intent_result['result'],
-        data_result['result']
-    )
-    
-    # Step 4: Solve optimization
-    solve_result = await tools.solve_optimization(
-        "Portfolio optimization",
-        intent_result['result'],
-        data_result['result'],
-        model_result['result']
-    )
-    
-    # Step 5: Get explanation
-    explain_result = await tools.explain_optimization(
-        "Portfolio optimization",
-        intent_result['result'],
-        data_result['result'],
-        model_result['result'],
-        solve_result['result']
-    )
-    
-    return {
-        'intent': intent_result,
-        'data': data_result,
-        'model': model_result,
-        'solution': solve_result,
-        'explanation': explain_result
-    }
-
-# Run optimization
-result = asyncio.run(optimize_portfolio())
-print(f"Optimal allocation: {result['solution']['result']['optimal_values']}")
-```
-
-### **JavaScript/Node.js**
-
-```javascript
-const axios = require('axios');
-
-class DcisionAIClient {
-    constructor(baseURL = 'https://platform.dcisionai.com/api', token) {
-        this.baseURL = baseURL;
-        this.token = token;
-    }
-    
-    async classifyIntent(problemDescription, context = null) {
-        const response = await axios.post(`${this.baseURL}/mcp/classify-intent`, {
-            problem_description: problemDescription,
-            context: context
-        }, {
-            headers: { Authorization: `Bearer ${this.token}` }
-        });
-        return response.data;
-    }
-    
-    async analyzeData(problemDescription, intentData) {
-        const response = await axios.post(`${this.baseURL}/mcp/analyze-data`, {
-            problem_description: problemDescription,
-            intent_data: intentData
-        }, {
-            headers: { Authorization: `Bearer ${this.token}` }
-        });
-        return response.data;
-    }
-    
-    async buildModel(problemDescription, intentData, dataAnalysis) {
-        const response = await axios.post(`${this.baseURL}/mcp/build-model`, {
-            problem_description: problemDescription,
-            intent_data: intentData,
-            data_analysis: dataAnalysis
-        }, {
-            headers: { Authorization: `Bearer ${this.token}` }
-        });
-        return response.data;
-    }
-    
-    async solveOptimization(problemDescription, intentData, dataAnalysis, modelBuilding) {
-        const response = await axios.post(`${this.baseURL}/mcp/solve-optimization`, {
-            problem_description: problemDescription,
-            intent_data: intentData,
-            data_analysis: dataAnalysis,
-            model_building: modelBuilding
-        }, {
-            headers: { Authorization: `Bearer ${this.token}` }
-        });
-        return response.data;
-    }
-    
-    async explainOptimization(problemDescription, intentData, dataAnalysis, modelBuilding, optimizationSolution) {
-        const response = await axios.post(`${this.baseURL}/mcp/explain-optimization`, {
-            problem_description: problemDescription,
-            intent_data: intentData,
-            data_analysis: dataAnalysis,
-            model_building: modelBuilding,
-            optimization_solution: optimizationSolution
-        }, {
-            headers: { Authorization: `Bearer ${this.token}` }
-        });
-        return response.data;
-    }
-    
-    async executeWorkflow(industry, workflowId, userInput) {
-        const response = await axios.post(`${this.baseURL}/mcp/execute-workflow`, {
-            industry: industry,
-            workflow_id: workflowId,
-            user_input: userInput
-        }, {
-            headers: { Authorization: `Bearer ${this.token}` }
-        });
-        return response.data;
-    }
-}
-
-// Usage example
-async function optimizePortfolio() {
-    const client = new DcisionAIClient('https://platform.dcisionai.com/api', 'your-jwt-token');
-    
-    const intent = await client.classifyIntent(
-        'Optimize my investment portfolio for maximum returns with moderate risk'
-    );
-    
-    const data = await client.analyzeData('Portfolio optimization', intent.result);
-    const model = await client.buildModel('Portfolio optimization', intent.result, data.result);
-    const solution = await client.solveOptimization('Portfolio optimization', intent.result, data.result, model.result);
-    const explanation = await client.explainOptimization('Portfolio optimization', intent.result, data.result, model.result, solution.result);
-    
-    return { intent, data, model, solution, explanation };
-}
-
-optimizePortfolio().then(result => {
-    console.log('Optimal allocation:', result.solution.result.optimal_values);
-});
-```
-
-### **cURL Examples**
-
-```bash
-# Health check
-curl -X GET "https://platform.dcisionai.com/api/mcp/health-check" \
-  -H "Authorization: Bearer your-jwt-token"
-
-# Classify intent
-curl -X POST "https://platform.dcisionai.com/api/mcp/classify-intent" \
-  -H "Authorization: Bearer your-jwt-token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "problem_description": "Optimize my investment portfolio for maximum returns with moderate risk",
-    "context": "Financial services, $2M portfolio"
-  }'
-
-# Execute workflow
-curl -X POST "https://platform.dcisionai.com/api/mcp/execute-workflow" \
-  -H "Authorization: Bearer your-jwt-token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "industry": "financial",
-    "workflow_id": "portfolio_optimization",
-    "user_input": {
-      "portfolio_size": 1000000,
-      "risk_tolerance": "moderate"
-    }
-  }'
-```
-
-## 📊 **Error Handling**
-
-### **Common Error Responses**
-
-```json
-{
-  "status": "error",
-  "step": "optimization_solution",
-  "timestamp": "2025-10-17T07:34:47.400Z",
-  "error": "No valid model variables found",
-  "message": "Model building step required before solving"
-}
-```
-
-### **HTTP Status Codes**
-
-- **200 OK**: Request successful
-- **400 Bad Request**: Invalid request parameters
-- **401 Unauthorized**: Authentication required
-- **403 Forbidden**: Insufficient permissions
-- **404 Not Found**: Resource not found
-- **500 Internal Server Error**: Server error
-
-### **Rate Limiting**
-
-- **Free Tier**: 100 requests per hour
-- **Pro Tier**: 1000 requests per hour
-- **Enterprise**: Custom limits
-
-## 🔒 **Security**
-
-### **Authentication**
-- JWT-based authentication
-- Token expiration: 24 hours
-- Refresh token support
-
-### **Data Protection**
-- End-to-end encryption
-- Data anonymization
-- Secure transmission (HTTPS)
-
-### **API Keys**
-- Generate API keys in dashboard
-- Key rotation support
-- Usage monitoring
+The DcisionAI API provides programmatic access to advanced mathematical optimization capabilities through a RESTful interface. The API is hosted on AWS Bedrock AgentCore Runtime and provides enterprise-grade performance and scalability.
 
 ---
 
-**DcisionAI API Reference**: *Complete Integration Guide*
+## 🔗 **Base URLs**
+
+### **Production Environment**
+- **SaaS Platform**: `https://platform.dcisionai.com`
+- **API Gateway**: `https://platform.dcisionai.com/api`
+- **AgentCore Runtime**: `https://bedrock-agentcore.us-east-1.amazonaws.com/runtimes/mcp_server-IkOAiK3aOz/invocations`
+
+### **Development Environment**
+- **Local Backend**: `http://localhost:5001`
+- **Local API**: `http://localhost:5001/api`
+
+---
+
+## 🔐 **Authentication**
+
+### **AWS IAM Authentication**
+All API requests require AWS IAM credentials with appropriate permissions:
+
+```bash
+# Set AWS credentials
+export AWS_ACCESS_KEY_ID=your_access_key
+export AWS_SECRET_ACCESS_KEY=your_secret_key
+export AWS_DEFAULT_REGION=us-east-1
+```
+
+### **Required IAM Permissions**
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "bedrock-agentcore:InvokeAgentRuntime"
+            ],
+            "Resource": "arn:aws:bedrock-agentcore:us-east-1:*:runtime/mcp_server-*"
+        }
+    ]
+}
+```
+
+---
+
+## 📋 **API Endpoints**
+
+### **Health Check**
+
+#### `GET /api/health`
+Check the health status of the DcisionAI platform.
+
+**Response:**
+```json
+{
+    "status": "healthy",
+    "mcp_server_url": "https://bedrock-agentcore.us-east-1.amazonaws.com/runtimes/mcp_server-IkOAiK3aOz/invocations",
+    "health_status": "healthy",
+    "features": [
+        "Claude 3 Haiku model building",
+        "OR-Tools optimization with 8+ solvers",
+        "Business explainability",
+        "21 industry workflows",
+        "AWS AgentCore hosting"
+    ],
+    "timestamp": "2025-01-17T20:58:42.123Z",
+    "endpoints": {
+        "classify_intent": "/api/mcp/classify-intent",
+        "analyze_data": "/api/mcp/analyze-data",
+        "build_model": "/api/mcp/build-model",
+        "solve_optimization": "/api/mcp/solve-optimization",
+        "select_solver": "/api/mcp/select-solver",
+        "explain_optimization": "/api/mcp/explain-optimization",
+        "execute_workflow": "/api/mcp/execute-workflow"
+    }
+}
+```
+
+---
+
+## 🧠 **Core Optimization Workflow**
+
+### **1. Intent Classification**
+
+#### `POST /api/mcp/classify-intent`
+Classify the optimization problem and identify the domain, type, and complexity.
+
+**Request:**
+```json
+{
+    "problem_description": "I need to optimize my production schedule. I have 2 production lines that can produce 100 and 90 units per hour respectively, at costs of $50 and $60 per hour. I need to produce at least 500 units. Minimize total cost.",
+    "context": "manufacturing"
+}
+```
+
+**Response:**
+```json
+{
+    "status": "success",
+    "result": {
+        "optimization_type": "linear_programming",
+        "problem_domain": "production_planning",
+        "objective": "minimize_cost",
+        "complexity": "medium",
+        "decision_variables": [
+            "production_time",
+            "resource_allocation"
+        ],
+        "constraints": [
+            "capacity",
+            "demand",
+            "budget"
+        ],
+        "reasoning": "Analyzed problem description to identify key decisions and constraints"
+    },
+    "message": "Intent classified using hosted MCP server on AWS AgentCore"
+}
+```
+
+### **2. Data Analysis**
+
+#### `POST /api/mcp/analyze-data`
+Analyze data readiness and quality for optimization.
+
+**Request:**
+```json
+{
+    "problem_description": "I need to optimize my production schedule...",
+    "intent_data": {
+        "optimization_type": "linear_programming",
+        "problem_domain": "production_planning",
+        "objective": "minimize_cost",
+        "complexity": "medium"
+    }
+}
+```
+
+**Response:**
+```json
+{
+    "status": "success",
+    "result": {
+        "data_quality": "high",
+        "missing_data": [],
+        "data_sources": [
+            "production_capacity",
+            "cost_parameters",
+            "demand_requirements"
+        ],
+        "recommendations": [
+            "Data is sufficient for optimization",
+            "Consider adding demand uncertainty parameters"
+        ],
+        "complexity_assessment": "medium"
+    },
+    "message": "Data analyzed using enhanced MCP server"
+}
+```
+
+### **3. Solver Selection**
+
+#### `POST /api/mcp/select-solver`
+Intelligently select the optimal solver for the problem.
+
+**Request:**
+```json
+{
+    "optimization_type": "linear_programming",
+    "problem_size": {
+        "num_variables": 5,
+        "num_constraints": 8
+    },
+    "performance_requirement": "balanced"
+}
+```
+
+**Response:**
+```json
+{
+    "status": "success",
+    "result": {
+        "selected_solver": "OR-Tools PDLP",
+        "reasoning": "Linear programming problem with medium size, PDLP provides good balance of speed and accuracy",
+        "alternative_solvers": [
+            "OR-Tools Simplex",
+            "Gurobi LP"
+        ],
+        "performance_estimate": {
+            "solve_time": "< 5 seconds",
+            "memory_usage": "low",
+            "accuracy": "high"
+        }
+    },
+    "message": "Solver selected using AI reasoning"
+}
+```
+
+### **4. Model Building**
+
+#### `POST /api/mcp/build-model`
+Build mathematical optimization model using AI reasoning.
+
+**Request:**
+```json
+{
+    "problem_description": "I need to optimize my production schedule...",
+    "intent_data": {
+        "optimization_type": "linear_programming",
+        "problem_domain": "production_planning",
+        "objective": "minimize_cost"
+    },
+    "data_analysis": {
+        "data_quality": "high",
+        "complexity_assessment": "medium"
+    }
+}
+```
+
+**Response:**
+```json
+{
+    "status": "success",
+    "result": {
+        "variables": [
+            {
+                "name": "x1",
+                "description": "Operating time of production line 1 (hours)",
+                "type": "continuous",
+                "bounds": [0, 24]
+            },
+            {
+                "name": "x2", 
+                "description": "Operating time of production line 2 (hours)",
+                "type": "continuous",
+                "bounds": [0, 24]
+            }
+        ],
+        "objective": {
+            "type": "minimize",
+            "expression": "50*x1 + 60*x2",
+            "description": "Minimize total production cost"
+        },
+        "constraints": [
+            {
+                "name": "demand_constraint",
+                "expression": "100*x1 + 90*x2 >= 500",
+                "description": "Meet minimum production requirement of 500 units"
+            }
+        ],
+        "reasoning_steps": {
+            "step1_decision_analysis": "Identified two key decisions: how long to run each production line",
+            "step2_constraint_analysis": "Main constraint is meeting demand requirement",
+            "step3_objective_analysis": "Objective is to minimize total cost",
+            "step4_variable_design": "Variables represent operating time for each line",
+            "step5_constraint_formulation": "Demand constraint ensures minimum production",
+            "step6_objective_formulation": "Cost objective sums hourly costs for each line",
+            "step7_validation": "All variables used in constraints and objective"
+        }
+    },
+    "message": "Model built using Claude 3 Haiku"
+}
+```
+
+### **5. Optimization Solving**
+
+#### `POST /api/mcp/solve-optimization`
+Solve the optimization problem and generate results.
+
+**Request:**
+```json
+{
+    "problem_description": "I need to optimize my production schedule...",
+    "intent_data": {
+        "optimization_type": "linear_programming",
+        "problem_domain": "production_planning"
+    },
+    "data_analysis": {
+        "data_quality": "high"
+    },
+    "model_building": {
+        "variables": [...],
+        "objective": {...},
+        "constraints": [...]
+    }
+}
+```
+
+**Response:**
+```json
+{
+    "status": "success",
+    "result": {
+        "solver_status": "optimal",
+        "objective_value": 250.0,
+        "optimal_values": {
+            "x1": 5.0,
+            "x2": 0.0
+        },
+        "solve_time": 0.15,
+        "solver_used": "OR-Tools PDLP",
+        "business_impact": {
+            "total_cost": 250.0,
+            "cost_savings": 0.0,
+            "capacity_utilization": "83.3%",
+            "recommendations": [
+                "Use only production line 1 for 5 hours",
+                "Production line 2 not needed for this demand level"
+            ]
+        },
+        "validation": {
+            "constraint_satisfaction": "all_satisfied",
+            "objective_calculation": "verified",
+            "business_logic": "validated"
+        }
+    },
+    "message": "Optimization completed successfully"
+}
+```
+
+### **6. Result Explanation**
+
+#### `POST /api/mcp/explain-optimization`
+Provide business-facing explanation of optimization results.
+
+**Request:**
+```json
+{
+    "problem_description": "I need to optimize my production schedule...",
+    "optimization_solution": {
+        "solver_status": "optimal",
+        "objective_value": 250.0,
+        "optimal_values": {
+            "x1": 5.0,
+            "x2": 0.0
+        }
+    }
+}
+```
+
+**Response:**
+```json
+{
+    "status": "success",
+    "result": {
+        "executive_summary": "Optimal solution found: Use production line 1 for 5 hours to meet demand at minimum cost of $250.",
+        "detailed_explanation": {
+            "solution_interpretation": "The optimal strategy is to operate production line 1 for 5 hours, producing 500 units at $50/hour, while keeping production line 2 idle.",
+            "cost_breakdown": {
+                "production_line_1": "$250 (5 hours × $50/hour)",
+                "production_line_2": "$0 (0 hours)",
+                "total_cost": "$250"
+            },
+            "constraint_analysis": "Demand constraint satisfied: 100 units/hour × 5 hours = 500 units",
+            "alternative_analysis": "Using production line 2 would increase cost: 500 units ÷ 90 units/hour × $60/hour = $333.33"
+        },
+        "business_recommendations": [
+            "Implement the 5-hour production schedule on line 1",
+            "Consider using line 2 for future demand increases",
+            "Monitor demand patterns for capacity planning"
+        ],
+        "risk_assessment": {
+            "solution_robustness": "high",
+            "sensitivity_to_changes": "low",
+            "implementation_risks": "minimal"
+        }
+    },
+    "message": "Optimization results explained in business terms"
+}
+```
+
+### **7. Scenario Simulation**
+
+#### `POST /api/mcp/simulate-scenarios`
+Run simulation analysis for strategic planning and risk assessment.
+
+**Request:**
+```json
+{
+    "problem_description": "I need to optimize my production schedule...",
+    "optimization_solution": {
+        "solver_status": "optimal",
+        "objective_value": 250.0,
+        "optimal_values": {
+            "x1": 5.0,
+            "x2": 0.0
+        }
+    },
+    "simulation_type": "monte_carlo",
+    "num_trials": 10000
+}
+```
+
+**Response:**
+```json
+{
+    "status": "success",
+    "result": {
+        "simulation_type": "monte_carlo",
+        "num_trials": 10000,
+        "uncertainty_sources": [
+            {
+                "name": "demand_variability",
+                "distribution": "normal",
+                "mean": 500,
+                "std_dev": 50
+            },
+            {
+                "name": "cost_volatility",
+                "distribution": "uniform",
+                "min": 45,
+                "max": 55
+            }
+        ],
+        "results": {
+            "expected_cost": 252.3,
+            "cost_std_dev": 12.7,
+            "percentile_5": 235.1,
+            "percentile_95": 271.8,
+            "probability_of_feasibility": 0.98
+        },
+        "risk_analysis": {
+            "value_at_risk_95": 271.8,
+            "conditional_var": 275.2,
+            "risk_drivers": [
+                "Demand variability accounts for 60% of cost variance",
+                "Cost volatility contributes 40% of uncertainty"
+            ]
+        },
+        "recommendations": [
+            "Solution is robust to demand variations",
+            "Consider hedging against cost volatility",
+            "Monitor demand patterns for early warning"
+        ]
+    },
+    "message": "Simulation analysis completed"
+}
+```
+
+---
+
+## 🏭 **Industry Workflows**
+
+### **Workflow Templates**
+
+#### `POST /api/mcp/get-workflow-templates`
+Get available industry-specific workflow templates.
+
+**Response:**
+```json
+{
+    "status": "success",
+    "result": {
+        "workflows": [
+            {
+                "id": "manufacturing_production_planning",
+                "name": "Manufacturing Production Planning",
+                "description": "Optimize production schedules, capacity, and resource allocation",
+                "industry": "manufacturing",
+                "complexity": "medium"
+            },
+            {
+                "id": "financial_portfolio_optimization",
+                "name": "Financial Portfolio Optimization", 
+                "description": "Optimize investment portfolios with risk constraints",
+                "industry": "financial",
+                "complexity": "high"
+            }
+        ]
+    }
+}
+```
+
+#### `POST /api/mcp/execute-workflow`
+Execute a complete industry workflow.
+
+**Request:**
+```json
+{
+    "industry": "manufacturing",
+    "workflow_id": "manufacturing_production_planning",
+    "user_input": {
+        "production_lines": 2,
+        "demand": 500,
+        "cost_per_hour": [50, 60],
+        "capacity_per_hour": [100, 90]
+    }
+}
+```
+
+---
+
+## ⚠️ **Error Handling**
+
+### **Common Error Responses**
+
+#### **400 Bad Request**
+```json
+{
+    "error": "Bad Request",
+    "message": "Invalid request parameters",
+    "details": "Problem description is required"
+}
+```
+
+#### **401 Unauthorized**
+```json
+{
+    "error": "Unauthorized",
+    "message": "Invalid AWS credentials or insufficient permissions"
+}
+```
+
+#### **500 Internal Server Error**
+```json
+{
+    "error": "Internal Server Error",
+    "message": "Optimization failed",
+    "details": "Solver encountered numerical issues"
+}
+```
+
+### **Error Codes**
+- `INVALID_INPUT`: Request parameters are invalid
+- `AUTHENTICATION_FAILED`: AWS credentials are invalid
+- `OPTIMIZATION_FAILED`: Solver could not find solution
+- `MODEL_BUILDING_FAILED`: AI could not build valid model
+- `RATE_LIMIT_EXCEEDED`: Too many requests
+
+---
+
+## 📊 **Rate Limits**
+
+### **Current Limits**
+- **Requests per minute**: 100
+- **Concurrent requests**: 10
+- **Daily quota**: 10,000 requests
+
+### **Rate Limit Headers**
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1642454400
+```
+
+---
+
+## 🔧 **SDK Examples**
+
+### **Python**
+```python
+import requests
+import json
+
+# Set up client
+base_url = "https://platform.dcisionai.com/api"
+headers = {"Content-Type": "application/json"}
+
+# Classify intent
+response = requests.post(
+    f"{base_url}/mcp/classify-intent",
+    headers=headers,
+    json={
+        "problem_description": "Optimize my production schedule..."
+    }
+)
+
+result = response.json()
+print(f"Problem type: {result['result']['optimization_type']}")
+```
+
+### **JavaScript**
+```javascript
+const baseUrl = 'https://platform.dcisionai.com/api';
+
+async function classifyIntent(problemDescription) {
+    const response = await fetch(`${baseUrl}/mcp/classify-intent`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            problem_description: problemDescription
+        })
+    });
+    
+    const result = await response.json();
+    return result.result;
+}
+```
+
+### **cURL**
+```bash
+curl -X POST https://platform.dcisionai.com/api/mcp/classify-intent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "problem_description": "I need to optimize my production schedule..."
+  }'
+```
+
+---
+
+## 📈 **Performance Metrics**
+
+### **Response Times**
+- **Intent Classification**: < 2 seconds
+- **Data Analysis**: < 3 seconds  
+- **Model Building**: < 10 seconds
+- **Optimization Solving**: < 30 seconds
+- **Result Explanation**: < 5 seconds
+
+### **Availability**
+- **Uptime**: 99.9%
+- **SLA**: 99.5% availability guarantee
+- **Maintenance Windows**: Sundays 2-4 AM UTC
+
+---
+
+## 🔄 **Versioning**
+
+### **Current Version**: v1.7.3
+- **API Version**: `/api/v1/`
+- **Backward Compatibility**: Maintained for 12 months
+- **Deprecation Notice**: 6 months advance notice
+
+### **Changelog**
+- **v1.7.3**: AgentCore Runtime integration, enhanced simulation
+- **v1.7.2**: Pattern-breaking prompts, improved explainability
+- **v1.7.1**: Multi-solver support, business validation
+- **v1.7.0**: Initial release with core optimization tools
+
+---
+
+*For additional support and examples, visit our [GitHub repository](https://github.com/dcisionai/dcisionai-mcp-platform) or contact our support team.*

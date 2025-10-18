@@ -1,0 +1,17 @@
+agent:
+  name: dcisionai-mcp-server
+  entrypoint: mcp_server.py
+  protocol: MCP
+  region: us-west-2
+
+aws:
+  execution_role: ""  # Auto-create
+  ecr_repository: ""  # Auto-create
+
+dependencies:
+  requirements_file: requirements.txt
+
+oauth:
+  enabled: true
+  discovery_url: "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_pEQfTkscK/.well-known/openid-configuration"
+  client_id: "5h4o4dpu7r7qreusrjhu54umqo"

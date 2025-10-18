@@ -1,27 +1,113 @@
 # DcisionAI Deployment Guide
 
-## 🚀 **Complete Deployment Guide**
+## 🚀 **Overview**
 
-This guide covers all deployment options for the DcisionAI platform, from local development to enterprise production deployments.
-
-## 🎯 **Deployment Options**
-
-### **Option 1: AWS AgentCore Runtime** (Recommended for Production)
-### **Option 2: PyPI Distribution** (Recommended for Development)
-### **Option 3: Docker Containers** (Recommended for Custom Infrastructure)
-### **Option 4: Local Development** (Recommended for Testing)
+This guide covers deploying the DcisionAI platform across different environments, from local development to production on AWS Bedrock AgentCore Runtime.
 
 ---
 
-## ☁️ **Option 1: AWS AgentCore Runtime**
+## 📋 **Prerequisites**
 
-### **Prerequisites**
-- AWS Account with appropriate permissions
-- AWS CLI configured
-- AgentCore CLI installed
-- Python 3.8-3.12 (OR-Tools compatibility)
+### **System Requirements**
+- **Python**: 3.10 or higher
+- **Node.js**: 18 or higher (for frontend)
+- **AWS CLI**: Latest version
+- **Docker**: 20.10 or higher (optional)
 
-### **Step 1: Install AgentCore CLI**
+### **AWS Requirements**
+- **AWS Account**: Active account with billing enabled
+- **IAM Permissions**: BedrockAgentCoreFullAccess policy
+- **Region**: us-east-1 (recommended)
+- **Service Quotas**: Bedrock AgentCore runtime limits
+
+### **Development Tools**
+- **Git**: For version control
+- **pip/uv**: Python package management
+- **npm/yarn**: Node.js package management
+
+---
+
+## 🏗️ **Architecture Overview**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Frontend (React)                        │
+│              platform.dcisionai.com                        │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────┐
+│                Backend (Flask)                             │
+│              MCP Client & API Gateway                      │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────┐
+│            AWS Bedrock AgentCore Runtime                   │
+│              (Hosted MCP Server)                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🛠️ **Deployment Options**
+
+### **Option 1: SaaS Platform (Recommended)**
+Deploy the complete web application with AgentCore Runtime integration.
+
+### **Option 2: MCP Server Only**
+Deploy just the MCP server for integration with existing applications.
+
+### **Option 3: Local Development**
+Set up local development environment for testing and development.
+
+---
+
+## 🌐 **Option 1: SaaS Platform Deployment**
+
+### **Step 1: Prepare AWS Environment**
+
+#### **1.1 Configure AWS CLI**
+```bash
+# Install AWS CLI
+pip install awscli
+
+# Configure credentials
+aws configure
+# Enter your AWS Access Key ID
+# Enter your AWS Secret Access Key  
+# Enter default region: us-east-1
+# Enter default output format: json
+```
+
+#### **1.2 Set Up IAM Permissions**
+```bash
+# Create IAM policy for AgentCore
+cat > agentcore-policy.json << EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "bedrock-agentcore:*",
+                "iam:PassRole",
+                "iam:CreateRole",
+                "iam:AttachRolePolicy"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+
+# Attach policy to your user/role
+aws iam attach-user-policy \
+    --user-name your-username \
+    --policy-arn arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess
+```
+
+### **Step 2: Deploy MCP Server to AgentCore**
+
+#### **2.1 Install AgentCore CLI**
 ```bash
 # Install AgentCore starter toolkit
 pip install bedrock-agentcore-starter-toolkit
@@ -30,163 +116,239 @@ pip install bedrock-agentcore-starter-toolkit
 agentcore --version
 ```
 
-### **Step 2: Set Up AWS Credentials**
+#### **2.2 Deploy Standalone Agent**
 ```bash
-# Configure AWS credentials
-aws configure
+# Navigate to deployment directory
+cd saas-platform/deployment
 
-# Or set environment variables
-export AWS_ACCESS_KEY_ID="your-access-key"
-export AWS_SECRET_ACCESS_KEY="your-secret-key"
-export AWS_DEFAULT_REGION="us-west-2"
+# Deploy to AgentCore (non-interactive)
+./deploy_to_agentcore_noninteractive.sh
+
+# Verify deployment
+agentcore list
 ```
 
-### **Step 3: Create Project Structure**
-```bash
-# Create project directory
-mkdir dcisionai-agentcore-project
-cd dcisionai-agentcore-project
-
-# Copy deployment files
-cp ../saas-platform/deployment/dcisionai_agentcore_production.py ./mcp_server.py
-cp ../saas-platform/deployment/requirements_production.txt ./requirements.txt
-touch __init__.py
-```
-
-### **Step 4: Configure AgentCore**
-```bash
-# Configure AgentCore deployment
-agentcore configure -e mcp_server.py --protocol MCP --name "dcisionai-mcp-server" --region "us-west-2"
-```
-
-**Configuration Options:**
-- **Execution Role**: Use existing IAM role or create new one
-- **ECR**: Press Enter to auto-create
-- **Dependency File**: Press Enter to auto-detect
-- **OAuth**: Type 'yes' and provide Cognito details
-
-### **Step 5: Set Up Cognito (OAuth)**
-```bash
-# Run Cognito setup script
-bash ../saas-platform/deployment/setup_cognito.sh
-```
-
-**Output:**
-```
-Pool ID: us-west-2_XXXXXXXXX
-Client ID: XXXXXXXXXXXXXXXX
-Bearer Token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
-Discovery URL: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_XXXXXXXXX/.well-known/openid-configuration
-```
-
-### **Step 6: Deploy to AWS**
-```bash
-# Deploy to AgentCore Runtime
-agentcore launch --name "dcisionai-mcp-server" --region "us-west-2"
-```
-
-### **Step 7: Test Deployment**
+#### **2.3 Test AgentCore Deployment**
 ```bash
 # Test the deployed agent
-agentcore invoke '{"prompt": "Hello, can you help me optimize my portfolio?"}'
+agentcore invoke '{"prompt": "Test optimization problem"}'
+
+# Check agent status
+agentcore status
 ```
 
-**Expected Output:**
-```json
-{
-  "status": "success",
-  "message": "DcisionAI Optimization Server is running on AWS AgentCore Runtime",
-  "available_tools": [
-    "classify_intent", "analyze_data", "build_model", "solve_optimization",
-    "select_solver", "explain_optimization", "get_workflow_templates", "execute_workflow"
-  ],
-  "features": [
-    "Claude 3 Haiku model building",
-    "OR-Tools optimization with 8+ solvers",
-    "Business explainability",
-    "21 industry workflows",
-    "AWS AgentCore Runtime hosting"
-  ]
+### **Step 3: Deploy Backend Server**
+
+#### **3.1 Set Up Backend Environment**
+```bash
+# Navigate to backend directory
+cd saas-platform/backend
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+#### **3.2 Configure Environment Variables**
+```bash
+# Create .env file
+cat > .env << EOF
+FLASK_ENV=production
+FLASK_DEBUG=False
+MCP_SERVER_URL=https://bedrock-agentcore.us-east-1.amazonaws.com/runtimes/mcp_server-IkOAiK3aOz/invocations
+AWS_DEFAULT_REGION=us-east-1
+EOF
+```
+
+#### **3.3 Start Backend Server**
+```bash
+# Start Flask server
+python app.py
+
+# Or use gunicorn for production
+gunicorn -w 4 -b 0.0.0.0:5001 app:app
+```
+
+### **Step 4: Deploy Frontend**
+
+#### **4.1 Set Up Frontend Environment**
+```bash
+# Navigate to frontend directory
+cd saas-platform/frontend
+
+# Install dependencies
+npm install
+
+# Build for production
+npm run build
+```
+
+#### **4.2 Deploy to Web Server**
+```bash
+# Copy build files to web server
+cp -r build/* /var/www/html/
+
+# Configure web server (nginx example)
+sudo nano /etc/nginx/sites-available/dcisionai
+```
+
+**Nginx Configuration:**
+```nginx
+server {
+    listen 80;
+    server_name platform.dcisionai.com;
+    
+    root /var/www/html;
+    index index.html;
+    
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    location /api {
+        proxy_pass http://localhost:5001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
 }
 ```
 
-### **Step 8: Monitor Deployment**
-```bash
-# View logs
-aws logs tail /aws/bedrock-agentcore/runtimes/dcisionai-mcp-server-DEFAULT --follow
+### **Step 5: Configure Domain and SSL**
 
-# Check status
-agentcore status --name "dcisionai-mcp-server" --region "us-west-2"
+#### **5.1 Set Up Domain**
+```bash
+# Point domain to your server
+# A record: platform.dcisionai.com -> YOUR_SERVER_IP
+```
+
+#### **5.2 Configure SSL with Let's Encrypt**
+```bash
+# Install certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Get SSL certificate
+sudo certbot --nginx -d platform.dcisionai.com
+
+# Test auto-renewal
+sudo certbot renew --dry-run
 ```
 
 ---
 
-## 📦 **Option 2: PyPI Distribution**
+## 🔧 **Option 2: MCP Server Only**
 
-### **Prerequisites**
-- Python 3.8-3.12
-- pip or uv package manager
-
-### **Step 1: Install Package**
+### **Step 1: Install MCP Server**
 ```bash
-# Standard installation
+# Install from PyPI
 pip install dcisionai-mcp-server
 
-# With all optional solvers
-pip install dcisionai-mcp-server[all-solvers]
-
-# With specific solver groups
-pip install dcisionai-mcp-server[quadratic,mosek]
+# Or install from source
+git clone https://github.com/dcisionai/dcisionai-mcp-platform.git
+cd dcisionai-mcp-platform/mcp-server
+pip install -e .
 ```
 
-### **Step 2: Configure Environment**
+### **Step 2: Configure MCP Client**
+
+#### **2.1 Cursor IDE Configuration**
+```json
+// .cursor/mcp.json
+{
+    "mcpServers": {
+        "dcisionai-mcp-server": {
+            "command": "uvx",
+            "args": ["dcisionai-mcp-server"],
+            "env": {
+                "AWS_DEFAULT_REGION": "us-east-1"
+            }
+        }
+    }
+}
+```
+
+#### **2.2 Claude Desktop Configuration**
+```json
+// claude_desktop_config.json
+{
+    "mcpServers": {
+        "dcisionai-mcp-server": {
+            "command": "uvx",
+            "args": ["dcisionai-mcp-server"]
+        }
+    }
+}
+```
+
+### **Step 3: Test MCP Integration**
 ```bash
-# Set AWS credentials
-export AWS_ACCESS_KEY_ID="your-access-key"
-export AWS_SECRET_ACCESS_KEY="your-secret-key"
-export AWS_DEFAULT_REGION="us-west-2"
-
-# Optional: Set custom configuration
-export DcisionAI_LOG_LEVEL="INFO"
-export DcisionAI_CACHE_SIZE="1000"
-```
-
-### **Step 3: Test Installation**
-```python
-# Test basic functionality
-from dcisionai_mcp_server.tools import DcisionAITools
-import asyncio
-
-async def test():
-    tools = DcisionAITools()
-    result = await tools.classify_intent("Test optimization problem")
-    print(f"Status: {result['status']}")
-
-asyncio.run(test())
-```
-
-### **Step 4: Run MCP Server**
-```bash
-# Run MCP server directly
-python -m dcisionai_mcp_server.working_mcp_server
-
-# Or use uvx
+# Test MCP server
 uvx dcisionai-mcp-server
+
+# In Cursor IDE, try:
+# "Classify this optimization problem: I need to optimize my production schedule..."
 ```
 
 ---
 
-## 🐳 **Option 3: Docker Containers**
+## 💻 **Option 3: Local Development**
 
-### **Prerequisites**
-- Docker installed
-- Docker Compose (optional)
+### **Step 1: Clone Repository**
+```bash
+# Clone the repository
+git clone https://github.com/dcisionai/dcisionai-mcp-platform.git
+cd dcisionai-mcp-platform
+```
+
+### **Step 2: Set Up Backend**
+```bash
+# Navigate to backend
+cd saas-platform/backend
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start backend server
+python app.py
+```
+
+### **Step 3: Set Up Frontend**
+```bash
+# Navigate to frontend (new terminal)
+cd saas-platform/frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+```
+
+### **Step 4: Configure Local MCP**
+```bash
+# Install MCP server locally
+cd mcp-server
+pip install -e .
+
+# Test local MCP server
+python -m dcisionai_mcp_server
+```
+
+---
+
+## 🐳 **Docker Deployment**
 
 ### **Step 1: Create Dockerfile**
 ```dockerfile
-FROM python:3.11-slim
+# Dockerfile
+FROM python:3.10-slim
 
-# Set working directory
 WORKDIR /app
 
 # Install system dependencies
@@ -195,499 +357,276 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
-
 # Expose port
-EXPOSE 8000
+EXPOSE 5001
 
-# Run MCP server
-CMD ["python", "-m", "dcisionai_mcp_server.working_mcp_server"]
+# Start application
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5001", "app:app"]
 ```
 
-### **Step 2: Create docker-compose.yml**
+### **Step 2: Build and Run**
+```bash
+# Build Docker image
+docker build -t dcisionai-backend .
+
+# Run container
+docker run -p 5001:5001 \
+    -e AWS_ACCESS_KEY_ID=your_key \
+    -e AWS_SECRET_ACCESS_KEY=your_secret \
+    -e AWS_DEFAULT_REGION=us-east-1 \
+    dcisionai-backend
+```
+
+### **Step 3: Docker Compose**
 ```yaml
+# docker-compose.yml
 version: '3.8'
 
 services:
-  dcisionai-mcp-server:
-    build: .
+  backend:
+    build: ./saas-platform/backend
     ports:
-      - "8000:8000"
+      - "5001:5001"
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
-    volumes:
-      - ./logs:/app/logs
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl
+      - AWS_DEFAULT_REGION=us-east-1
     depends_on:
-      - dcisionai-mcp-server
-    restart: unless-stopped
+      - frontend
+
+  frontend:
+    build: ./saas-platform/frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./saas-platform/frontend:/app
+      - /app/node_modules
 ```
 
-### **Step 3: Build and Deploy**
 ```bash
-# Build Docker image
-docker build -t dcisionai-mcp-server .
-
-# Run container
-docker run -d \
-  --name dcisionai-mcp-server \
-  -p 8000:8000 \
-  -e AWS_ACCESS_KEY_ID="your-key" \
-  -e AWS_SECRET_ACCESS_KEY="your-secret" \
-  -e AWS_DEFAULT_REGION="us-west-2" \
-  dcisionai-mcp-server
-
-# Or use Docker Compose
+# Start with Docker Compose
 docker-compose up -d
 ```
 
-### **Step 4: Test Deployment**
-```bash
-# Check container status
-docker ps
-
-# View logs
-docker logs dcisionai-mcp-server
-
-# Test MCP server
-curl http://localhost:8000/health
-```
-
 ---
 
-## 🏠 **Option 4: Local Development**
+## 🔍 **Monitoring and Logging**
 
-### **Prerequisites**
-- Python 3.8-3.12
-- Git
-- Virtual environment (recommended)
-
-### **Step 1: Clone Repository**
+### **Step 1: Set Up CloudWatch**
 ```bash
-git clone https://github.com/dcisionai/dcisionai-mcp-platform.git
-cd dcisionai-mcp-platform
+# Create CloudWatch log group
+aws logs create-log-group \
+    --log-group-name /aws/bedrock-agentcore/dcisionai
+
+# Set retention policy
+aws logs put-retention-policy \
+    --log-group-name /aws/bedrock-agentcore/dcisionai \
+    --retention-in-days 30
 ```
 
-### **Step 2: Set Up Virtual Environment**
-```bash
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Upgrade pip
-pip install --upgrade pip
-```
-
-### **Step 3: Install Dependencies**
-```bash
-# Install development dependencies
-pip install -r mcp-server/requirements.txt
-
-# Install package in development mode
-cd mcp-server
-pip install -e .
-```
-
-### **Step 4: Configure Environment**
-```bash
-# Set AWS credentials
-export AWS_ACCESS_KEY_ID="your-access-key"
-export AWS_SECRET_ACCESS_KEY="your-secret-key"
-export AWS_DEFAULT_REGION="us-west-2"
-
-# Set development environment
-export DcisionAI_ENV="development"
-export DcisionAI_LOG_LEVEL="DEBUG"
-```
-
-### **Step 5: Run Tests**
-```bash
-# Run unit tests
-python -m pytest tests/
-
-# Run integration tests
-python -m pytest tests/integration/
-
-# Run end-to-end tests
-python -m pytest tests/e2e/
-```
-
-### **Step 6: Start Development Server**
-```bash
-# Run MCP server
-python -m dcisionai_mcp_server.working_mcp_server
-
-# Or run with debug mode
-python -m dcisionai_mcp_server.working_mcp_server --debug
-```
-
----
-
-## 🔧 **Configuration**
-
-### **Environment Variables**
-
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `AWS_ACCESS_KEY_ID` | AWS access key | - | Yes |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key | - | Yes |
-| `AWS_DEFAULT_REGION` | AWS region | us-west-2 | No |
-| `DcisionAI_LOG_LEVEL` | Logging level | INFO | No |
-| `DcisionAI_CACHE_SIZE` | Cache size | 1000 | No |
-| `DcisionAI_ENV` | Environment | production | No |
-
-### **Configuration Files**
-
-#### **MCP Configuration** (`~/.cursor/mcp.json`)
-```json
-{
-  "mcpServers": {
-    "dcisionai-mcp-server": {
-      "command": "uvx",
-      "args": ["dcisionai-mcp-server@latest"],
-      "env": {
-        "PYTHONUNBUFFERED": "1",
-        "AWS_ACCESS_KEY_ID": "your-key",
-        "AWS_SECRET_ACCESS_KEY": "your-secret"
-      }
-    }
-  }
-}
-```
-
-#### **Docker Configuration** (`docker-compose.yml`)
-```yaml
-version: '3.8'
-services:
-  dcisionai-mcp-server:
-    image: dcisionai-mcp-server:latest
-    environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
-    ports:
-      - "8000:8000"
-```
-
----
-
-## 📊 **Monitoring & Observability**
-
-### **Health Checks**
-
-#### **MCP Server Health**
-```bash
-# Check MCP server status
-curl http://localhost:8000/health
-
-# Expected response
-{
-  "status": "healthy",
-  "version": "1.4.3",
-  "tools_available": 8,
-  "uptime": "2h 15m 30s"
-}
-```
-
-#### **AWS AgentCore Health**
-```bash
-# Check AgentCore status
-agentcore status --name "dcisionai-mcp-server"
-
-# View logs
-aws logs tail /aws/bedrock-agentcore/runtimes/dcisionai-mcp-server-DEFAULT --follow
-```
-
-### **Metrics & Logging**
-
-#### **Application Metrics**
-- Request count and latency
-- Optimization solve times
-- Error rates and types
-- Solver performance metrics
-
-#### **Infrastructure Metrics**
-- CPU and memory usage
-- Network I/O
-- Disk usage
-- Container health
-
-#### **Business Metrics**
-- Optimization success rate
-- User satisfaction scores
-- Cost savings achieved
-- Time to solution
-
-### **Alerting**
-
-#### **Critical Alerts**
-- Service downtime
-- High error rates (>5%)
-- Long solve times (>30s)
-- Resource exhaustion
-
-#### **Warning Alerts**
-- High memory usage (>80%)
-- Slow response times (>5s)
-- Failed optimizations
-- Authentication failures
-
----
-
-## 🔒 **Security**
-
-### **Authentication & Authorization**
-
-#### **AWS IAM Roles**
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "bedrock:InvokeModel",
-        "bedrock:InvokeModelWithResponseStream"
-      ],
-      "Resource": "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
-    }
-  ]
-}
-```
-
-#### **API Authentication**
+### **Step 2: Configure Application Logging**
 ```python
-# JWT token validation
-import jwt
-from datetime import datetime, timedelta
+# In app.py
+import logging
+import boto3
 
-def validate_token(token):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        return payload
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
+# Set up CloudWatch logging
+cloudwatch = boto3.client('logs')
+logger = logging.getLogger(__name__)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 ```
 
-### **Data Protection**
-
-#### **Encryption**
-- **In Transit**: TLS 1.3 for all communications
-- **At Rest**: AES-256 encryption for stored data
-- **Key Management**: AWS KMS for key rotation
-
-#### **Data Anonymization**
-```python
-# Anonymize sensitive data
-def anonymize_data(data):
-    # Remove PII
-    data = remove_pii(data)
-    # Hash identifiers
-    data = hash_identifiers(data)
-    # Aggregate values
-    data = aggregate_values(data)
-    return data
-```
-
-### **Network Security**
-
-#### **Firewall Rules**
+### **Step 3: Set Up Health Checks**
 ```bash
-# Allow only necessary ports
-ufw allow 22/tcp   # SSH
-ufw allow 80/tcp   # HTTP
-ufw allow 443/tcp  # HTTPS
-ufw deny 8000/tcp  # Block direct MCP access
-```
+# Create health check script
+cat > health_check.sh << EOF
+#!/bin/bash
+curl -f http://localhost:5001/api/health || exit 1
+EOF
 
-#### **VPC Configuration**
-```yaml
-# VPC with private subnets
-VPC:
-  CIDR: 10.0.0.0/16
-  Subnets:
-    - Private: 10.0.1.0/24
-    - Private: 10.0.2.0/24
-    - Public: 10.0.3.0/24
+chmod +x health_check.sh
+
+# Add to crontab
+echo "*/5 * * * * /path/to/health_check.sh" | crontab -
 ```
 
 ---
 
-## 🚀 **Scaling**
+## 🔒 **Security Configuration**
 
-### **Horizontal Scaling**
+### **Step 1: Set Up IAM Roles**
+```bash
+# Create IAM role for AgentCore
+aws iam create-role \
+    --role-name DcisionAIAgentCoreRole \
+    --assume-role-policy-document '{
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "bedrock-agentcore.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+            }
+        ]
+    }'
 
-#### **Load Balancing**
-```yaml
-# Nginx load balancer configuration
-upstream dcisionai_backend {
-    server dcisionai-1:8000;
-    server dcisionai-2:8000;
-    server dcisionai-3:8000;
+# Attach policy
+aws iam attach-role-policy \
+    --role-name DcisionAIAgentCoreRole \
+    --policy-arn arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess
+```
+
+### **Step 2: Configure VPC (Optional)**
+```bash
+# Create VPC for private deployment
+aws ec2 create-vpc \
+    --cidr-block 10.0.0.0/16 \
+    --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=dcisionai-vpc}]'
+```
+
+### **Step 3: Set Up Secrets Management**
+```bash
+# Store secrets in AWS Secrets Manager
+aws secretsmanager create-secret \
+    --name dcisionai/api-keys \
+    --description "API keys for DcisionAI platform" \
+    --secret-string '{"api_key": "your-api-key"}'
+```
+
+---
+
+## 📊 **Performance Optimization**
+
+### **Step 1: Configure Caching**
+```python
+# In app.py
+from flask_caching import Cache
+
+cache = Cache(app, config={
+    'CACHE_TYPE': 'redis',
+    'CACHE_REDIS_URL': 'redis://localhost:6379/0'
+})
+
+@app.route('/api/mcp/classify-intent', methods=['POST'])
+@cache.memoize(timeout=300)  # Cache for 5 minutes
+def mcp_classify_intent():
+    # ... existing code
+```
+
+### **Step 2: Set Up Load Balancing**
+```nginx
+# nginx.conf
+upstream backend {
+    server 127.0.0.1:5001;
+    server 127.0.0.1:5002;
+    server 127.0.0.1:5003;
 }
 
 server {
-    listen 80;
-    location / {
-        proxy_pass http://dcisionai_backend;
+    location /api {
+        proxy_pass http://backend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
 }
 ```
 
-#### **Auto Scaling**
-```yaml
-# Kubernetes HPA configuration
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: dcisionai-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: dcisionai-mcp-server
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-```
+### **Step 3: Configure Auto-scaling**
+```bash
+# Set up systemd service
+cat > /etc/systemd/system/dcisionai-backend.service << EOF
+[Unit]
+Description=DcisionAI Backend
+After=network.target
 
-### **Vertical Scaling**
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/dcisionai/backend
+ExecStart=/opt/dcisionai/backend/venv/bin/gunicorn -w 4 -b 0.0.0.0:5001 app:app
+Restart=always
 
-#### **Resource Limits**
-```yaml
-# Kubernetes resource limits
-resources:
-  requests:
-    memory: "512Mi"
-    cpu: "250m"
-  limits:
-    memory: "2Gi"
-    cpu: "1000m"
-```
+[Install]
+WantedBy=multi-user.target
+EOF
 
-#### **Performance Tuning**
-```python
-# Optimize solver performance
-solver_params = {
-    'time_limit': 30000,  # 30 seconds
-    'threads': 4,         # Use 4 CPU cores
-    'memory_limit': 2048  # 2GB memory limit
-}
+# Enable and start service
+sudo systemctl enable dcisionai-backend
+sudo systemctl start dcisionai-backend
 ```
 
 ---
 
-## 🔄 **CI/CD Pipeline**
+## 🧪 **Testing and Validation**
 
-### **GitHub Actions**
+### **Step 1: Run Integration Tests**
+```bash
+# Test AgentCore integration
+cd saas-platform/backend
+python -m pytest tests/test_agentcore_integration.py -v
 
-#### **Build and Test**
-```yaml
-name: Build and Test
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        pip install pytest
-    - name: Run tests
-      run: pytest tests/
-    - name: Build package
-      run: python -m build
+# Test API endpoints
+python -m pytest tests/test_api_endpoints.py -v
 ```
 
-#### **Deploy to AWS**
-```yaml
-name: Deploy to AWS
-on:
-  push:
-    branches: [main]
+### **Step 2: Load Testing**
+```bash
+# Install locust
+pip install locust
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-2
-    - name: Deploy to AgentCore
-      run: |
-        agentcore launch --name "dcisionai-mcp-server" --region "us-west-2"
+# Create load test
+cat > load_test.py << EOF
+from locust import HttpUser, task, between
+
+class DcisionAIUser(HttpUser):
+    wait_time = between(1, 3)
+    
+    @task
+    def classify_intent(self):
+        self.client.post("/api/mcp/classify-intent", json={
+            "problem_description": "Test optimization problem"
+        })
+EOF
+
+# Run load test
+locust -f load_test.py --host=http://localhost:5001
 ```
 
-### **Docker Registry**
+### **Step 3: Health Monitoring**
+```bash
+# Create monitoring script
+cat > monitor.sh << EOF
+#!/bin/bash
+echo "Checking DcisionAI platform health..."
 
-#### **Build and Push**
-```yaml
-name: Build and Push Docker Image
-on:
-  push:
-    branches: [main]
+# Check backend
+curl -f http://localhost:5001/api/health || echo "Backend DOWN"
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Build Docker image
-      run: docker build -t dcisionai-mcp-server .
-    - name: Push to registry
-      run: |
-        docker tag dcisionai-mcp-server:latest ${{ secrets.REGISTRY_URL }}/dcisionai-mcp-server:latest
-        docker push ${{ secrets.REGISTRY_URL }}/dcisionai-mcp-server:latest
+# Check AgentCore
+agentcore status || echo "AgentCore DOWN"
+
+# Check disk space
+df -h | grep -E "(Filesystem|/dev/)"
+
+# Check memory usage
+free -h
+EOF
+
+chmod +x monitor.sh
 ```
 
 ---
@@ -696,83 +635,80 @@ jobs:
 
 ### **Common Issues**
 
-#### **1. AWS Credentials Error**
+#### **AgentCore Deployment Fails**
 ```bash
-# Check AWS configuration
+# Check AWS credentials
 aws sts get-caller-identity
 
-# Reconfigure if needed
-aws configure
+# Check AgentCore CLI
+agentcore --version
+
+# Check deployment logs
+agentcore logs --tail
 ```
 
-#### **2. OR-Tools Installation Issues**
+#### **Backend Connection Issues**
 ```bash
-# Install system dependencies
-sudo apt-get update
-sudo apt-get install -y gcc g++
+# Check if backend is running
+ps aux | grep python
 
-# Reinstall OR-Tools
-pip uninstall ortools
-pip install ortools
-```
-
-#### **3. MCP Server Not Starting**
-```bash
-# Check Python version
-python --version
-
-# Check dependencies
-pip list | grep dcisionai-mcp-server
+# Check port availability
+netstat -tlnp | grep 5001
 
 # Check logs
-tail -f logs/mcp_server.log
+tail -f /var/log/dcisionai/backend.log
 ```
 
-#### **4. AgentCore Deployment Issues**
+#### **Frontend Build Issues**
 ```bash
-# Check AgentCore status
-agentcore status --name "dcisionai-mcp-server"
+# Clear npm cache
+npm cache clean --force
 
-# View deployment logs
-aws logs tail /aws/bedrock-agentcore/runtimes/dcisionai-mcp-server-DEFAULT --follow
+# Delete node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Check Node.js version
+node --version
 ```
 
-### **Debug Mode**
-
-#### **Enable Debug Logging**
+### **Debug Commands**
 ```bash
-export DcisionAI_LOG_LEVEL="DEBUG"
-export PYTHONUNBUFFERED=1
-python -m dcisionai_mcp_server.working_mcp_server
-```
+# Test AgentCore connection
+agentcore invoke '{"prompt": "test"}'
 
-#### **Verbose Output**
-```bash
-# Run with verbose output
-python -m dcisionai_mcp_server.working_mcp_server --verbose
+# Test backend API
+curl -X GET http://localhost:5001/api/health
 
-# Or use debug mode
-python -m dcisionai_mcp_server.working_mcp_server --debug
+# Test frontend
+curl -X GET http://localhost:3000
+
+# Check system resources
+htop
+df -h
+free -h
 ```
 
 ---
 
-## 📞 **Support**
+## 📚 **Additional Resources**
 
-### **Getting Help**
+### **Documentation**
+- [AWS Bedrock AgentCore Documentation](https://docs.aws.amazon.com/bedrock-agentcore/)
+- [MCP Protocol Specification](https://modelcontextprotocol.io/)
+- [Flask Documentation](https://flask.palletsprojects.com/)
+- [React Documentation](https://reactjs.org/docs/)
 
-1. **Documentation**: [docs.dcisionai.com](https://docs.dcisionai.com)
-2. **Support Email**: [support@dcisionai.com](mailto:support@dcisionai.com)
-3. **GitHub Issues**: [github.com/dcisionai/issues](https://github.com/dcisionai/issues)
-4. **Community Discord**: [discord.gg/dcisionai](https://discord.gg/dcisionai)
+### **Support**
+- **GitHub Issues**: [Report bugs and request features](https://github.com/dcisionai/dcisionai-mcp-platform/issues)
+- **Discord Community**: [Join our developer community](https://discord.gg/dcisionai)
+- **Email Support**: support@dcisionai.com
 
-### **Enterprise Support**
-
-- **24/7 Support**: Available for Enterprise customers
-- **Dedicated Support**: Assigned support engineer
-- **SLA**: 99.9% uptime guarantee
-- **Custom Deployments**: On-premise and hybrid options
+### **Training**
+- **Workshops**: Monthly optimization workshops
+- **Certification**: DcisionAI Platform Certification
+- **Consulting**: Enterprise deployment consulting
 
 ---
 
-**DcisionAI Deployment Guide**: *From Development to Production*
+*For additional deployment scenarios or custom configurations, please contact our support team or refer to our [GitHub repository](https://github.com/dcisionai/dcisionai-mcp-platform).*

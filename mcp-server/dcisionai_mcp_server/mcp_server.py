@@ -25,6 +25,7 @@ from .tools import (
     solve_optimization,
     select_solver,
     explain_optimization,
+    simulate_scenarios,
     get_workflow_templates,
     execute_workflow,
 )
@@ -119,6 +120,11 @@ class DcisionAIMCPServer:
                             "data_analysis": {
                                 "type": "object",
                                 "description": "Results from data analysis step",
+                                "default": {}
+                            },
+                            "solver_selection": {
+                                "type": "object",
+                                "description": "Results from solver selection step",
                                 "default": {}
                             }
                         },
@@ -222,6 +228,40 @@ class DcisionAIMCPServer:
                     }
                 ),
                 Tool(
+                    name="simulate_scenarios",
+                    description="Simulate different scenarios for optimization analysis and risk assessment",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "problem_description": {
+                                "type": "string",
+                                "description": "Description of the optimization problem"
+                            },
+                            "optimization_solution": {
+                                "type": "object",
+                                "description": "Results from optimization solving",
+                                "default": {}
+                            },
+                            "scenario_parameters": {
+                                "type": "object",
+                                "description": "Parameters for scenario simulation",
+                                "default": {}
+                            },
+                            "simulation_type": {
+                                "type": "string",
+                                "description": "Type of simulation (monte_carlo, discrete_event, agent_based, system_dynamics, stochastic_optimization)",
+                                "default": "monte_carlo"
+                            },
+                            "num_trials": {
+                                "type": "integer",
+                                "description": "Number of simulation trials",
+                                "default": 10000
+                            }
+                        },
+                        "required": ["problem_description"]
+                    }
+                ),
+                Tool(
                     name="execute_workflow",
                     description="Execute a complete optimization workflow",
                     inputSchema={
@@ -264,7 +304,8 @@ class DcisionAIMCPServer:
                     result = await build_model(
                         arguments.get("problem_description", ""),
                         arguments.get("intent_data", {}),
-                        arguments.get("data_analysis", {})
+                        arguments.get("data_analysis", {}),
+                        arguments.get("solver_selection", {})
                     )
                 elif name == "solve_optimization":
                     result = await solve_optimization(
@@ -286,6 +327,14 @@ class DcisionAIMCPServer:
                         arguments.get("data_analysis", {}),
                         arguments.get("model_building", {}),
                         arguments.get("optimization_solution", {})
+                    )
+                elif name == "simulate_scenarios":
+                    result = await simulate_scenarios(
+                        arguments.get("problem_description", ""),
+                        arguments.get("optimization_solution", {}),
+                        arguments.get("scenario_parameters", {}),
+                        arguments.get("simulation_type", "monte_carlo"),
+                        arguments.get("num_trials", 10000)
                     )
                 elif name == "get_workflow_templates":
                     result = await get_workflow_templates()

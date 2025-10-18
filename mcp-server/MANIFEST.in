@@ -4,6 +4,7 @@ include LICENSE
 include requirements.txt
 include pyproject.toml
 include setup.py
+include dcisionai_kb.json
 
 # Include all Python files
 recursive-include src *.py

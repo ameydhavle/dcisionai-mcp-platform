@@ -18,6 +18,11 @@ mcp_server_root = os.path.abspath(os.path.join(current_dir, '../../mcp-server'))
 if mcp_server_root not in sys.path:
     sys.path.insert(0, mcp_server_root)
 
+# Also add the mcp-server directory to import the latest tools
+mcp_server_dir = os.path.abspath(os.path.join(current_dir, '../../mcp-server/dcisionai_mcp_server'))
+if mcp_server_dir not in sys.path:
+    sys.path.insert(0, mcp_server_dir)
+
 # Import AgentCore Runtime
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 
